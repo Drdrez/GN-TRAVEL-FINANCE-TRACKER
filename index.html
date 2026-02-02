@@ -3,63 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="GN ICON.png" type="image/png">
-    <title>FINANCE TRACKER</title>
+    <link rel="icon" href="GN-ICON.png" type="image/png">
+    <title>GN TRAVEL MARKETING LLC FINANCE TRACKER</title>
     
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
         :root {
             --primary-blue: #34b0e5;
-            --text-dark: #1e293b;
+            --text-dark: #334155;
             --text-light: #64748b;
         }
 
-        /* --- ANIMATED BACKGROUND --- */
+        /* --- STATIC BACKGROUND (Needed for Glass effect) --- */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(-45deg, #e0f2fe, #eef2ff, #fdf4ff, #f0f9ff);
-            background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
+            /* Soft, static gradient to make the glass effect visible */
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f5f3ff 100%);
             color: var(--text-dark);
+            min-height: 100vh;
             padding-left: env(safe-area-inset-left);
             padding-right: env(safe-area-inset-right);
         }
 
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        /* --- GLASSMORPHISM CLASS --- */
+        /* --- GLASSMORPHISM CLASSES --- */
         .glass {
-            background: rgba(255, 255, 255, 0.65); /* Semi-transparent white */
-            backdrop-filter: blur(12px);            /* The "Frost" effect */
-            -webkit-backdrop-filter: blur(12px);    /* Safari support */
-            border: 1px solid rgba(255, 255, 255, 0.5); /* Subtle white border */
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05); /* Soft shadow */
+            background: rgba(255, 255, 255, 0.75); /* Higher opacity for readability */
+            backdrop-filter: blur(12px);            /* The "Frost" */
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
         }
 
-        /* Sidebar Glass (slightly more opaque) */
+        /* Sidebar specific glass */
         .glass-sidebar {
-            background: rgba(255, 255, 255, 0.75);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border-right: 1px solid rgba(255, 255, 255, 0.6);
         }
 
         /* Custom Scrollbar */
         .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.2); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
         /* Sidebar Link Active State */
-        .nav-link { cursor: pointer; transition: all 0.2s; }
-        .nav-link:hover { background: rgba(255,255,255,0.5); }
+        .nav-link { cursor: pointer; transition: all 0.2s ease; }
+        .nav-link:hover { background: rgba(255,255,255,0.6); }
         .nav-link.active {
             background: rgba(52, 176, 229, 0.15);
             color: var(--primary-blue);
@@ -72,25 +65,25 @@
         /* Table Styles */
         th, td { white-space: nowrap; }
         
-        /* Editable Styles */
+        /* Editable Inputs */
         td[contenteditable="true"], th[contenteditable="true"], select.editable-input {
             background-color: transparent;
             cursor: text;
-            transition: background-color 0.2s;
+            transition: all 0.2s;
             outline: none;
             border: 1px dashed transparent;
             width: 100%;
-            padding: 4px;
-            border-radius: 4px;
+            padding: 4px 8px;
+            border-radius: 6px;
         }
         td[contenteditable="true"]:hover, th[contenteditable="true"]:hover {
-            background-color: rgba(255,255,255,0.6);
+            background-color: rgba(255,255,255,0.8);
             border: 1px dashed #cbd5e1;
         }
         td[contenteditable="true"]:focus, th[contenteditable="true"]:focus {
             background-color: white;
             border: 1px solid var(--primary-blue);
-            box-shadow: 0 0 0 2px rgba(52, 176, 229, 0.2);
+            box-shadow: 0 0 0 2px rgba(52, 176, 229, 0.1);
         }
         
         .editable-header {
@@ -101,30 +94,25 @@
             cursor: text;
         }
 
-        /* Helper to hide/show views */
         .hidden { display: none !important; }
 
-        /* Invoice Modal Overlay */
+        /* Invoice Modal */
         #invoice-modal {
-            background-color: rgba(0,0,0,0.3); /* Darker backdrop for modal */
+            background-color: rgba(0,0,0,0.4);
             backdrop-filter: blur(4px);
         }
 
         /* Loading Overlay */
         .loading-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(255,255,255,0.4);
-            backdrop-filter: blur(10px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            position: fixed; inset: 0;
+            background: rgba(255,255,255,0.5);
+            backdrop-filter: blur(5px);
+            display: flex; align-items: center; justify-content: center;
             z-index: 100;
         }
         .loading-spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(255,255,255,0.5);
+            width: 40px; height: 40px;
+            border: 4px solid #e2e8f0;
             border-top-color: #34b0e5;
             border-radius: 50%;
             animation: spin 1s linear infinite;
@@ -133,31 +121,26 @@
 
         /* Save indicator */
         .save-indicator {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: #10b981;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-size: 14px;
-            display: none;
-            z-index: 50;
+            position: fixed; bottom: 20px; right: 20px;
+            background: #10b981; color: white;
+            padding: 8px 16px; border-radius: 8px;
+            font-size: 14px; font-weight: 600;
+            display: none; z-index: 50;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         .save-indicator.show { display: flex; align-items: center; gap: 8px; }
         .save-indicator.error { background: #ef4444; }
         
-        /* --- RESPONSIVE --- */
+        /* Mobile */
         @media (max-width: 1023px) {
             #sidebar {
                 position: fixed; left: 0; top: 0; z-index: 40; height: 100%;
-                transform: translateX(-100%);
-                transition: transform 0.25s ease-out;
+                transform: translateX(-100%); transition: transform 0.25s ease-out;
             }
             #sidebar.sidebar-open { transform: translateX(0); box-shadow: 4px 0 20px rgba(0,0,0,0.1); }
             #sidebar-overlay {
-                display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.2); backdrop-filter: blur(2px); z-index: 30;
+                display: none; position: fixed; inset: 0;
+                background: rgba(0,0,0,0.3); backdrop-filter: blur(2px); z-index: 30;
             }
             #sidebar-overlay.sidebar-open { display: block; }
             .mobile-menu-btn { display: flex; }
@@ -165,40 +148,14 @@
         @media (min-width: 1024px) { .mobile-menu-btn { display: none; } }
         
         @media print {
-            body { background: white; animation: none; }
+            body { background: white; }
             #invoice-print-area, #invoice-print-area * { visibility: visible; }
             #invoice-print-area { position: absolute; left: 0; top: 0; width: 100%; background: white; padding: 20px; }
             body * { visibility: hidden; }
         }
     </style>
 </head>
-<body class="flex h-screen overflow-hidden min-h-0 hidden" id="main-body">
-
-    <script>
-        // --- AUTH CONFIG ---
-        // REPLACE WITH YOUR ACTUAL SUPABASE KEYS
-        const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co';
-        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
-
-        const supabaseAuth = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        async function checkAuth() {
-            const { data: { session } } = await supabaseAuth.auth.getSession();
-            if (!session) {
-                // If no user, kick them to login page
-                window.location.href = '/login.html';
-            } else {
-                // If user exists, show the dashboard
-                document.getElementById('main-body').classList.remove('hidden');
-            }
-        }
-        checkAuth();
-
-        async function doLogout() {
-            await supabaseAuth.auth.signOut();
-            window.location.href = '/login.html';
-        }
-    </script>
+<body class="flex h-screen overflow-hidden min-h-0">
 
     <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()" aria-hidden="true"></div>
 
@@ -214,13 +171,13 @@
     <aside id="sidebar" class="w-64 glass-sidebar flex-shrink-0 flex flex-col h-full overflow-y-auto lg:translate-x-0" aria-label="Main navigation">
         <div class="p-4 lg:p-6 flex items-center justify-between gap-3">
             <div class="flex items-center gap-3 min-w-0">
-                <img src="GN ICON.png" alt="GN Logo" class="w-10 h-10 rounded-lg object-contain flex-shrink-0 shadow-sm">
+                <img src="GN-ICON.png" alt="GN Logo" class="w-10 h-10 rounded-lg object-contain flex-shrink-0 shadow-sm">
                 <div class="flex flex-col justify-center overflow-hidden min-w-0">
-                    <span class="text-[10px] font-bold text-gray-500 uppercase tracking-tight leading-tight whitespace-nowrap truncate">GN TRAVEL MARKETING LLC</span>
+                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-tight leading-tight whitespace-nowrap truncate">GN TRAVEL MARKETING LLC</span>
                     <span class="text-[15px] font-extrabold text-[#34b0e5] leading-none whitespace-nowrap truncate">FINANCE TRACKER</span>
                 </div>
             </div>
-            <button type="button" class="lg:hidden w-9 h-9 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-100/50" onclick="closeSidebar()">
+            <button type="button" class="lg:hidden w-9 h-9 rounded-lg flex items-center justify-center text-slate-500 hover:bg-slate-100/50" onclick="closeSidebar()">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
         </div>
@@ -230,27 +187,22 @@
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
                 Dashboard
             </div>
-            <div onclick="switchView('income')" id="nav-income" class="nav-link text-gray-600 flex items-center px-4 py-3 text-sm font-medium rounded-xl">
+            <div onclick="switchView('income')" id="nav-income" class="nav-link text-slate-600 flex items-center px-4 py-3 text-sm font-medium rounded-xl">
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 Income Tracker
             </div>
-            <div onclick="switchView('expenses')" id="nav-expenses" class="nav-link text-gray-600 flex items-center px-4 py-3 text-sm font-medium rounded-xl">
+            <div onclick="switchView('expenses')" id="nav-expenses" class="nav-link text-slate-600 flex items-center px-4 py-3 text-sm font-medium rounded-xl">
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"></path></svg>
                 Expenses Tracker
             </div>
-            <div onclick="switchView('cash')" id="nav-cash" class="nav-link text-gray-600 flex items-center px-4 py-3 text-sm font-medium rounded-xl">
+            <div onclick="switchView('cash')" id="nav-cash" class="nav-link text-slate-600 flex items-center px-4 py-3 text-sm font-medium rounded-xl">
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                 Cash Overview
             </div>
-
-            <div onclick="doLogout()" class="nav-link text-red-500 hover:bg-red-50 hover:text-red-600 flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-colors mt-8 cursor-pointer">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                Sign Out
-            </div>
         </nav>
         
-        <div class="p-4 border-t border-white/40">
-            <div class="text-xs text-gray-500 text-center">
+        <div class="p-4 border-t border-slate-200/60">
+            <div class="text-xs text-slate-400 text-center">
                 <span id="sync-status" class="text-green-500">●</span> Auto-saving enabled
             </div>
         </div>
@@ -258,7 +210,7 @@
 
     <main class="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 md:p-8 relative min-w-0">
         
-        <button type="button" id="mobile-menu-btn" class="mobile-menu-btn fixed z-20 lg:hidden w-10 h-10 rounded-lg glass flex items-center justify-center text-gray-600 top-[calc(1rem+env(safe-area-inset-top))] left-[calc(1rem+env(safe-area-inset-left))]" onclick="toggleSidebar()">
+        <button type="button" id="mobile-menu-btn" class="mobile-menu-btn fixed z-20 lg:hidden w-10 h-10 rounded-lg glass flex items-center justify-center text-slate-600 top-[calc(1rem+env(safe-area-inset-top))] left-[calc(1rem+env(safe-area-inset-left))]" onclick="toggleSidebar()">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
         </button>
 
@@ -334,7 +286,7 @@
             </div>
 
             <div class="glass rounded-2xl shadow-sm mb-8 overflow-hidden">
-                <div class="p-4 sm:p-6 border-b border-white/40 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                <div class="p-4 sm:p-6 border-b border-slate-200/60 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                     <h3 class="text-base sm:text-lg font-bold text-[#34b0e5]">Income & Expenses Breakdown</h3>
                     <div class="text-xs text-slate-500 italic">Edit 'Expenses' column. 'Income' is auto-calculated.</div>
                 </div>
@@ -342,17 +294,17 @@
                     <table class="w-full text-sm text-left table-cell-padding min-w-[600px]" id="table-main">
                         <thead class="text-xs text-slate-700 uppercase bg-white/40">
                             <tr>
-                                <th class="px-6 py-4 font-bold border-r border-white/40">Month</th>
+                                <th class="px-6 py-4 font-bold border-r border-slate-200/60">Month</th>
                                 <th class="px-6 py-4 font-bold text-right">Income</th>
                                 <th class="px-6 py-4 font-bold text-right">Expenses</th>
                                 <th class="px-6 py-4 font-bold text-right">Net Income</th>
                                 <th class="px-6 py-4 font-bold text-right">Profit Margin %</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-white/40 font-medium"></tbody>
+                        <tbody class="divide-y divide-slate-200/60 font-medium"></tbody>
                         <tfoot class="bg-white/50 font-bold border-t-2 border-[#34b0e5]">
                             <tr>
-                                <td class="px-6 py-4 border-r border-white/40">Total</td>
+                                <td class="px-6 py-4 border-r border-slate-200/60">Total</td>
                                 <td class="px-6 py-4 text-right" id="total-income-main">₱0</td>
                                 <td class="px-6 py-4 text-right text-red-500" id="total-expenses-main">₱0</td>
                                 <td class="px-6 py-4 text-right text-green-600" id="total-net-main">₱0</td>
@@ -364,7 +316,7 @@
             </div>
 
             <div class="glass rounded-2xl shadow-sm overflow-hidden">
-                 <div class="p-4 sm:p-6 border-b border-white/40 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+                 <div class="p-4 sm:p-6 border-b border-slate-200/60 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                     <div>
                         <h3 class="text-base sm:text-lg font-bold text-[#34b0e5]">Business Income</h3>
                     </div>
@@ -383,15 +335,15 @@
                     <table class="w-full text-sm text-left table-cell-padding min-w-[400px]" id="table-business">
                         <thead class="text-xs text-slate-700 uppercase bg-white/40">
                             <tr id="business-header-row">
-                                <th class="px-6 py-4 font-bold border-r border-white/40">Month</th>
-                                <th class="px-6 py-4 font-bold text-right bg-white/30 border-l border-white/40" id="header-total">Total</th>
+                                <th class="px-6 py-4 font-bold border-r border-slate-200/60">Month</th>
+                                <th class="px-6 py-4 font-bold text-right bg-white/30 border-l border-slate-200/60" id="header-total">Total</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-white/40 font-medium" id="business-body"></tbody>
+                        <tbody class="divide-y divide-slate-200/60 font-medium" id="business-body"></tbody>
                         <tfoot class="bg-white/50 font-bold border-t-2 border-[#34b0e5]" id="business-footer">
                             <tr id="business-footer-row">
-                                <td class="px-6 py-4 border-r border-white/40">Total</td>
-                                <td class="px-6 py-4 text-right border-l border-white/40" id="footer-total">₱0</td>
+                                <td class="px-6 py-4 border-r border-slate-200/60">Total</td>
+                                <td class="px-6 py-4 text-right border-l border-slate-200/60" id="footer-total">₱0</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -427,7 +379,7 @@
             </div>
 
             <div class="glass rounded-2xl shadow-sm mb-8 overflow-hidden">
-                <div class="p-6 border-b border-white/40 flex justify-between items-center">
+                <div class="p-6 border-b border-slate-200/60 flex justify-between items-center">
                     <h3 class="text-lg font-bold text-[#34b0e5]">Income Tracker Details</h3>
                     <button onclick="addIncomeRow()" class="glass text-[#34b0e5] px-3 py-1.5 rounded-md text-sm font-semibold hover:bg-blue-50 transition-colors flex items-center gap-1">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
@@ -438,20 +390,20 @@
                     <table class="w-full text-sm text-left table-cell-padding min-w-[700px]" id="table-income-tracker">
                         <thead class="text-xs text-slate-700 uppercase bg-white/40 sticky top-0 z-10 backdrop-blur-md">
                             <tr>
-                                <th class="px-4 py-3 font-bold border-r border-white/40">Date</th>
-                                <th class="px-4 py-3 font-bold border-r border-white/40">Client Name</th>
-                                <th class="px-4 py-3 font-bold border-r border-white/40">Service Type</th>
-                                <th class="px-4 py-3 font-bold border-r border-white/40">Pricing Model</th>
-                                <th class="px-4 py-3 font-bold text-right border-r border-white/40">Gross</th>
-                                <th class="px-4 py-3 font-bold text-right border-r border-white/40">Net</th>
-                                <th class="px-4 py-3 font-bold border-r border-white/40">Mode</th>
-                                <th class="px-4 py-3 font-bold border-r border-white/40">Status</th>
-                                <th class="px-4 py-3 font-bold border-r border-white/40">Ref ID</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60">Date</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60">Client Name</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60">Service Type</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60">Pricing Model</th>
+                                <th class="px-4 py-3 font-bold text-right border-r border-slate-200/60">Gross</th>
+                                <th class="px-4 py-3 font-bold text-right border-r border-slate-200/60">Net</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60">Mode</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60">Status</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60">Ref ID</th>
                                 <th class="px-4 py-3 font-bold">Notes</th>
                                 <th class="px-2 py-3 font-bold">Action</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-white/40 font-medium" id="tracker-body"></tbody>
+                        <tbody class="divide-y divide-slate-200/60 font-medium" id="tracker-body"></tbody>
                     </table>
                 </div>
             </div>
@@ -459,7 +411,7 @@
 
         <section id="view-expenses" class="hidden pb-8">
             <div class="glass rounded-2xl shadow-sm mb-8 overflow-hidden flex-1 flex flex-col">
-                <div class="p-6 border-b border-white/40 flex justify-between items-center">
+                <div class="p-6 border-b border-slate-200/60 flex justify-between items-center">
                     <h3 class="text-lg font-bold text-[#34b0e5]">Expenses Details</h3>
                     <button onclick="addExpenseRow()" class="glass text-[#34b0e5] px-3 py-1.5 rounded-md text-sm font-semibold hover:bg-blue-50 transition-colors flex items-center gap-1">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
@@ -470,20 +422,20 @@
                     <table class="w-full text-sm text-left table-cell-padding min-w-[700px]" id="table-expenses">
                         <thead class="text-xs text-slate-700 uppercase bg-white/40 sticky top-0 z-10 backdrop-blur-md">
                             <tr>
-                                <th class="px-4 py-3 font-bold border-r border-white/40">Date</th>
-                                <th class="px-4 py-3 font-bold border-r border-white/40">Vendor</th>
-                                <th class="px-4 py-3 font-bold border-r border-white/40">Category</th>
-                                <th class="px-4 py-3 font-bold border-r border-white/40">Type</th>
-                                <th class="px-4 py-3 font-bold border-r border-white/40">Service</th>
-                                <th class="px-4 py-3 font-bold text-right border-r border-white/40">Amount</th>
-                                <th class="px-4 py-3 font-bold border-r border-white/40">Payment</th>
-                                <th class="px-4 py-3 font-bold border-r border-white/40">Status</th>
-                                <th class="px-4 py-3 font-bold border-r border-white/40">Recurring</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60">Date</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60">Vendor</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60">Category</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60">Type</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60">Service</th>
+                                <th class="px-4 py-3 font-bold text-right border-r border-slate-200/60">Amount</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60">Payment</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60">Status</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60">Recurring</th>
                                 <th class="px-4 py-3 font-bold">Notes</th>
                                 <th class="px-2 py-3 font-bold"></th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-white/40 font-medium" id="expenses-body"></tbody>
+                        <tbody class="divide-y divide-slate-200/60 font-medium" id="expenses-body"></tbody>
                     </table>
                 </div>
             </div>
@@ -491,7 +443,7 @@
 
         <section id="view-cash" class="hidden pb-8">
             <div class="glass rounded-2xl shadow-sm mb-8 overflow-hidden">
-                <div class="p-6 border-b border-white/40 flex justify-between items-center">
+                <div class="p-6 border-b border-slate-200/60 flex justify-between items-center">
                     <h3 class="text-lg font-bold text-[#34b0e5]">Cash Account Balances</h3>
                     <button onclick="addCashAccountRow()" class="glass text-[#34b0e5] px-3 py-1.5 rounded-md text-sm font-semibold hover:bg-blue-50 transition-colors flex items-center gap-1">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
@@ -502,21 +454,21 @@
                     <table class="w-full text-sm text-left table-cell-padding min-w-[500px]">
                         <thead class="text-xs text-slate-700 uppercase bg-white/40 sticky top-0 z-10 backdrop-blur-md">
                             <tr>
-                                <th class="px-6 py-3 font-bold border-r border-white/40">Month</th>
-                                <th class="px-6 py-3 font-bold border-r border-white/40">Account Name</th>
-                                <th class="px-6 py-3 font-bold border-r border-white/40">Account Category</th>
-                                <th class="px-6 py-3 font-bold border-r border-white/40">Institution / Platform</th>
+                                <th class="px-6 py-3 font-bold border-r border-slate-200/60">Month</th>
+                                <th class="px-6 py-3 font-bold border-r border-slate-200/60">Account Name</th>
+                                <th class="px-6 py-3 font-bold border-r border-slate-200/60">Account Category</th>
+                                <th class="px-6 py-3 font-bold border-r border-slate-200/60">Institution / Platform</th>
                                 <th class="px-6 py-3 font-bold text-right">Balance</th>
                                 <th class="px-2 py-3"></th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-white/40 font-medium" id="cash-balances-body"></tbody>
+                        <tbody class="divide-y divide-slate-200/60 font-medium" id="cash-balances-body"></tbody>
                     </table>
                 </div>
             </div>
 
             <div class="glass rounded-2xl shadow-sm mb-8 overflow-hidden">
-                <div class="p-6 border-b border-white/40 flex justify-between items-center">
+                <div class="p-6 border-b border-slate-200/60 flex justify-between items-center">
                     <h3 class="text-lg font-bold text-[#34b0e5]">Monthly Cash Movement</h3>
                     <div class="text-xs text-slate-500 italic">Net Cash Change is auto-calculated</div>
                 </div>
@@ -524,13 +476,13 @@
                     <table class="w-full text-sm text-left table-cell-padding min-w-[320px]">
                         <thead class="text-xs text-slate-700 uppercase bg-white/40 sticky top-0 z-10 backdrop-blur-md">
                             <tr>
-                                <th class="px-6 py-3 font-bold border-r border-white/40">Month</th>
-                                <th class="px-6 py-3 font-bold text-right border-r border-white/40">Starting Cash</th>
-                                <th class="px-6 py-3 font-bold text-right border-r border-white/40">Ending Cash</th>
+                                <th class="px-6 py-3 font-bold border-r border-slate-200/60">Month</th>
+                                <th class="px-6 py-3 font-bold text-right border-r border-slate-200/60">Starting Cash</th>
+                                <th class="px-6 py-3 font-bold text-right border-r border-slate-200/60">Ending Cash</th>
                                 <th class="px-6 py-3 font-bold text-right">Net Cash Change</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-white/40 font-medium" id="cash-movement-body"></tbody>
+                        <tbody class="divide-y divide-slate-200/60 font-medium" id="cash-movement-body"></tbody>
                     </table>
                 </div>
             </div>
@@ -540,7 +492,7 @@
 
     <div id="invoice-modal" class="fixed inset-0 hidden items-center justify-center z-50 p-2 sm:p-4">
         <div class="glass modal-inner rounded-2xl shadow-2xl w-full max-w-[800px] max-h-[90vh] overflow-y-auto flex flex-col">
-            <div class="p-4 border-b border-white/40 flex justify-between items-center bg-white/30 rounded-t-2xl">
+            <div class="p-4 border-b border-slate-200/60 flex justify-between items-center bg-white/30 rounded-t-2xl">
                 <h3 class="font-bold text-lg text-slate-800">Generate Invoice</h3>
                 <button onclick="closeInvoice()" class="text-slate-500 hover:text-red-500 transition-colors">✕</button>
             </div>
@@ -592,7 +544,7 @@
                 </div>
             </div>
 
-            <div class="p-4 border-t border-white/40 bg-white/30 flex justify-end gap-2 rounded-b-2xl">
+            <div class="p-4 border-t border-slate-200/60 bg-white/30 flex justify-end gap-2 rounded-b-2xl">
                 <button onclick="closeInvoice()" class="px-4 py-2 text-slate-600 hover:bg-white/50 rounded-lg transition-colors font-medium">Close</button>
                 <button onclick="window.print()" class="px-4 py-2 bg-[#34b0e5] hover:bg-sky-500 text-white rounded-lg shadow-md transition-all flex items-center gap-2 font-bold">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
@@ -944,7 +896,7 @@
 
             document.querySelectorAll('.nav-link').forEach(el => {
                 el.classList.remove('active');
-                el.classList.add('text-gray-600');
+                el.classList.add('text-slate-600');
             });
 
             document.getElementById('nav-' + viewId).classList.add('active');
@@ -1067,13 +1019,13 @@
                 const trMain = document.createElement('tr');
                 trMain.className = "hover:bg-white/20 transition-colors";
                 const expenseVal = dashboardExpenses[currentYear + '_' + month] || 0;
-                trMain.innerHTML = `<td class="px-6 py-4 font-bold text-slate-700 border-r border-white/40">${month}</td><td class="px-6 py-4 text-right bg-white/20 text-slate-500 income-cell">₱0</td><td class="px-6 py-4 text-right expense-cell text-red-400" contenteditable="true" data-month="${month}">${formatMoney(expenseVal)}</td><td class="px-6 py-4 text-right net-cell">-</td><td class="px-6 py-4 text-right margin-cell">-</td>`;
+                trMain.innerHTML = `<td class="px-6 py-4 font-bold text-slate-700 border-r border-slate-200/60">${month}</td><td class="px-6 py-4 text-right bg-white/20 text-slate-500 income-cell">₱0</td><td class="px-6 py-4 text-right expense-cell text-red-400" contenteditable="true" data-month="${month}">${formatMoney(expenseVal)}</td><td class="px-6 py-4 text-right net-cell">-</td><td class="px-6 py-4 text-right margin-cell">-</td>`;
                 mainBody.appendChild(trMain);
                 
                 const trBus = document.createElement('tr');
                 trBus.className = "hover:bg-white/20 transition-colors";
                 trBus.setAttribute('data-month', month);
-                trBus.innerHTML = `<td class="px-6 py-4 font-bold text-slate-700 border-r border-white/40">${month}</td><td class="px-6 py-4 text-right bg-white/20 border-l border-white/40 font-bold total-cell text-slate-600">₱0</td>`;
+                trBus.innerHTML = `<td class="px-6 py-4 font-bold text-slate-700 border-r border-slate-200/60">${month}</td><td class="px-6 py-4 text-right bg-white/20 border-l border-slate-200/60 font-bold total-cell text-slate-600">₱0</td>`;
                 busBody.appendChild(trBus);
             });
 
@@ -1090,7 +1042,7 @@
             const totalFooter = document.getElementById('footer-total');
 
             const newTh = document.createElement('th');
-            newTh.className = "px-6 py-4 font-bold text-right group relative border-r border-white/40";
+            newTh.className = "px-6 py-4 font-bold text-right group relative border-r border-slate-200/60";
             newTh.innerHTML = `<div class="flex items-center justify-end gap-2"><span class="editable-header" contenteditable="true">${name}</span><button onclick="removeBusinessColumn(this)" class="opacity-0 group-hover:opacity-100 text-red-300 hover:text-red-500 transition-opacity p-1 rounded hover:bg-red-50">✕</button></div>`;
             newTh.querySelector('span').addEventListener('blur', function() {
                 const colIndex = Array.from(headRow.children).indexOf(newTh) - 1;
@@ -1124,7 +1076,7 @@
             });
             
             const newFootTd = document.createElement('td');
-            newFootTd.className = "px-6 py-4 text-right font-bold text-slate-700 border-r border-white/40";
+            newFootTd.className = "px-6 py-4 text-right font-bold text-slate-700 border-r border-slate-200/60";
             newFootTd.innerText = "₱0";
             footRow.insertBefore(newFootTd, totalFooter);
             calculateDashboard();
@@ -1218,15 +1170,15 @@
             };
 
             tr.innerHTML = `
-                <td class="px-4 py-3 border-r border-white/40"><input type="date" value="${record.date || ''}" class="editable-input text-slate-700 font-medium" onchange="updateIncomeRecord(this)"></td>
-                <td class="px-4 py-3 border-r border-white/40 text-slate-700" contenteditable="true">${record.clientName || 'Client Name'}</td>
-                <td class="px-4 py-3 border-r border-white/40">${createSelect(serviceOptions, record.serviceType)}</td>
-                <td class="px-4 py-3 border-r border-white/40">${createSelect(pricingOptions, record.pricingModel)}</td>
-                <td class="px-4 py-3 text-right border-r border-white/40 text-slate-700" contenteditable="true">${formatMoney(record.gross || 0)}</td>
-                <td class="px-4 py-3 text-right border-r border-white/40 text-slate-700" contenteditable="true">${formatMoney(record.net || 0)}</td>
-                <td class="px-4 py-3 border-r border-white/40 text-slate-700" contenteditable="true">${record.paymentMode || 'Bank Transfer'}</td>
-                <td class="px-4 py-3 border-r border-white/40">${createSelect(statusOptions, record.status)}</td>
-                <td class="px-4 py-3 border-r border-white/40 text-slate-700" contenteditable="true">${record.refId || 'INV-001'}</td>
+                <td class="px-4 py-3 border-r border-slate-200/60"><input type="date" value="${record.date || ''}" class="editable-input text-slate-700 font-medium" onchange="updateIncomeRecord(this)"></td>
+                <td class="px-4 py-3 border-r border-slate-200/60 text-slate-700" contenteditable="true">${record.clientName || 'Client Name'}</td>
+                <td class="px-4 py-3 border-r border-slate-200/60">${createSelect(serviceOptions, record.serviceType)}</td>
+                <td class="px-4 py-3 border-r border-slate-200/60">${createSelect(pricingOptions, record.pricingModel)}</td>
+                <td class="px-4 py-3 text-right border-r border-slate-200/60 text-slate-700" contenteditable="true">${formatMoney(record.gross || 0)}</td>
+                <td class="px-4 py-3 text-right border-r border-slate-200/60 text-slate-700" contenteditable="true">${formatMoney(record.net || 0)}</td>
+                <td class="px-4 py-3 border-r border-slate-200/60 text-slate-700" contenteditable="true">${record.paymentMode || 'Bank Transfer'}</td>
+                <td class="px-4 py-3 border-r border-slate-200/60">${createSelect(statusOptions, record.status)}</td>
+                <td class="px-4 py-3 border-r border-slate-200/60 text-slate-700" contenteditable="true">${record.refId || 'INV-001'}</td>
                 <td class="px-4 py-3 text-slate-700" contenteditable="true">${record.notes || ''}</td>
                 <td class="px-2 py-3 text-center flex gap-1 justify-center">
                     <button onclick="openInvoice(this)" class="text-blue-400 hover:text-blue-600 transition-colors" title="Generate Invoice">
@@ -1354,15 +1306,15 @@
             };
 
             tr.innerHTML = `
-                <td class="px-4 py-3 border-r border-white/40"><input type="date" value="${record.date || ''}" class="editable-input text-slate-700 font-medium" onchange="updateExpenseRecord(this)"></td>
-                <td class="px-4 py-3 border-r border-white/40 text-slate-700" contenteditable="true">${record.vendor || 'Vendor Name'}</td>
-                <td class="px-4 py-3 border-r border-white/40">${createSelect(expenseCategories, record.category)}</td>
-                <td class="px-4 py-3 border-r border-white/40">${createSelect(expenseTypes, record.type)}</td>
-                <td class="px-4 py-3 border-r border-white/40 text-slate-700" contenteditable="true">${record.service || 'General'}</td>
-                <td class="px-4 py-3 text-right border-r border-white/40 text-slate-700" contenteditable="true">${formatMoney(record.amount || 0)}</td>
-                <td class="px-4 py-3 border-r border-white/40">${createSelect(expensePayments, record.payment)}</td>
-                <td class="px-4 py-3 border-r border-white/40">${createSelect(expenseStatuses, record.status)}</td>
-                <td class="px-4 py-3 border-r border-white/40">${createSelect(expenseRecurring, record.recurring)}</td>
+                <td class="px-4 py-3 border-r border-slate-200/60"><input type="date" value="${record.date || ''}" class="editable-input text-slate-700 font-medium" onchange="updateExpenseRecord(this)"></td>
+                <td class="px-4 py-3 border-r border-slate-200/60 text-slate-700" contenteditable="true">${record.vendor || 'Vendor Name'}</td>
+                <td class="px-4 py-3 border-r border-slate-200/60">${createSelect(expenseCategories, record.category)}</td>
+                <td class="px-4 py-3 border-r border-slate-200/60">${createSelect(expenseTypes, record.type)}</td>
+                <td class="px-4 py-3 border-r border-slate-200/60 text-slate-700" contenteditable="true">${record.service || 'General'}</td>
+                <td class="px-4 py-3 text-right border-r border-slate-200/60 text-slate-700" contenteditable="true">${formatMoney(record.amount || 0)}</td>
+                <td class="px-4 py-3 border-r border-slate-200/60">${createSelect(expensePayments, record.payment)}</td>
+                <td class="px-4 py-3 border-r border-slate-200/60">${createSelect(expenseStatuses, record.status)}</td>
+                <td class="px-4 py-3 border-r border-slate-200/60">${createSelect(expenseRecurring, record.recurring)}</td>
                 <td class="px-4 py-3 text-slate-700" contenteditable="true">${record.notes || ''}</td>
                 <td class="px-2 py-3 text-center">
                     <button onclick="deleteExpenseRow(this)" class="text-gray-400 hover:text-red-500 transition-colors">
@@ -1458,10 +1410,10 @@
             };
 
             tr.innerHTML = `
-                <td class="px-6 py-4 border-r border-white/40">${createMonthSelect(record.month)}</td>
-                <td class="px-6 py-4 border-r border-white/40">${createSelect(cashAcctNames, record.accountName)}</td>
-                <td class="px-6 py-4 border-r border-white/40">${createSelect(cashAcctCategories, record.category)}</td>
-                <td class="px-6 py-4 border-r border-white/40 text-slate-700" contenteditable="true">${record.institution || 'Bank Name'}</td>
+                <td class="px-6 py-4 border-r border-slate-200/60">${createMonthSelect(record.month)}</td>
+                <td class="px-6 py-4 border-r border-slate-200/60">${createSelect(cashAcctNames, record.accountName)}</td>
+                <td class="px-6 py-4 border-r border-slate-200/60">${createSelect(cashAcctCategories, record.category)}</td>
+                <td class="px-6 py-4 border-r border-slate-200/60 text-slate-700" contenteditable="true">${record.institution || 'Bank Name'}</td>
                 <td class="px-6 py-4 text-right text-slate-700 font-medium" contenteditable="true">${formatMoney(record.balance || 0)}</td>
                 <td class="px-2 py-3 text-center">
                     <button onclick="deleteCashAccount(this)" class="text-gray-400 hover:text-red-500 transition-colors">
@@ -1528,9 +1480,9 @@
                 const startVal = cashMovement[`${month}_start`] || 0;
                 const endVal = cashMovement[`${month}_end`] || 0;
                 tr.innerHTML = `
-                    <td class="px-6 py-4 font-bold text-slate-700 border-r border-white/40">${month}</td>
-                    <td class="px-6 py-4 text-right border-r border-white/40 cash-start text-slate-600" contenteditable="true">${formatMoney(startVal)}</td>
-                    <td class="px-6 py-4 text-right border-r border-white/40 cash-end text-slate-600" contenteditable="true">${formatMoney(endVal)}</td>
+                    <td class="px-6 py-4 font-bold text-slate-700 border-r border-slate-200/60">${month}</td>
+                    <td class="px-6 py-4 text-right border-r border-slate-200/60 cash-start text-slate-600" contenteditable="true">${formatMoney(startVal)}</td>
+                    <td class="px-6 py-4 text-right border-r border-slate-200/60 cash-end text-slate-600" contenteditable="true">${formatMoney(endVal)}</td>
                     <td class="px-6 py-4 text-right cash-net font-bold">-</td>
                 `;
                 tbody.appendChild(tr);
