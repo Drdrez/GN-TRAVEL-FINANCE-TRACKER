@@ -8,6 +8,7 @@
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
         :root {
@@ -19,7 +20,6 @@
         /* --- STATIC BACKGROUND (Needed for Glass effect) --- */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            /* Soft, static gradient to make the glass effect visible */
             background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f5f3ff 100%);
             color: var(--text-dark);
             min-height: 100vh;
@@ -29,14 +29,13 @@
 
         /* --- GLASSMORPHISM CLASSES --- */
         .glass {
-            background: rgba(255, 255, 255, 0.75); /* Higher opacity for readability */
-            backdrop-filter: blur(12px);            /* The "Frost" */
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.6);
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
         }
 
-        /* Sidebar specific glass */
         .glass-sidebar {
             background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(12px);
@@ -153,6 +152,43 @@
             #invoice-print-area { position: absolute; left: 0; top: 0; width: 100%; background: white; padding: 20px; }
             body * { visibility: hidden; }
         }
+
+        /* --- ADDED: PDF EXPORT STYLES --- */
+        /* These styles trigger only when the 'pdf-mode' class is added by JS during export */
+        .pdf-mode {
+            background: white !important;
+            width: 100% !important;
+            max-width: none !important;
+        }
+        /* Remove glass effect for crisp PDF text */
+        .pdf-mode .glass {
+            background: #ffffff !important;
+            backdrop-filter: none !important;
+            border: 1px solid #e2e8f0 !important;
+            box-shadow: none !important;
+        }
+        /* Hide buttons and interactive elements */
+        .pdf-mode button, 
+        .pdf-mode .no-print,
+        .pdf-mode .mobile-menu-btn {
+            display: none !important;
+        }
+        /* Force scrollable tables to expand fully */
+        .pdf-mode .overflow-x-auto, 
+        .pdf-mode .overflow-y-auto, 
+        .pdf-mode .custom-scrollbar {
+            overflow: visible !important;
+            height: auto !important;
+            max-height: none !important;
+        }
+        /* Remove inputs styling to look like text */
+        .pdf-mode input, 
+        .pdf-mode select { 
+            border: none !important; 
+            background: transparent !important; 
+            appearance: none !important; 
+            padding: 0 !important;
+        }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden min-h-0">
@@ -208,7 +244,7 @@
         </div>
     </aside>
 
-    <main class="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 md:p-8 relative min-w-0">
+    <main class="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 md:p-8 relative min-w-0" id="main-content">
         
         <button type="button" id="mobile-menu-btn" class="mobile-menu-btn fixed z-20 lg:hidden w-10 h-10 rounded-lg glass flex items-center justify-center text-slate-600 top-[calc(1rem+env(safe-area-inset-top))] left-[calc(1rem+env(safe-area-inset-left))]" onclick="toggleSidebar()">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
@@ -224,12 +260,21 @@
                 <div class="relative" id="export-dropdown-wrap">
                     <button type="button" class="glass rounded-lg px-4 py-2 text-sm shadow-sm flex items-center gap-2 hover:bg-white/80 transition-all text-slate-700 font-medium" onclick="toggleExportDropdown(event)" id="export-btn">
                         <svg class="w-4 h-4 text-slate-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                        <span>Export</span>
+                        <span>Export PDF</span>
                     </button>
-                    <div id="export-dropdown" class="absolute right-0 mt-2 w-48 glass rounded-lg shadow-xl border border-white/60 z-50 hidden">
-                        <a href="#" onclick="exportToCSV('income'); closeExportDropdown(); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-white/50 first:rounded-t-lg">Export Income</a>
-                        <a href="#" onclick="exportToCSV('expenses'); closeExportDropdown(); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-white/50">Export Expenses</a>
-                        <a href="#" onclick="exportToCSV('cash'); closeExportDropdown(); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-white/50 last:rounded-b-lg">Export Cash Flow</a>
+                    <div id="export-dropdown" class="absolute right-0 mt-2 w-56 glass rounded-lg shadow-xl border border-white/60 z-50 hidden">
+                        <a href="#" onclick="exportToPDF('dashboard'); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-white/50 first:rounded-t-lg">
+                             <span class="font-bold text-[#34b0e5]">●</span> Export Dashboard
+                        </a>
+                        <a href="#" onclick="exportToPDF('income'); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-white/50">
+                             <span class="font-bold text-[#34b0e5]">●</span> Export Income
+                        </a>
+                        <a href="#" onclick="exportToPDF('expenses'); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-white/50">
+                             <span class="font-bold text-[#34b0e5]">●</span> Export Expenses
+                        </a>
+                        <a href="#" onclick="exportToPDF('cash'); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-white/50 last:rounded-b-lg">
+                             <span class="font-bold text-[#34b0e5]">●</span> Export Cash Flow
+                        </a>
                     </div>
                 </div>
 
@@ -288,7 +333,7 @@
             <div class="glass rounded-2xl shadow-sm mb-8 overflow-hidden">
                 <div class="p-4 sm:p-6 border-b border-slate-200/60 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                     <h3 class="text-base sm:text-lg font-bold text-[#34b0e5]">Income & Expenses Breakdown</h3>
-                    <div class="text-xs text-slate-500 italic">Edit 'Expenses' column. 'Income' is auto-calculated.</div>
+                    <div class="text-xs text-slate-500 italic no-print">Edit 'Expenses' column. 'Income' is auto-calculated.</div>
                 </div>
                 <div class="overflow-x-auto custom-scrollbar">
                     <table class="w-full text-sm text-left table-cell-padding min-w-[600px]" id="table-main">
@@ -320,7 +365,7 @@
                     <div>
                         <h3 class="text-base sm:text-lg font-bold text-[#34b0e5]">Business Income</h3>
                     </div>
-                    <div class="flex gap-2 flex-shrink-0">
+                    <div class="flex gap-2 flex-shrink-0 no-print">
                         <button id="restore-btn" onclick="restoreColumn()" disabled class="glass px-3 py-1.5 rounded-md text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-green-50 hover:text-green-600 flex items-center gap-2">
                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
                              Restore
@@ -381,7 +426,7 @@
             <div class="glass rounded-2xl shadow-sm mb-8 overflow-hidden">
                 <div class="p-6 border-b border-slate-200/60 flex justify-between items-center">
                     <h3 class="text-lg font-bold text-[#34b0e5]">Income Tracker Details</h3>
-                    <button onclick="addIncomeRow()" class="glass text-[#34b0e5] px-3 py-1.5 rounded-md text-sm font-semibold hover:bg-blue-50 transition-colors flex items-center gap-1">
+                    <button onclick="addIncomeRow()" class="glass text-[#34b0e5] px-3 py-1.5 rounded-md text-sm font-semibold hover:bg-blue-50 transition-colors flex items-center gap-1 no-print">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                         Add Entry
                     </button>
@@ -400,7 +445,7 @@
                                 <th class="px-4 py-3 font-bold border-r border-slate-200/60">Status</th>
                                 <th class="px-4 py-3 font-bold border-r border-slate-200/60">Ref ID</th>
                                 <th class="px-4 py-3 font-bold">Notes</th>
-                                <th class="px-2 py-3 font-bold">Action</th>
+                                <th class="px-2 py-3 font-bold no-print">Action</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-200/60 font-medium" id="tracker-body"></tbody>
@@ -413,7 +458,7 @@
             <div class="glass rounded-2xl shadow-sm mb-8 overflow-hidden flex-1 flex flex-col">
                 <div class="p-6 border-b border-slate-200/60 flex justify-between items-center">
                     <h3 class="text-lg font-bold text-[#34b0e5]">Expenses Details</h3>
-                    <button onclick="addExpenseRow()" class="glass text-[#34b0e5] px-3 py-1.5 rounded-md text-sm font-semibold hover:bg-blue-50 transition-colors flex items-center gap-1">
+                    <button onclick="addExpenseRow()" class="glass text-[#34b0e5] px-3 py-1.5 rounded-md text-sm font-semibold hover:bg-blue-50 transition-colors flex items-center gap-1 no-print">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                         Add Expense
                     </button>
@@ -432,7 +477,7 @@
                                 <th class="px-4 py-3 font-bold border-r border-slate-200/60">Status</th>
                                 <th class="px-4 py-3 font-bold border-r border-slate-200/60">Recurring</th>
                                 <th class="px-4 py-3 font-bold">Notes</th>
-                                <th class="px-2 py-3 font-bold"></th>
+                                <th class="px-2 py-3 font-bold no-print"></th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-200/60 font-medium" id="expenses-body"></tbody>
@@ -445,7 +490,7 @@
             <div class="glass rounded-2xl shadow-sm mb-8 overflow-hidden">
                 <div class="p-6 border-b border-slate-200/60 flex justify-between items-center">
                     <h3 class="text-lg font-bold text-[#34b0e5]">Cash Account Balances</h3>
-                    <button onclick="addCashAccountRow()" class="glass text-[#34b0e5] px-3 py-1.5 rounded-md text-sm font-semibold hover:bg-blue-50 transition-colors flex items-center gap-1">
+                    <button onclick="addCashAccountRow()" class="glass text-[#34b0e5] px-3 py-1.5 rounded-md text-sm font-semibold hover:bg-blue-50 transition-colors flex items-center gap-1 no-print">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                         Add Account Entry
                     </button>
@@ -459,7 +504,7 @@
                                 <th class="px-6 py-3 font-bold border-r border-slate-200/60">Account Category</th>
                                 <th class="px-6 py-3 font-bold border-r border-slate-200/60">Institution / Platform</th>
                                 <th class="px-6 py-3 font-bold text-right">Balance</th>
-                                <th class="px-2 py-3"></th>
+                                <th class="px-2 py-3 no-print"></th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-200/60 font-medium" id="cash-balances-body"></tbody>
@@ -816,35 +861,60 @@
             await apiPost('business', { columns: businessColumns, businessData: businessData, dashboardExpenses: dashboardExpenses });
         }
 
-        // --- EXPORT TO CSV ---
-        function exportToCSV(type) {
-            let tableId = '';
-            let filename = '';
-            if(type === 'income') { tableId = 'table-income-tracker'; filename = 'income_report.csv'; }
-            if(type === 'expenses') { tableId = 'table-expenses'; filename = 'expenses_report.csv'; }
-            if(type === 'cash') { tableId = 'table-business'; filename = 'business_income_report.csv'; }
+        // --- PDF EXPORT FUNCTION ---
+        function exportToPDF(viewId) {
+            // Close the dropdown immediately
+            closeExportDropdown();
+            
+            // Get the container element (e.g., 'view-income')
+            const element = document.getElementById('view-' + viewId);
+            if (!element) return;
 
-            const table = document.getElementById(tableId);
-            if(!table) return;
-            let csv = [];
-            const rows = table.querySelectorAll("tr");
-            for (let i = 0; i < rows.length; i++) {
-                let row = [], cols = rows[i].querySelectorAll("td, th");
-                for (let j = 0; j < cols.length; j++) {
-                    let data = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, "").replace(/"/g, '""'); 
-                    if(j < cols.length - 1) row.push('"' + data + '"');
-                }
-                csv.push(row.join(","));
+            // Handle hidden views: temporarily unhide them for capture
+            let wasHidden = false;
+            if (element.classList.contains('hidden')) {
+                wasHidden = true;
+                element.classList.remove('hidden');
+                // If we are unhiding a view to print it, we should probably hide the CURRENT view 
+                // to prevent layout shifts, but for PDF generation, just unhiding the target is usually enough 
+                // because we pass that specific element to html2pdf.
             }
-            const blob = new Blob([csv.join("\n")], { type: "text/csv" });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.setAttribute("hidden", "");
-            a.setAttribute("href", url);
-            a.setAttribute("download", filename);
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+
+            // Apply specific print styles (hides buttons, removes glass, etc.)
+            element.classList.add('pdf-mode');
+
+            // Show loading spinner
+            const loader = document.getElementById('loading-overlay');
+            loader.style.display = 'flex';
+
+            // PDF Configuration
+            const opt = {
+                margin:       0.25,
+                filename:     `${viewId}_report_${currentYear}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, logging: false },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
+            };
+
+            // Generate PDF
+            html2pdf().from(element).set(opt).save().then(() => {
+                // CLEANUP: Remove print styles
+                element.classList.remove('pdf-mode');
+                
+                // If it was hidden, re-hide it
+                if (wasHidden) {
+                    element.classList.add('hidden');
+                }
+                
+                // Hide loading spinner
+                loader.style.display = 'none';
+            }).catch(err => {
+                console.error("PDF Export failed:", err);
+                element.classList.remove('pdf-mode');
+                if (wasHidden) element.classList.add('hidden');
+                loader.style.display = 'none';
+                alert("Failed to generate PDF. Please try again.");
+            });
         }
 
         // --- INVOICE GENERATOR ---
@@ -1043,7 +1113,7 @@
 
             const newTh = document.createElement('th');
             newTh.className = "px-6 py-4 font-bold text-right group relative border-r border-slate-200/60";
-            newTh.innerHTML = `<div class="flex items-center justify-end gap-2"><span class="editable-header" contenteditable="true">${name}</span><button onclick="removeBusinessColumn(this)" class="opacity-0 group-hover:opacity-100 text-red-300 hover:text-red-500 transition-opacity p-1 rounded hover:bg-red-50">✕</button></div>`;
+            newTh.innerHTML = `<div class="flex items-center justify-end gap-2"><span class="editable-header" contenteditable="true">${name}</span><button onclick="removeBusinessColumn(this)" class="opacity-0 group-hover:opacity-100 text-red-300 hover:text-red-500 transition-opacity p-1 rounded hover:bg-red-50 no-print">✕</button></div>`;
             newTh.querySelector('span').addEventListener('blur', function() {
                 const colIndex = Array.from(headRow.children).indexOf(newTh) - 1;
                 if (colIndex >= 0 && colIndex < businessColumns.length) {
@@ -1180,7 +1250,7 @@
                 <td class="px-4 py-3 border-r border-slate-200/60">${createSelect(statusOptions, record.status)}</td>
                 <td class="px-4 py-3 border-r border-slate-200/60 text-slate-700" contenteditable="true">${record.refId || 'INV-001'}</td>
                 <td class="px-4 py-3 text-slate-700" contenteditable="true">${record.notes || ''}</td>
-                <td class="px-2 py-3 text-center flex gap-1 justify-center">
+                <td class="px-2 py-3 text-center flex gap-1 justify-center no-print">
                     <button onclick="openInvoice(this)" class="text-blue-400 hover:text-blue-600 transition-colors" title="Generate Invoice">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                     </button>
@@ -1316,7 +1386,7 @@
                 <td class="px-4 py-3 border-r border-slate-200/60">${createSelect(expenseStatuses, record.status)}</td>
                 <td class="px-4 py-3 border-r border-slate-200/60">${createSelect(expenseRecurring, record.recurring)}</td>
                 <td class="px-4 py-3 text-slate-700" contenteditable="true">${record.notes || ''}</td>
-                <td class="px-2 py-3 text-center">
+                <td class="px-2 py-3 text-center no-print">
                     <button onclick="deleteExpenseRow(this)" class="text-gray-400 hover:text-red-500 transition-colors">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
@@ -1415,7 +1485,7 @@
                 <td class="px-6 py-4 border-r border-slate-200/60">${createSelect(cashAcctCategories, record.category)}</td>
                 <td class="px-6 py-4 border-r border-slate-200/60 text-slate-700" contenteditable="true">${record.institution || 'Bank Name'}</td>
                 <td class="px-6 py-4 text-right text-slate-700 font-medium" contenteditable="true">${formatMoney(record.balance || 0)}</td>
-                <td class="px-2 py-3 text-center">
+                <td class="px-2 py-3 text-center no-print">
                     <button onclick="deleteCashAccount(this)" class="text-gray-400 hover:text-red-500 transition-colors">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
@@ -1564,4 +1634,3 @@
     </script>
 </body>
 </html>
-
