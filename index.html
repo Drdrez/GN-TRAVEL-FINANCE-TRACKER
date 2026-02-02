@@ -154,26 +154,22 @@
         }
 
         /* --- ADDED: PDF EXPORT STYLES --- */
-        /* These styles trigger only when the 'pdf-mode' class is added by JS during export */
         .pdf-mode {
             background: white !important;
             width: 100% !important;
             max-width: none !important;
         }
-        /* Remove glass effect for crisp PDF text */
         .pdf-mode .glass {
             background: #ffffff !important;
             backdrop-filter: none !important;
             border: 1px solid #e2e8f0 !important;
             box-shadow: none !important;
         }
-        /* Hide buttons and interactive elements */
         .pdf-mode button, 
         .pdf-mode .no-print,
         .pdf-mode .mobile-menu-btn {
             display: none !important;
         }
-        /* Force scrollable tables to expand fully */
         .pdf-mode .overflow-x-auto, 
         .pdf-mode .overflow-y-auto, 
         .pdf-mode .custom-scrollbar {
@@ -181,7 +177,6 @@
             height: auto !important;
             max-height: none !important;
         }
-        /* Remove inputs styling to look like text */
         .pdf-mode input, 
         .pdf-mode select { 
             border: none !important; 
@@ -435,16 +430,16 @@
                     <table class="w-full text-sm text-left table-cell-padding min-w-[700px]" id="table-income-tracker">
                         <thead class="text-xs text-slate-700 uppercase bg-white/40 sticky top-0 z-10 backdrop-blur-md">
                             <tr>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60">Date</th>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60">Client Name</th>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60">Service Type</th>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60">Pricing Model</th>
-                                <th class="px-4 py-3 font-bold text-right border-r border-slate-200/60">Gross</th>
-                                <th class="px-4 py-3 font-bold text-right border-r border-slate-200/60">Net</th>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60">Mode</th>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60">Status</th>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60">Ref ID</th>
-                                <th class="px-4 py-3 font-bold">Notes</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[130px]">Date</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[200px]">Client Name</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[160px]">Service Type</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[140px]">Pricing Model</th>
+                                <th class="px-4 py-3 font-bold text-right border-r border-slate-200/60 min-w-[100px]">Gross</th>
+                                <th class="px-4 py-3 font-bold text-right border-r border-slate-200/60 min-w-[100px]">Net</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[120px]">Mode</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[100px]">Status</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[100px]">Ref ID</th>
+                                <th class="px-4 py-3 font-bold min-w-[250px]">Notes</th>
                                 <th class="px-2 py-3 font-bold no-print">Action</th>
                             </tr>
                         </thead>
@@ -467,16 +462,16 @@
                     <table class="w-full text-sm text-left table-cell-padding min-w-[700px]" id="table-expenses">
                         <thead class="text-xs text-slate-700 uppercase bg-white/40 sticky top-0 z-10 backdrop-blur-md">
                             <tr>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60">Date</th>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60">Vendor</th>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60">Category</th>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60">Type</th>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60">Service</th>
-                                <th class="px-4 py-3 font-bold text-right border-r border-slate-200/60">Amount</th>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60">Payment</th>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60">Status</th>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60">Recurring</th>
-                                <th class="px-4 py-3 font-bold">Notes</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[130px]">Date</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[200px]">Vendor</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[160px]">Category</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[120px]">Type</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[150px]">Service</th>
+                                <th class="px-4 py-3 font-bold text-right border-r border-slate-200/60 min-w-[120px]">Amount</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[120px]">Payment</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[100px]">Status</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[100px]">Recurring</th>
+                                <th class="px-4 py-3 font-bold min-w-[250px]">Notes</th>
                                 <th class="px-2 py-3 font-bold no-print"></th>
                             </tr>
                         </thead>
@@ -499,11 +494,11 @@
                     <table class="w-full text-sm text-left table-cell-padding min-w-[500px]">
                         <thead class="text-xs text-slate-700 uppercase bg-white/40 sticky top-0 z-10 backdrop-blur-md">
                             <tr>
-                                <th class="px-6 py-3 font-bold border-r border-slate-200/60">Month</th>
-                                <th class="px-6 py-3 font-bold border-r border-slate-200/60">Account Name</th>
-                                <th class="px-6 py-3 font-bold border-r border-slate-200/60">Account Category</th>
-                                <th class="px-6 py-3 font-bold border-r border-slate-200/60">Institution / Platform</th>
-                                <th class="px-6 py-3 font-bold text-right">Balance</th>
+                                <th class="px-6 py-3 font-bold border-r border-slate-200/60 min-w-[140px]">Month</th>
+                                <th class="px-6 py-3 font-bold border-r border-slate-200/60 min-w-[180px]">Account Name</th>
+                                <th class="px-6 py-3 font-bold border-r border-slate-200/60 min-w-[180px]">Account Category</th>
+                                <th class="px-6 py-3 font-bold border-r border-slate-200/60 min-w-[200px]">Institution / Platform</th>
+                                <th class="px-6 py-3 font-bold text-right min-w-[120px]">Balance</th>
                                 <th class="px-2 py-3 no-print"></th>
                             </tr>
                         </thead>
