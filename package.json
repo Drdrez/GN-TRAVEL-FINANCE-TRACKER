@@ -1,6 +1,7 @@
 {
   "name": "gn-travel-finance-tracker",
   "version": "1.0.0",
+  "type": "module",
   "description": "Finance Tracker for GN Travel Marketing LLC",
   "main": "index.html",
   "scripts": {
@@ -14,3 +15,4 @@
     "node": ">=18.0.0"
   }
 }
+
