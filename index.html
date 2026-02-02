@@ -72,9 +72,20 @@
             outline: none;
             border: 1px dashed transparent;
             width: 100%;
-            padding: 4px 8px;
+            /* Modified Padding: Added right padding (2.5rem) to prevent arrow overlap */
+            padding: 4px 2.5rem 4px 8px; 
             border-radius: 6px;
+            /* Added text-overflow to handle extremely long text gracefully */
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
         }
+        
+        /* Reset padding for non-select editable inputs (like date or text) */
+        td[contenteditable="true"], th[contenteditable="true"], input.editable-input {
+             padding: 4px 8px;
+        }
+
         td[contenteditable="true"]:hover, th[contenteditable="true"]:hover {
             background-color: rgba(255,255,255,0.8);
             border: 1px dashed #cbd5e1;
@@ -153,7 +164,7 @@
             body * { visibility: hidden; }
         }
 
-        /* --- ADDED: PDF EXPORT STYLES --- */
+        /* --- PDF EXPORT STYLES --- */
         .pdf-mode {
             background: white !important;
             width: 100% !important;
@@ -432,12 +443,12 @@
                             <tr>
                                 <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[130px]">Date</th>
                                 <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[200px]">Client Name</th>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[160px]">Service Type</th>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[140px]">Pricing Model</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[190px]">Service Type</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[170px]">Pricing Model</th>
                                 <th class="px-4 py-3 font-bold text-right border-r border-slate-200/60 min-w-[100px]">Gross</th>
                                 <th class="px-4 py-3 font-bold text-right border-r border-slate-200/60 min-w-[100px]">Net</th>
                                 <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[120px]">Mode</th>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[100px]">Status</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[130px]">Status</th>
                                 <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[100px]">Ref ID</th>
                                 <th class="px-4 py-3 font-bold min-w-[250px]">Notes</th>
                                 <th class="px-2 py-3 font-bold no-print">Action</th>
@@ -464,13 +475,13 @@
                             <tr>
                                 <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[130px]">Date</th>
                                 <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[200px]">Vendor</th>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[160px]">Category</th>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[120px]">Type</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[200px]">Category</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[150px]">Type</th>
                                 <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[150px]">Service</th>
                                 <th class="px-4 py-3 font-bold text-right border-r border-slate-200/60 min-w-[120px]">Amount</th>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[120px]">Payment</th>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[100px]">Status</th>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[100px]">Recurring</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[150px]">Payment</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[130px]">Status</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[120px]">Recurring</th>
                                 <th class="px-4 py-3 font-bold min-w-[250px]">Notes</th>
                                 <th class="px-2 py-3 font-bold no-print"></th>
                             </tr>
@@ -495,8 +506,8 @@
                         <thead class="text-xs text-slate-700 uppercase bg-white/40 sticky top-0 z-10 backdrop-blur-md">
                             <tr>
                                 <th class="px-6 py-3 font-bold border-r border-slate-200/60 min-w-[140px]">Month</th>
-                                <th class="px-6 py-3 font-bold border-r border-slate-200/60 min-w-[180px]">Account Name</th>
-                                <th class="px-6 py-3 font-bold border-r border-slate-200/60 min-w-[180px]">Account Category</th>
+                                <th class="px-6 py-3 font-bold border-r border-slate-200/60 min-w-[220px]">Account Name</th>
+                                <th class="px-6 py-3 font-bold border-r border-slate-200/60 min-w-[220px]">Account Category</th>
                                 <th class="px-6 py-3 font-bold border-r border-slate-200/60 min-w-[200px]">Institution / Platform</th>
                                 <th class="px-6 py-3 font-bold text-right min-w-[120px]">Balance</th>
                                 <th class="px-2 py-3 no-print"></th>
