@@ -61,53 +61,67 @@
 
         .kpi-card { border-top: 4px solid var(--primary-blue); }
 
-        /* Table Styles */
-        th, td { white-space: nowrap; }
+        /* --- COMPACT TABLE STYLES (EXCEL-LIKE) --- */
+        th, td { 
+            white-space: nowrap; 
+            padding: 4px 8px; /* Reduced padding for compact look */
+            font-size: 11px;  /* Smaller font size */
+            border-bottom: 1px solid #e2e8f0;
+        }
         
+        thead th {
+            padding: 6px 8px;
+            background-color: rgba(241, 245, 249, 0.8);
+            color: #475569;
+            font-weight: 700;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
         /* --- EDITABLE INPUTS & DROPDOWNS (OPTIMIZED) --- */
         td[contenteditable="true"], th[contenteditable="true"], select.editable-input, input.editable-input {
             background-color: transparent;
             cursor: text;
             transition: all 0.2s;
             outline: none;
-            border: 1px dashed transparent;
+            border: 1px solid transparent; /* Subtle border for alignment */
             width: 100%;
-            border-radius: 6px;
-            /* SMALLER FONT FOR BETTER FIT */
-            font-size: 0.75rem !important; /* 12px */
+            border-radius: 2px; /* Sharper corners for Excel look */
+            font-size: 11px !important; 
             font-weight: 500;
+            line-height: 1.2;
+            min-height: 20px;
         }
 
         /* Specific Dropdown Styling */
         select.editable-input {
-            /* Reduced right padding to 1.75rem (approx 28px) - enough for arrow, but gives more space for text */
-            padding: 6px 1.75rem 6px 8px; 
+            padding: 2px 1.25rem 2px 4px; 
             text-overflow: ellipsis;
             white-space: nowrap;
             overflow: hidden;
-            line-height: 1.25;
-            appearance: none; /* Reset native appearance to ensure consistent spacing */
+            appearance: none;
             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-            background-position: right 0.2rem center;
+            background-position: right 0.1rem center;
             background-repeat: no-repeat;
-            background-size: 1.25em 1.25em;
+            background-size: 1em 1em;
         }
         
         /* Text Input Styling */
         td[contenteditable="true"], th[contenteditable="true"], input.editable-input {
-             padding: 6px 8px;
+             padding: 2px 4px;
         }
 
         td[contenteditable="true"]:hover, th[contenteditable="true"]:hover, 
         select.editable-input:hover, input.editable-input:hover {
             background-color: rgba(255,255,255,0.8);
-            border: 1px dashed #cbd5e1;
+            border: 1px solid #cbd5e1;
         }
         td[contenteditable="true"]:focus, th[contenteditable="true"]:focus,
         select.editable-input:focus, input.editable-input:focus {
             background-color: white;
             border: 1px solid var(--primary-blue);
-            box-shadow: 0 0 0 2px rgba(52, 176, 229, 0.1);
+            box-shadow: 0 0 0 1px rgba(52, 176, 229, 0.2);
         }
         
         .editable-header {
@@ -119,6 +133,41 @@
         }
 
         .hidden { display: none !important; }
+
+        /* Pagination Controls */
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            border-top: 1px solid #e2e8f0;
+            background: rgba(255,255,255,0.4);
+            font-size: 11px;
+        }
+        .pagination-btn {
+            padding: 2px 8px;
+            border-radius: 4px;
+            border: 1px solid #cbd5e1;
+            background: white;
+            color: #334155;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .pagination-btn:hover:not(:disabled) {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+        }
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .rows-per-page {
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            padding: 2px;
+            font-size: 11px;
+            background: white;
+        }
 
         /* Invoice Modal */
         #invoice-modal {
@@ -192,7 +241,8 @@
         }
         .pdf-mode button, 
         .pdf-mode .no-print,
-        .pdf-mode .mobile-menu-btn {
+        .pdf-mode .mobile-menu-btn,
+        .pdf-mode .pagination-container { /* Hide pagination in PDF */
             display: none !important;
         }
         .pdf-mode .overflow-x-auto, 
@@ -283,18 +333,10 @@
                         <span>Export PDF</span>
                     </button>
                     <div id="export-dropdown" class="absolute right-0 mt-2 w-56 glass rounded-lg shadow-xl border border-white/60 z-50 hidden">
-                        <a href="#" onclick="exportToPDF('dashboard'); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-white/50 first:rounded-t-lg">
-                             <span class="font-bold text-[#34b0e5]">●</span> Export Dashboard
-                        </a>
-                        <a href="#" onclick="exportToPDF('income'); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-white/50">
-                             <span class="font-bold text-[#34b0e5]">●</span> Export Income
-                        </a>
-                        <a href="#" onclick="exportToPDF('expenses'); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-white/50">
-                             <span class="font-bold text-[#34b0e5]">●</span> Export Expenses
-                        </a>
-                        <a href="#" onclick="exportToPDF('cash'); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-white/50 last:rounded-b-lg">
-                             <span class="font-bold text-[#34b0e5]">●</span> Export Cash Flow
-                        </a>
+                        <a href="#" onclick="exportToPDF('dashboard'); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-white/50 first:rounded-t-lg"><span class="font-bold text-[#34b0e5]">●</span> Export Dashboard</a>
+                        <a href="#" onclick="exportToPDF('income'); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-white/50"><span class="font-bold text-[#34b0e5]">●</span> Export Income</a>
+                        <a href="#" onclick="exportToPDF('expenses'); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-white/50"><span class="font-bold text-[#34b0e5]">●</span> Export Expenses</a>
+                        <a href="#" onclick="exportToPDF('cash'); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-white/50 last:rounded-b-lg"><span class="font-bold text-[#34b0e5]">●</span> Export Cash Flow</a>
                     </div>
                 </div>
 
@@ -386,14 +428,8 @@
                         <h3 class="text-base sm:text-lg font-bold text-[#34b0e5]">Business Income</h3>
                     </div>
                     <div class="flex gap-2 flex-shrink-0 no-print">
-                        <button id="restore-btn" onclick="restoreColumn()" disabled class="glass px-3 py-1.5 rounded-md text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-green-50 hover:text-green-600 flex items-center gap-2">
-                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
-                             Restore
-                        </button>
-                        <button onclick="addBusinessColumn()" class="glass text-[#34b0e5] px-3 py-1.5 rounded-md text-sm font-semibold hover:bg-blue-50 transition-colors flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                            Add Business
-                        </button>
+                        <button id="restore-btn" onclick="restoreColumn()" disabled class="glass px-3 py-1.5 rounded-md text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-green-50 hover:text-green-600 flex items-center gap-2">Restore</button>
+                        <button onclick="addBusinessColumn()" class="glass text-[#34b0e5] px-3 py-1.5 rounded-md text-sm font-semibold hover:bg-blue-50 transition-colors flex items-center gap-2">Add Business</button>
                     </div>
                 </div>
                 <div class="overflow-x-auto custom-scrollbar">
@@ -422,12 +458,10 @@
                     <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Total Gross Income</h3>
                     <div class="text-3xl font-extrabold text-[#34b0e5]" id="tracker-total-gross">₱0.00</div>
                 </div>
-                
                 <div class="glass p-6 rounded-2xl shadow-sm flex flex-col justify-center items-center text-center">
                     <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Total Net Income</h3>
                     <div class="text-3xl font-extrabold text-green-500" id="tracker-total-net">₱0.00</div>
                 </div>
-
                 <div class="glass p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center relative">
                     <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2 absolute top-4 left-4">Income by Service</h3>
                     <div class="h-40 w-full flex justify-center mt-6">
@@ -443,7 +477,7 @@
                 </div>
             </div>
 
-            <div class="glass rounded-2xl shadow-sm mb-8 overflow-hidden">
+            <div class="glass rounded-2xl shadow-sm mb-8 overflow-hidden flex flex-col">
                 <div class="p-6 border-b border-slate-200/60 flex justify-between items-center">
                     <h3 class="text-lg font-bold text-[#34b0e5]">Income Tracker Details</h3>
                     <button onclick="addIncomeRow()" class="glass text-[#34b0e5] px-3 py-1.5 rounded-md text-sm font-semibold hover:bg-blue-50 transition-colors flex items-center gap-1 no-print">
@@ -455,21 +489,38 @@
                     <table class="w-full text-sm text-left table-cell-padding min-w-[700px]" id="table-income-tracker">
                         <thead class="text-xs text-slate-700 uppercase bg-white/40 sticky top-0 z-10 backdrop-blur-md">
                             <tr>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[130px]">Date</th>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[200px]">Client Name</th>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[240px]">Service Type</th>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[170px]">Pricing Model</th>
-                                <th class="px-4 py-3 font-bold text-right border-r border-slate-200/60 min-w-[100px]">Gross</th>
-                                <th class="px-4 py-3 font-bold text-right border-r border-slate-200/60 min-w-[100px]">Net</th>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[120px]">Mode</th>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[130px]">Status</th>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[100px]">Ref ID</th>
-                                <th class="px-4 py-3 font-bold min-w-[250px]">Notes</th>
-                                <th class="px-2 py-3 font-bold no-print">Action</th>
+                                <th class="px-4 py-2 font-bold border-r border-slate-200/60 min-w-[130px]">Date</th>
+                                <th class="px-4 py-2 font-bold border-r border-slate-200/60 min-w-[200px]">Client Name</th>
+                                <th class="px-4 py-2 font-bold border-r border-slate-200/60 min-w-[240px]">Service Type</th>
+                                <th class="px-4 py-2 font-bold border-r border-slate-200/60 min-w-[170px]">Pricing Model</th>
+                                <th class="px-4 py-2 font-bold text-right border-r border-slate-200/60 min-w-[100px]">Gross</th>
+                                <th class="px-4 py-2 font-bold text-right border-r border-slate-200/60 min-w-[100px]">Net</th>
+                                <th class="px-4 py-2 font-bold border-r border-slate-200/60 min-w-[120px]">Mode</th>
+                                <th class="px-4 py-2 font-bold border-r border-slate-200/60 min-w-[130px]">Status</th>
+                                <th class="px-4 py-2 font-bold border-r border-slate-200/60 min-w-[100px]">Ref ID</th>
+                                <th class="px-4 py-2 font-bold min-w-[250px]">Notes</th>
+                                <th class="px-2 py-2 font-bold no-print">Action</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-200/60 font-medium" id="tracker-body"></tbody>
+                        <tbody class="divide-y divide-slate-200/60 font-medium text-[11px]" id="tracker-body"></tbody>
                     </table>
+                </div>
+                <div class="pagination-container" id="income-pagination">
+                    <div class="flex items-center gap-2">
+                        <span>Show:</span>
+                        <select class="rows-per-page" onchange="changeLimit('income', this.value)">
+                            <option value="10">10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        <span>rows</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button class="pagination-btn" onclick="prevPage('income')">Prev</button>
+                        <span id="income-page-num" class="font-bold">1</span>
+                        <button class="pagination-btn" onclick="nextPage('income')">Next</button>
+                    </div>
                 </div>
             </div>
         </section>
@@ -487,21 +538,38 @@
                     <table class="w-full text-sm text-left table-cell-padding min-w-[700px]" id="table-expenses">
                         <thead class="text-xs text-slate-700 uppercase bg-white/40 sticky top-0 z-10 backdrop-blur-md">
                             <tr>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[130px]">Date</th>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[220px]">Vendor</th>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[240px]">Category</th>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[150px]">Type</th>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[150px]">Service</th>
-                                <th class="px-4 py-3 font-bold text-right border-r border-slate-200/60 min-w-[120px]">Amount</th>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[150px]">Payment</th>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[130px]">Status</th>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60 min-w-[120px]">Recurring</th>
-                                <th class="px-4 py-3 font-bold min-w-[250px]">Notes</th>
-                                <th class="px-2 py-3 font-bold no-print"></th>
+                                <th class="px-4 py-2 font-bold border-r border-slate-200/60 min-w-[130px]">Date</th>
+                                <th class="px-4 py-2 font-bold border-r border-slate-200/60 min-w-[220px]">Vendor</th>
+                                <th class="px-4 py-2 font-bold border-r border-slate-200/60 min-w-[240px]">Category</th>
+                                <th class="px-4 py-2 font-bold border-r border-slate-200/60 min-w-[150px]">Type</th>
+                                <th class="px-4 py-2 font-bold border-r border-slate-200/60 min-w-[150px]">Service</th>
+                                <th class="px-4 py-2 font-bold text-right border-r border-slate-200/60 min-w-[120px]">Amount</th>
+                                <th class="px-4 py-2 font-bold border-r border-slate-200/60 min-w-[150px]">Payment</th>
+                                <th class="px-4 py-2 font-bold border-r border-slate-200/60 min-w-[130px]">Status</th>
+                                <th class="px-4 py-2 font-bold border-r border-slate-200/60 min-w-[120px]">Recurring</th>
+                                <th class="px-4 py-2 font-bold min-w-[250px]">Notes</th>
+                                <th class="px-2 py-2 font-bold no-print"></th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-200/60 font-medium" id="expenses-body"></tbody>
+                        <tbody class="divide-y divide-slate-200/60 font-medium text-[11px]" id="expenses-body"></tbody>
                     </table>
+                </div>
+                <div class="pagination-container" id="expenses-pagination">
+                    <div class="flex items-center gap-2">
+                        <span>Show:</span>
+                        <select class="rows-per-page" onchange="changeLimit('expenses', this.value)">
+                            <option value="10">10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        <span>rows</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button class="pagination-btn" onclick="prevPage('expenses')">Prev</button>
+                        <span id="expenses-page-num" class="font-bold">1</span>
+                        <button class="pagination-btn" onclick="nextPage('expenses')">Next</button>
+                    </div>
                 </div>
             </div>
         </section>
@@ -519,16 +587,33 @@
                     <table class="w-full text-sm text-left table-cell-padding min-w-[500px]">
                         <thead class="text-xs text-slate-700 uppercase bg-white/40 sticky top-0 z-10 backdrop-blur-md">
                             <tr>
-                                <th class="px-6 py-3 font-bold border-r border-slate-200/60 min-w-[140px]">Month</th>
-                                <th class="px-6 py-3 font-bold border-r border-slate-200/60 min-w-[250px]">Account Name</th>
-                                <th class="px-6 py-3 font-bold border-r border-slate-200/60 min-w-[250px]">Account Category</th>
-                                <th class="px-6 py-3 font-bold border-r border-slate-200/60 min-w-[250px]">Institution / Platform</th>
-                                <th class="px-6 py-3 font-bold text-right min-w-[120px]">Balance</th>
-                                <th class="px-2 py-3 no-print"></th>
+                                <th class="px-6 py-2 font-bold border-r border-slate-200/60 min-w-[140px]">Month</th>
+                                <th class="px-6 py-2 font-bold border-r border-slate-200/60 min-w-[250px]">Account Name</th>
+                                <th class="px-6 py-2 font-bold border-r border-slate-200/60 min-w-[250px]">Account Category</th>
+                                <th class="px-6 py-2 font-bold border-r border-slate-200/60 min-w-[250px]">Institution / Platform</th>
+                                <th class="px-6 py-2 font-bold text-right min-w-[120px]">Balance</th>
+                                <th class="px-2 py-2 no-print"></th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-200/60 font-medium" id="cash-balances-body"></tbody>
+                        <tbody class="divide-y divide-slate-200/60 font-medium text-[11px]" id="cash-balances-body"></tbody>
                     </table>
+                </div>
+                <div class="pagination-container" id="cash-pagination">
+                    <div class="flex items-center gap-2">
+                        <span>Show:</span>
+                        <select class="rows-per-page" onchange="changeLimit('cash', this.value)">
+                            <option value="10">10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        <span>rows</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button class="pagination-btn" onclick="prevPage('cash')">Prev</button>
+                        <span id="cash-page-num" class="font-bold">1</span>
+                        <button class="pagination-btn" onclick="nextPage('cash')">Next</button>
+                    </div>
                 </div>
             </div>
 
@@ -541,13 +626,13 @@
                     <table class="w-full text-sm text-left table-cell-padding min-w-[320px]">
                         <thead class="text-xs text-slate-700 uppercase bg-white/40 sticky top-0 z-10 backdrop-blur-md">
                             <tr>
-                                <th class="px-6 py-3 font-bold border-r border-slate-200/60">Month</th>
-                                <th class="px-6 py-3 font-bold text-right border-r border-slate-200/60">Starting Cash</th>
-                                <th class="px-6 py-3 font-bold text-right border-r border-slate-200/60">Ending Cash</th>
-                                <th class="px-6 py-3 font-bold text-right">Net Cash Change</th>
+                                <th class="px-6 py-2 font-bold border-r border-slate-200/60">Month</th>
+                                <th class="px-6 py-2 font-bold text-right border-r border-slate-200/60">Starting Cash</th>
+                                <th class="px-6 py-2 font-bold text-right border-r border-slate-200/60">Ending Cash</th>
+                                <th class="px-6 py-2 font-bold text-right">Net Cash Change</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-200/60 font-medium" id="cash-movement-body"></tbody>
+                        <tbody class="divide-y divide-slate-200/60 font-medium text-[11px]" id="cash-movement-body"></tbody>
                     </table>
                 </div>
             </div>
@@ -574,12 +659,10 @@
                         <p class="text-sm text-gray-500">Date: <span id="inv-date">...</span></p>
                     </div>
                 </div>
-
                 <div class="mb-8 p-4 bg-gray-50 rounded border border-gray-100">
                     <p class="text-xs font-bold text-gray-500 uppercase mb-1">Bill To:</p>
                     <h3 class="font-bold text-lg text-gray-800" id="inv-client">Client Name</h3>
                 </div>
-
                 <table class="w-full mb-8">
                     <thead class="border-b-2 border-gray-200">
                         <tr>
@@ -594,7 +677,6 @@
                         </tr>
                     </tbody>
                 </table>
-
                 <div class="flex justify-end">
                     <div class="w-1/2 border-t pt-4">
                         <div class="flex justify-between items-center">
@@ -603,7 +685,6 @@
                         </div>
                     </div>
                 </div>
-                
                 <div class="mt-12 text-center text-xs text-gray-400">
                     <p>Thank you for your business!</p>
                 </div>
@@ -624,7 +705,54 @@
         const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
         const API_BASE = '/api';
 
-        // --- MOBILE SIDEBAR ---
+        // --- GLOBAL STATE ---
+        let currentCurrency = 'PHP';
+        let exchangeRate = 58; 
+        let currentYear = new Date().getFullYear();
+        let incomeRecords = [];
+        let expenseRecords = [];
+        let cashAccounts = [];
+        let cashMovement = {};
+        let businessColumns = ['Service A', 'Service B'];
+        let businessData = {};
+        let dashboardExpenses = {};
+        let deletedColumns = [];
+        let saveTimeout = null;
+        const SAVE_DELAY = 1000;
+
+        // --- PAGINATION STATE ---
+        let paginationState = {
+            income: { page: 1, limit: 10 },
+            expenses: { page: 1, limit: 10 },
+            cash: { page: 1, limit: 10 }
+        };
+
+        // --- PAGINATION LOGIC ---
+        function changeLimit(table, newLimit) {
+            paginationState[table].limit = parseInt(newLimit);
+            paginationState[table].page = 1; // Reset to page 1
+            refreshTable(table);
+        }
+
+        function prevPage(table) {
+            if (paginationState[table].page > 1) {
+                paginationState[table].page--;
+                refreshTable(table);
+            }
+        }
+
+        function nextPage(table) {
+            paginationState[table].page++;
+            refreshTable(table); // Rendering logic handles bounds checking
+        }
+
+        function refreshTable(table) {
+            if (table === 'income') renderIncomeTable();
+            if (table === 'expenses') renderExpenseTable();
+            if (table === 'cash') renderCashAccountsTable();
+        }
+
+        // --- MOBILE SIDEBAR & UI FUNCTIONS ---
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebar-overlay');
@@ -641,8 +769,6 @@
             overlay.classList.remove('sidebar-open');
             overlay.setAttribute('aria-hidden', 'true');
         }
-
-        // --- EXPORT DROPDOWN ---
         function toggleExportDropdown(e) {
             e.stopPropagation();
             const dd = document.getElementById('export-dropdown');
@@ -659,141 +785,14 @@
                 closeExportDropdown();
             }
         });
-        
-        // --- LIVE CURRENCY ---
-        let currentCurrency = 'PHP';
-        let exchangeRate = 58; // Fallback
-        let currentYear = new Date().getFullYear();
 
-        // --- DATA STORES ---
-        let incomeRecords = [];
-        let expenseRecords = [];
-        let cashAccounts = [];
-        let cashMovement = {};
-        let businessColumns = ['Service A', 'Service B'];
-        let businessData = {};
-        let dashboardExpenses = {};
-        let deletedColumns = [];
-
-        // --- SAVE DEBOUNCE ---
-        let saveTimeout = null;
-        const SAVE_DELAY = 1000;
-
-        // --- API FUNCTIONS ---
-        async function apiGet(endpoint) {
-            try {
-                const response = await fetch(`${API_BASE}/${endpoint}`);
-                const result = await response.json();
-                if (result.success) return result.data;
-                throw new Error(result.error);
-            } catch (error) {
-                console.error(`API GET ${endpoint} error:`, error);
-                return null;
-            }
-        }
-
-        async function apiPost(endpoint, data) {
-            try {
-                const response = await fetch(`${API_BASE}/${endpoint}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                const result = await response.json();
-                if (result.success) {
-                    showSaveIndicator();
-                    return result.data || result;
-                }
-                throw new Error(result.error);
-            } catch (error) {
-                console.error(`API POST ${endpoint} error:`, error);
-                showSaveIndicator(true);
-                return null;
-            }
-        }
-
-        async function apiPut(endpoint, data) {
-            try {
-                const response = await fetch(`${API_BASE}/${endpoint}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                const result = await response.json();
-                if (result.success) {
-                    showSaveIndicator();
-                    return result.data || result;
-                }
-                throw new Error(result.error);
-            } catch (error) {
-                console.error(`API PUT ${endpoint} error:`, error);
-                showSaveIndicator(true);
-                return null;
-            }
-        }
-
-        async function apiDelete(endpoint, id) {
-            try {
-                const response = await fetch(`${API_BASE}/${endpoint}?id=${id}`, {
-                    method: 'DELETE'
-                });
-                const result = await response.json();
-                if (result.success) {
-                    showSaveIndicator();
-                    return true;
-                }
-                throw new Error(result.error);
-            } catch (error) {
-                console.error(`API DELETE ${endpoint} error:`, error);
-                showSaveIndicator(true);
-                return false;
-            }
-        }
-
-        function showSaveIndicator(isError = false) {
-            const indicator = document.getElementById('save-indicator');
-            indicator.classList.remove('error');
-            if (isError) {
-                indicator.classList.add('error');
-                indicator.querySelector('span').textContent = 'Save failed';
-            } else {
-                indicator.querySelector('span').textContent = 'Saved';
-            }
-            indicator.classList.add('show');
-            setTimeout(() => indicator.classList.remove('show'), 2000);
-        }
-
-        // --- LIVE CURRENCY FETCHER ---
-        async function fetchLiveExchangeRate() {
-            try {
-                const response = await fetch('https://open.er-api.com/v6/latest/USD');
-                const data = await response.json();
-                if (data && data.rates && data.rates.PHP) {
-                    exchangeRate = data.rates.PHP;
-                    console.log('Live Exchange Rate Fetched:', exchangeRate);
-                    const usdBtn = document.getElementById('btn-usd');
-                    if (usdBtn) usdBtn.setAttribute('title', `Current Rate: ₱${exchangeRate.toFixed(2)} = $1 USD`);
-                    if (currentCurrency === 'USD') {
-                        calculateDashboard();
-                        updateIncomeTracker();
-                        renderIncomeTable();
-                        renderExpenseTable();
-                        calculateCashMovement();
-                    }
-                }
-            } catch (error) {
-                console.warn('Failed to fetch live rate, using default.', error);
-            }
-        }
-
-        // --- GLOBAL UTILS ---
+        // --- UTILS ---
         function parseMoney(str) {
             if (!str) return 0;
-            const clean = str.replace(/[₱$₱,\s]/g, '');
+            const clean = str.toString().replace(/[₱$₱,\s]/g, '');
             const num = parseFloat(clean);
             return isNaN(num) ? 0 : num;
         }
-
         function formatMoney(num) {
             let val = num;
             let symbol = '₱';
@@ -803,7 +802,6 @@
             }
             return symbol + val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
-
         function toggleCurrency(curr) {
             if(curr === currentCurrency) return;
             currentCurrency = curr;
@@ -820,7 +818,6 @@
             renderExpenseTable();
             calculateCashMovement();
         }
-
         function changeYear(year) {
             currentYear = parseInt(year);
             document.getElementById('year-selector').value = year;
@@ -830,35 +827,102 @@
             updateIncomeTracker();
             calculateDashboard(); 
         }
-
         function scheduleSave(saveFunction) {
             if (saveTimeout) clearTimeout(saveTimeout);
             saveTimeout = setTimeout(saveFunction, SAVE_DELAY);
         }
 
-        // --- DATA PERSISTENCE ---
+        // --- API & DATA LOADING ---
+        async function apiGet(endpoint) {
+            try {
+                const response = await fetch(`${API_BASE}/${endpoint}`);
+                const result = await response.json();
+                if (result.success) return result.data;
+                throw new Error(result.error);
+            } catch (error) {
+                console.error(`API GET ${endpoint} error:`, error);
+                return null;
+            }
+        }
+        async function apiPost(endpoint, data) {
+            try {
+                const response = await fetch(`${API_BASE}/${endpoint}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                if (result.success) { showSaveIndicator(); return result.data || result; }
+                throw new Error(result.error);
+            } catch (error) { console.error(`API POST ${endpoint} error:`, error); showSaveIndicator(true); return null; }
+        }
+        async function apiPut(endpoint, data) {
+            try {
+                const response = await fetch(`${API_BASE}/${endpoint}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                if (result.success) { showSaveIndicator(); return result.data || result; }
+                throw new Error(result.error);
+            } catch (error) { console.error(`API PUT ${endpoint} error:`, error); showSaveIndicator(true); return null; }
+        }
+        async function apiDelete(endpoint, id) {
+            try {
+                const response = await fetch(`${API_BASE}/${endpoint}?id=${id}`, { method: 'DELETE' });
+                const result = await response.json();
+                if (result.success) { showSaveIndicator(); return true; }
+                throw new Error(result.error);
+            } catch (error) { console.error(`API DELETE ${endpoint} error:`, error); showSaveIndicator(true); return false; }
+        }
+        function showSaveIndicator(isError = false) {
+            const indicator = document.getElementById('save-indicator');
+            indicator.classList.remove('error');
+            if (isError) {
+                indicator.classList.add('error');
+                indicator.querySelector('span').textContent = 'Save failed';
+            } else {
+                indicator.querySelector('span').textContent = 'Saved';
+            }
+            indicator.classList.add('show');
+            setTimeout(() => indicator.classList.remove('show'), 2000);
+        }
+        async function fetchLiveExchangeRate() {
+            try {
+                const response = await fetch('https://open.er-api.com/v6/latest/USD');
+                const data = await response.json();
+                if (data && data.rates && data.rates.PHP) {
+                    exchangeRate = data.rates.PHP;
+                    const usdBtn = document.getElementById('btn-usd');
+                    if (usdBtn) usdBtn.setAttribute('title', `Current Rate: ₱${exchangeRate.toFixed(2)} = $1 USD`);
+                    if (currentCurrency === 'USD') {
+                        calculateDashboard();
+                        updateIncomeTracker();
+                        renderIncomeTable();
+                        renderExpenseTable();
+                        calculateCashMovement();
+                    }
+                }
+            } catch (error) { console.warn('Failed to fetch live rate, using default.', error); }
+        }
         async function loadAllData() {
             document.getElementById('loading-overlay').style.display = 'flex';
             try {
                 const incomeData = await apiGet('income');
                 if (incomeData) incomeRecords = incomeData;
-
                 const expenseData = await apiGet('expenses');
                 if (expenseData) expenseRecords = expenseData;
-
                 const cashAccountsData = await apiGet('cash?type=accounts');
                 if (cashAccountsData) cashAccounts = cashAccountsData;
-
                 const cashMovementData = await apiGet('cash?type=movement');
                 if (cashMovementData) cashMovement = cashMovementData;
-
                 const businessDataResult = await apiGet('business');
                 if (businessDataResult) {
                     businessColumns = businessDataResult.columns || ['Service A', 'Service B'];
                     businessData = businessDataResult.businessData || {};
                     dashboardExpenses = businessDataResult.dashboardExpenses || {};
                 }
-
                 initDashboard();
                 renderIncomeTable();
                 renderExpenseTable();
@@ -866,157 +930,63 @@
                 initCashMovement();
                 calculateDashboard();
                 resizeChartsForView('dashboard');
-            } catch (error) {
-                console.error('Error loading data:', error);
-            } finally {
-                document.getElementById('loading-overlay').style.display = 'none';
-            }
+            } catch (error) { console.error('Error loading data:', error); } 
+            finally { document.getElementById('loading-overlay').style.display = 'none'; }
         }
-
         async function saveIncomeRecords() { await apiPut('income', incomeRecords); }
         async function saveExpenseRecords() { await apiPut('expenses', expenseRecords); }
         async function saveCashAccounts() { await apiPut('cash?type=accounts', cashAccounts); }
         async function saveCashMovement() { await apiPost('cash?type=movement', cashMovement); }
-        async function saveBusinessData() {
-            await apiPost('business', { columns: businessColumns, businessData: businessData, dashboardExpenses: dashboardExpenses });
-        }
+        async function saveBusinessData() { await apiPost('business', { columns: businessColumns, businessData: businessData, dashboardExpenses: dashboardExpenses }); }
 
-        // --- PDF EXPORT FUNCTION ---
         function exportToPDF(viewId) {
-            // Close the dropdown immediately
             closeExportDropdown();
-            
-            // Get the container element (e.g., 'view-income')
             const element = document.getElementById('view-' + viewId);
             if (!element) return;
-
-            // Handle hidden views: temporarily unhide them for capture
             let wasHidden = false;
             if (element.classList.contains('hidden')) {
                 wasHidden = true;
                 element.classList.remove('hidden');
-                // If we are unhiding a view to print it, we should probably hide the CURRENT view 
-                // to prevent layout shifts, but for PDF generation, just unhiding the target is usually enough 
-                // because we pass that specific element to html2pdf.
             }
-
-            // Apply specific print styles (hides buttons, removes glass, etc.)
             element.classList.add('pdf-mode');
-
-            // Show loading spinner
             const loader = document.getElementById('loading-overlay');
             loader.style.display = 'flex';
-
-            // PDF Configuration
             const opt = {
-                margin:       0.25,
-                filename:     `${viewId}_report_${currentYear}.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true, logging: false },
-                jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
+                margin: 0.25,
+                filename: `${viewId}_report_${currentYear}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, logging: false },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
             };
-
-            // Generate PDF
             html2pdf().from(element).set(opt).save().then(() => {
-                // CLEANUP: Remove print styles
                 element.classList.remove('pdf-mode');
-                
-                // If it was hidden, re-hide it
-                if (wasHidden) {
-                    element.classList.add('hidden');
-                }
-                
-                // Hide loading spinner
+                if (wasHidden) element.classList.add('hidden');
                 loader.style.display = 'none';
             }).catch(err => {
                 console.error("PDF Export failed:", err);
                 element.classList.remove('pdf-mode');
                 if (wasHidden) element.classList.add('hidden');
                 loader.style.display = 'none';
-                alert("Failed to generate PDF. Please try again.");
+                alert("Failed to generate PDF.");
             });
         }
 
-        // --- INVOICE GENERATOR ---
-        function openInvoice(btn) {
-            const row = btn.closest('tr');
-            const cells = row.querySelectorAll('td');
-            const date = cells[0].querySelector('input') ? cells[0].querySelector('input').value : cells[0].innerText;
-            const client = cells[1].innerText;
-            const service = cells[2].querySelector('select') ? cells[2].querySelector('select').value : cells[2].innerText;
-            const amount = cells[5].innerText;
-            const ref = cells[8].innerText;
-
-            document.getElementById('inv-date').innerText = date;
-            document.getElementById('inv-num').innerText = ref || "001";
-            document.getElementById('inv-client').innerText = client || "Client Name";
-            document.getElementById('inv-service').innerText = service;
-            document.getElementById('inv-amount').innerText = amount;
-            document.getElementById('inv-total').innerText = amount;
-
-            document.getElementById('invoice-modal').classList.remove('hidden');
-            document.getElementById('invoice-modal').classList.add('flex');
-        }
-
-        function closeInvoice() {
-            document.getElementById('invoice-modal').classList.add('hidden');
-            document.getElementById('invoice-modal').classList.remove('flex');
-        }
-
-        // --- SHARED VIEW LOGIC ---
-        function resizeChartsForView(viewId) {
-            requestAnimationFrame(function() {
-                if (viewId === 'dashboard') {
-                    if (window.revenueBarChart) window.revenueBarChart.resize();
-                    if (window.revenuePieChart) window.revenuePieChart.resize();
-                }
-                if (viewId === 'income') {
-                    if (window.trackerChart) window.trackerChart.resize();
-                    if (window.trackerBarChart) window.trackerBarChart.resize();
-                }
-            });
-        }
-
-        function switchView(viewId) {
-            const titles = { 'dashboard': 'Business Dashboard', 'income': 'Income Tracker', 'expenses': 'Expenses Tracker', 'cash': 'Cash Overview' };
-            document.getElementById('page-title').innerText = titles[viewId] || 'Finance Tracker';
-            
-            document.querySelectorAll('section[id^="view-"]').forEach(el => el.classList.add('hidden'));
-            document.getElementById('view-' + viewId).classList.remove('hidden');
-
-            document.querySelectorAll('.nav-link').forEach(el => {
-                el.classList.remove('active');
-                el.classList.add('text-slate-600');
-            });
-
-            document.getElementById('nav-' + viewId).classList.add('active');
-            
-            if(viewId === 'income') updateIncomeTracker();
-            if(viewId === 'dashboard') calculateDashboard();
-            if(viewId === 'cash') calculateCashMovement();
-
-            closeSidebar();
-            resizeChartsForView(viewId);
-        }
-
-        // --- DASHBOARD LOGIC ---
+        // --- DASHBOARD FUNCTIONS ---
         function calculateDashboard() {
+            // ... (Same logic as before, just ensuring it runs)
             const busTable = document.getElementById('table-business');
             const bodyRows = busTable.querySelectorAll('tbody tr');
             const footerCells = busTable.querySelectorAll('tfoot td');
             const headerCells = busTable.querySelectorAll('thead th');
             const numBizCols = headerCells.length - 2; 
-            
             let colSums = new Array(numBizCols).fill(0);
             let colNames = [];
             for(let c=1; c <= numBizCols; c++) {
                 const span = headerCells[c].querySelector('.editable-header');
                 colNames.push(span ? span.innerText : "Untitled");
             }
-
             let monthlyIncomes = [];
             let totalYearlyIncome = 0;
-
             bodyRows.forEach((row, rIdx) => {
                 const cells = row.querySelectorAll('td');
                 let rowSum = 0;
@@ -1029,30 +999,25 @@
                 monthlyIncomes.push(rowSum);
                 totalYearlyIncome += rowSum;
             });
-            
             let grandTotal = 0;
             for(let c=1; c <= numBizCols; c++) {
                 footerCells[c].innerText = formatMoney(colSums[c-1]);
                 grandTotal += colSums[c-1];
             }
             footerCells[footerCells.length-1].innerText = formatMoney(grandTotal);
-
+            
             const mainRows = document.querySelectorAll('#table-main tbody tr');
             let totalExpenses = 0;
             let totalNet = 0;
-
             mainRows.forEach((row, rIdx) => {
                 const income = monthlyIncomes[rIdx] || 0;
                 const expenseCell = row.querySelector('.expense-cell');
                 const expense = parseMoney(expenseCell.innerText);
                 const net = income - expense;
-                
                 row.querySelector('.income-cell').innerText = formatMoney(income);
                 row.querySelector('.net-cell').innerText = formatMoney(net);
-                
                 const netCell = row.querySelector('.net-cell');
                 netCell.className = `px-6 py-4 text-right net-cell font-bold ${net >= 0 ? 'text-green-600' : 'text-red-500'}`;
-
                 const marginCell = row.querySelector('.margin-cell');
                 if(income > 0) {
                     const margin = (net / income) * 100;
@@ -1062,22 +1027,18 @@
                     marginCell.innerText = '-';
                     marginCell.className = 'px-6 py-4 text-right margin-cell text-gray-400';
                 }
-
                 totalExpenses += expense;
                 totalNet += net;
             });
-
             document.getElementById('total-income-main').innerText = formatMoney(totalYearlyIncome);
             document.getElementById('total-expenses-main').innerText = formatMoney(totalExpenses);
             document.getElementById('total-net-main').innerText = formatMoney(totalNet);
             const totalMargin = totalYearlyIncome > 0 ? (totalNet / totalYearlyIncome) * 100 : 0;
             document.getElementById('total-margin-main').innerText = totalMargin.toFixed(1) + '%';
-
             document.getElementById('kpi-revenue').innerText = formatMoney(totalYearlyIncome);
             document.getElementById('kpi-expenses').innerText = formatMoney(totalExpenses);
             document.getElementById('kpi-net-income').innerText = formatMoney(totalNet);
             document.getElementById('kpi-margin').innerText = totalMargin.toFixed(1) + '%';
-            
             if(window.revenueBarChart) {
                 window.revenueBarChart.data.labels = colNames;
                 window.revenueBarChart.data.datasets[0].data = colSums;
@@ -1086,39 +1047,32 @@
             if(window.revenuePieChart) {
                 window.revenuePieChart.data.labels = colNames;
                 window.revenuePieChart.data.datasets[0].data = colSums;
-                const baseColors = ['#34b0e5', '#84d0f0', '#1e6b8c', '#a0e0f8', '#0f4b63', '#62c4ea', '#103a4a'];
-                window.revenuePieChart.data.datasets[0].backgroundColor = colNames.map((_, i) => baseColors[i % baseColors.length]);
+                window.revenuePieChart.data.datasets[0].backgroundColor = colNames.map((_, i) => ['#34b0e5', '#84d0f0', '#1e6b8c', '#a0e0f8', '#0f4b63'][i % 5]);
                 window.revenuePieChart.update();
             }
         }
 
-        // --- INIT DASHBOARD ---
         function initDashboard() {
             const mainBody = document.querySelector('#table-main tbody');
             const busBody = document.querySelector('#table-business tbody');
             const headerRow = document.getElementById('business-header-row');
             const footerRow = document.getElementById('business-footer-row');
-            
             mainBody.innerHTML = '';
             busBody.innerHTML = '';
-            
             while (headerRow.children.length > 2) { headerRow.removeChild(headerRow.children[1]); }
             while (footerRow.children.length > 2) { footerRow.removeChild(footerRow.children[1]); }
-            
-            MONTHS.forEach((month, index) => {
+            MONTHS.forEach((month) => {
                 const trMain = document.createElement('tr');
                 trMain.className = "hover:bg-white/20 transition-colors";
                 const expenseVal = dashboardExpenses[currentYear + '_' + month] || 0;
                 trMain.innerHTML = `<td class="px-6 py-4 font-bold text-slate-700 border-r border-slate-200/60">${month}</td><td class="px-6 py-4 text-right bg-white/20 text-slate-500 income-cell">₱0</td><td class="px-6 py-4 text-right expense-cell text-red-400" contenteditable="true" data-month="${month}">${formatMoney(expenseVal)}</td><td class="px-6 py-4 text-right net-cell">-</td><td class="px-6 py-4 text-right margin-cell">-</td>`;
                 mainBody.appendChild(trMain);
-                
                 const trBus = document.createElement('tr');
                 trBus.className = "hover:bg-white/20 transition-colors";
                 trBus.setAttribute('data-month', month);
                 trBus.innerHTML = `<td class="px-6 py-4 font-bold text-slate-700 border-r border-slate-200/60">${month}</td><td class="px-6 py-4 text-right bg-white/20 border-l border-slate-200/60 font-bold total-cell text-slate-600">₱0</td>`;
                 busBody.appendChild(trBus);
             });
-
             businessColumns.forEach(colName => { addBusinessColumnUI(colName); });
             attachDashboardListeners();
         }
@@ -1130,7 +1084,6 @@
             const footRow = table.querySelector('tfoot tr');
             const totalHeader = document.getElementById('header-total');
             const totalFooter = document.getElementById('footer-total');
-
             const newTh = document.createElement('th');
             newTh.className = "px-6 py-4 font-bold text-right group relative border-r border-slate-200/60";
             newTh.innerHTML = `<div class="flex items-center justify-end gap-2"><span class="editable-header" contenteditable="true">${name}</span><button onclick="removeBusinessColumn(this)" class="opacity-0 group-hover:opacity-100 text-red-300 hover:text-red-500 transition-opacity p-1 rounded hover:bg-red-50 no-print">✕</button></div>`;
@@ -1143,8 +1096,7 @@
                 calculateDashboard();
             });
             headRow.insertBefore(newTh, totalHeader);
-
-            bodyRows.forEach((row, index) => {
+            bodyRows.forEach((row) => {
                 const month = row.getAttribute('data-month');
                 const newTd = document.createElement('td');
                 newTd.className = "px-6 py-4 text-right text-slate-600";
@@ -1164,7 +1116,6 @@
                 });
                 row.insertBefore(newTd, row.lastElementChild);
             });
-            
             const newFootTd = document.createElement('td');
             newFootTd.className = "px-6 py-4 text-right font-bold text-slate-700 border-r border-slate-200/60";
             newFootTd.innerText = "₱0";
@@ -1173,9 +1124,8 @@
         }
 
         function addBusinessColumn(defaultName = "New Service") {
-            const name = defaultName;
-            businessColumns.push(name);
-            addBusinessColumnUI(name);
+            businessColumns.push(defaultName);
+            addBusinessColumnUI(defaultName);
             scheduleSave(saveBusinessData);
         }
 
@@ -1185,9 +1135,7 @@
             const colIndex = Array.from(headRow.children).indexOf(th);
             const colName = th.querySelector('.editable-header').innerText;
             const colData = {};
-            MONTHS.forEach(month => {
-                colData[month] = businessData[currentYear + '_' + colName + '_' + month] || 0;
-            });
+            MONTHS.forEach(month => { colData[month] = businessData[currentYear + '_' + colName + '_' + month] || 0; });
             deletedColumns.push({ name: colName, data: colData, index: colIndex - 1 });
             document.getElementById('restore-btn').disabled = false;
             const arrayIndex = colIndex - 1;
@@ -1205,9 +1153,7 @@
             if (deletedColumns.length === 0) return;
             const restored = deletedColumns.pop();
             businessColumns.splice(restored.index, 0, restored.name);
-            MONTHS.forEach(month => {
-                businessData[currentYear + '_' + restored.name + '_' + month] = restored.data[month];
-            });
+            MONTHS.forEach(month => { businessData[currentYear + '_' + restored.name + '_' + month] = restored.data[month]; });
             initDashboard();
             calculateDashboard();
             if (deletedColumns.length === 0) document.getElementById('restore-btn').disabled = true;
@@ -1224,13 +1170,11 @@
                     calculateDashboard();
                     scheduleSave(saveBusinessData);
                 });
-                cell.addEventListener('keydown', function(e) {
-                    if (e.key === 'Enter') { e.preventDefault(); this.blur(); }
-                });
+                cell.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); this.blur(); } });
             });
         }
 
-        // --- INCOME TRACKER ---
+        // --- INCOME TABLE (PAGINATED) ---
         const serviceOptions = ["Social Media Management", "Virtual Assistance", "Paid Ads", "Branding", "Graphic Design"];
         const pricingOptions = ["Monthly Retainer", "Project-Based"];
         const statusOptions = ["Paid", "Pending", "Overdue"];
@@ -1238,13 +1182,34 @@
         function renderIncomeTable() {
             const tbody = document.getElementById('tracker-body');
             tbody.innerHTML = '';
-            incomeRecords.forEach((record, index) => {
+            
+            // 1. Filter by current year
+            const filteredRecords = incomeRecords.filter(record => {
                 const recordYear = new Date(record.date).getFullYear();
-                if (!record.date || recordYear === currentYear) {
-                    const tr = createIncomeRow(record, index);
-                    tbody.appendChild(tr);
-                }
+                return !record.date || recordYear === currentYear;
             });
+
+            // 2. Pagination Logic
+            const limit = paginationState.income.limit;
+            const totalPages = Math.ceil(filteredRecords.length / limit);
+            // Ensure current page isn't out of bounds
+            if (paginationState.income.page > totalPages) paginationState.income.page = totalPages || 1;
+            if (paginationState.income.page < 1) paginationState.income.page = 1;
+            
+            const start = (paginationState.income.page - 1) * limit;
+            const end = start + limit;
+            const pageData = filteredRecords.slice(start, end);
+
+            // 3. Render Rows
+            pageData.forEach((record, index) => {
+                const globalIndex = incomeRecords.indexOf(record); // Keep reference to main array
+                const tr = createIncomeRow(record, globalIndex);
+                tbody.appendChild(tr);
+            });
+
+            // 4. Update Controls
+            document.getElementById('income-page-num').innerText = `${paginationState.income.page} / ${totalPages || 1}`;
+            
             updateIncomeTracker();
         }
 
@@ -1252,6 +1217,7 @@
             const tr = document.createElement('tr');
             tr.className = "hover:bg-white/20 transition-colors";
             tr.setAttribute('data-id', record.id);
+            
             const createSelect = (options, selected) => {
                 let html = `<select class="editable-input text-slate-700 font-medium" onchange="updateIncomeRecord(this)">`;
                 options.forEach(opt => html += `<option value="${opt}" ${opt === selected ? 'selected' : ''}>${opt}</option>`);
@@ -1260,23 +1226,19 @@
             };
 
             tr.innerHTML = `
-                <td class="px-4 py-3 border-r border-slate-200/60"><input type="date" value="${record.date || ''}" class="editable-input text-slate-700 font-medium" onchange="updateIncomeRecord(this)"></td>
-                <td class="px-4 py-3 border-r border-slate-200/60 text-slate-700" contenteditable="true">${record.clientName || 'Client Name'}</td>
-                <td class="px-4 py-3 border-r border-slate-200/60">${createSelect(serviceOptions, record.serviceType)}</td>
-                <td class="px-4 py-3 border-r border-slate-200/60">${createSelect(pricingOptions, record.pricingModel)}</td>
-                <td class="px-4 py-3 text-right border-r border-slate-200/60 text-slate-700" contenteditable="true">${formatMoney(record.gross || 0)}</td>
-                <td class="px-4 py-3 text-right border-r border-slate-200/60 text-slate-700" contenteditable="true">${formatMoney(record.net || 0)}</td>
-                <td class="px-4 py-3 border-r border-slate-200/60 text-slate-700" contenteditable="true">${record.paymentMode || 'Bank Transfer'}</td>
-                <td class="px-4 py-3 border-r border-slate-200/60">${createSelect(statusOptions, record.status)}</td>
-                <td class="px-4 py-3 border-r border-slate-200/60 text-slate-700" contenteditable="true">${record.refId || 'INV-001'}</td>
-                <td class="px-4 py-3 text-slate-700" contenteditable="true">${record.notes || ''}</td>
-                <td class="px-2 py-3 text-center flex gap-1 justify-center no-print">
-                    <button onclick="openInvoice(this)" class="text-blue-400 hover:text-blue-600 transition-colors" title="Generate Invoice">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    </button>
-                    <button onclick="deleteIncomeRow(this)" class="text-gray-400 hover:text-red-500 transition-colors" title="Delete">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                    </button>
+                <td class="px-4 py-2 border-r border-slate-200/60"><input type="date" value="${record.date || ''}" class="editable-input text-slate-700 font-medium" onchange="updateIncomeRecord(this)"></td>
+                <td class="px-4 py-2 border-r border-slate-200/60 text-slate-700" contenteditable="true">${record.clientName || 'Client Name'}</td>
+                <td class="px-4 py-2 border-r border-slate-200/60">${createSelect(serviceOptions, record.serviceType)}</td>
+                <td class="px-4 py-2 border-r border-slate-200/60">${createSelect(pricingOptions, record.pricingModel)}</td>
+                <td class="px-4 py-2 text-right border-r border-slate-200/60 text-slate-700" contenteditable="true">${formatMoney(record.gross || 0)}</td>
+                <td class="px-4 py-2 text-right border-r border-slate-200/60 text-slate-700" contenteditable="true">${formatMoney(record.net || 0)}</td>
+                <td class="px-4 py-2 border-r border-slate-200/60 text-slate-700" contenteditable="true">${record.paymentMode || 'Bank Transfer'}</td>
+                <td class="px-4 py-2 border-r border-slate-200/60">${createSelect(statusOptions, record.status)}</td>
+                <td class="px-4 py-2 border-r border-slate-200/60 text-slate-700" contenteditable="true">${record.refId || 'INV-001'}</td>
+                <td class="px-4 py-2 text-slate-700" contenteditable="true">${record.notes || ''}</td>
+                <td class="px-2 py-2 text-center flex gap-1 justify-center no-print">
+                    <button onclick="openInvoice(this)" class="text-blue-400 hover:text-blue-600 transition-colors" title="Invoice"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg></button>
+                    <button onclick="deleteIncomeRow(this)" class="text-gray-400 hover:text-red-500 transition-colors" title="Delete"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
                 </td>
             `;
             tr.querySelectorAll('[contenteditable="true"]').forEach(cell => {
@@ -1286,6 +1248,132 @@
             return tr;
         }
 
+        // --- EXPENSES TABLE (PAGINATED) ---
+        const expenseCategories = ["Payroll", "Software / Tools", "Advertising", "Payment Processing Fees", "Tax", "Education / Coaching", "Miscellaneous"];
+        const expenseTypes = ["Fixed", "Variable"];
+        const expensePayments = ["Card", "Bank", "Cash", "Transfer"];
+        const expenseStatuses = ["Paid", "Pending", "Overdue"];
+        const expenseRecurring = ["Yes", "No"];
+
+        function renderExpenseTable() {
+            const tbody = document.getElementById('expenses-body');
+            tbody.innerHTML = '';
+
+            const filteredRecords = expenseRecords.filter(record => {
+                const recordYear = new Date(record.date).getFullYear();
+                return !record.date || recordYear === currentYear;
+            });
+
+            const limit = paginationState.expenses.limit;
+            const totalPages = Math.ceil(filteredRecords.length / limit);
+            if (paginationState.expenses.page > totalPages) paginationState.expenses.page = totalPages || 1;
+            if (paginationState.expenses.page < 1) paginationState.expenses.page = 1;
+
+            const start = (paginationState.expenses.page - 1) * limit;
+            const end = start + limit;
+            const pageData = filteredRecords.slice(start, end);
+
+            pageData.forEach((record, index) => {
+                const tr = createExpenseRow(record);
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('expenses-page-num').innerText = `${paginationState.expenses.page} / ${totalPages || 1}`;
+        }
+
+        function createExpenseRow(record) {
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-white/20 transition-colors";
+            tr.setAttribute('data-id', record.id);
+            const createSelect = (options, selected) => {
+                let html = `<select class="editable-input text-slate-700 font-medium" onchange="updateExpenseRecord(this)">`;
+                options.forEach(opt => html += `<option value="${opt}" ${opt === selected ? 'selected' : ''}>${opt}</option>`);
+                html += `</select>`;
+                return html;
+            };
+
+            tr.innerHTML = `
+                <td class="px-4 py-2 border-r border-slate-200/60"><input type="date" value="${record.date || ''}" class="editable-input text-slate-700 font-medium" onchange="updateExpenseRecord(this)"></td>
+                <td class="px-4 py-2 border-r border-slate-200/60 text-slate-700" contenteditable="true">${record.vendor || 'Vendor Name'}</td>
+                <td class="px-4 py-2 border-r border-slate-200/60">${createSelect(expenseCategories, record.category)}</td>
+                <td class="px-4 py-2 border-r border-slate-200/60">${createSelect(expenseTypes, record.type)}</td>
+                <td class="px-4 py-2 border-r border-slate-200/60 text-slate-700" contenteditable="true">${record.service || 'General'}</td>
+                <td class="px-4 py-2 text-right border-r border-slate-200/60 text-slate-700" contenteditable="true">${formatMoney(record.amount || 0)}</td>
+                <td class="px-4 py-2 border-r border-slate-200/60">${createSelect(expensePayments, record.payment)}</td>
+                <td class="px-4 py-2 border-r border-slate-200/60">${createSelect(expenseStatuses, record.status)}</td>
+                <td class="px-4 py-2 border-r border-slate-200/60">${createSelect(expenseRecurring, record.recurring)}</td>
+                <td class="px-4 py-2 text-slate-700" contenteditable="true">${record.notes || ''}</td>
+                <td class="px-2 py-2 text-center no-print">
+                    <button onclick="deleteExpenseRow(this)" class="text-gray-400 hover:text-red-500 transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+                </td>
+            `;
+            tr.querySelectorAll('[contenteditable="true"]').forEach(cell => {
+                cell.addEventListener('blur', function() { updateExpenseRecordFromRow(tr); });
+                cell.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); this.blur(); } });
+            });
+            return tr;
+        }
+
+        // --- CASH ACCOUNTS TABLE (PAGINATED) ---
+        const cashAcctNames = ["Philippine Bank", "Business Savings", "Stripe Balance", "PayPal Balance", "Wise Balance"];
+        const cashAcctCategories = ["Operating Cash", "Payment Processors", "Savings / Reserves", "Tax Reserve", "Other"];
+
+        function renderCashAccountsTable() {
+            const tbody = document.getElementById('cash-balances-body');
+            tbody.innerHTML = '';
+
+            const limit = paginationState.cash.limit;
+            const totalPages = Math.ceil(cashAccounts.length / limit);
+            if (paginationState.cash.page > totalPages) paginationState.cash.page = totalPages || 1;
+            if (paginationState.cash.page < 1) paginationState.cash.page = 1;
+
+            const start = (paginationState.cash.page - 1) * limit;
+            const end = start + limit;
+            const pageData = cashAccounts.slice(start, end);
+
+            pageData.forEach((record, index) => {
+                const tr = createCashAccountRow(record);
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('cash-page-num').innerText = `${paginationState.cash.page} / ${totalPages || 1}`;
+        }
+
+        function createCashAccountRow(record) {
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-white/20 transition-colors";
+            tr.setAttribute('data-id', record.id);
+            const createSelect = (options, selected) => {
+                let html = `<select class="editable-input text-slate-700 font-medium" onchange="updateCashAccount(this)">`;
+                options.forEach(opt => html += `<option value="${opt}" ${opt === selected ? 'selected' : ''}>${opt}</option>`);
+                html += `</select>`;
+                return html;
+            };
+            const createMonthSelect = (selected) => {
+                let html = `<select class="editable-input text-slate-700 font-medium" onchange="updateCashAccount(this)">`;
+                MONTHS.forEach(m => html += `<option value="${m}" ${m === selected ? 'selected' : ''}>${m}</option>`);
+                html += `</select>`;
+                return html;
+            };
+
+            tr.innerHTML = `
+                <td class="px-6 py-2 border-r border-slate-200/60">${createMonthSelect(record.month)}</td>
+                <td class="px-6 py-2 border-r border-slate-200/60">${createSelect(cashAcctNames, record.accountName)}</td>
+                <td class="px-6 py-2 border-r border-slate-200/60">${createSelect(cashAcctCategories, record.category)}</td>
+                <td class="px-6 py-2 border-r border-slate-200/60 text-slate-700" contenteditable="true">${record.institution || 'Bank Name'}</td>
+                <td class="px-6 py-2 text-right text-slate-700 font-medium" contenteditable="true">${formatMoney(record.balance || 0)}</td>
+                <td class="px-2 py-2 text-center no-print">
+                    <button onclick="deleteCashAccount(this)" class="text-gray-400 hover:text-red-500 transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+                </td>
+            `;
+            tr.querySelectorAll('[contenteditable="true"]').forEach(cell => {
+                cell.addEventListener('blur', function() { updateCashAccountFromRow(tr); });
+                cell.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); this.blur(); } });
+            });
+            return tr;
+        }
+
+        // --- ADD/UPDATE/DELETE WRAPPERS (To maintain logic with pagination) ---
         function addIncomeRow() {
             const newRecord = {
                 id: Date.now().toString(),
@@ -1300,11 +1388,12 @@
                 notes: ''
             };
             incomeRecords.push(newRecord);
+            // Go to last page to see new entry
+            paginationState.income.page = Math.ceil(incomeRecords.length / paginationState.income.limit);
             renderIncomeTable();
             scheduleSave(saveIncomeRecords);
         }
 
-        function updateIncomeRecord(element) { updateIncomeRecordFromRow(element.closest('tr')); }
         function updateIncomeRecordFromRow(tr) {
             const id = tr.getAttribute('data-id');
             const index = incomeRecords.findIndex(r => r.id === id);
@@ -1328,95 +1417,14 @@
             updateIncomeTracker();
             scheduleSave(saveIncomeRecords);
         }
+        function updateIncomeRecord(el) { updateIncomeRecordFromRow(el.closest('tr')); }
 
         function deleteIncomeRow(btn) {
             const tr = btn.closest('tr');
             const id = tr.getAttribute('data-id');
             incomeRecords = incomeRecords.filter(r => r.id !== id);
-            tr.remove();
-            updateIncomeTracker();
+            renderIncomeTable();
             scheduleSave(saveIncomeRecords);
-        }
-
-        function updateIncomeTracker() {
-            let totalGross = 0;
-            let totalNet = 0;
-            let serviceTotals = {};
-            serviceOptions.forEach(s => serviceTotals[s] = 0);
-            incomeRecords.forEach(record => {
-                const recordYear = new Date(record.date).getFullYear();
-                if (!record.date || recordYear === currentYear) {
-                    totalGross += record.gross || 0;
-                    totalNet += record.net || 0;
-                    if (serviceTotals[record.serviceType] !== undefined) serviceTotals[record.serviceType] += record.net || 0;
-                }
-            });
-            document.getElementById('tracker-total-gross').innerText = formatMoney(totalGross);
-            document.getElementById('tracker-total-net').innerText = formatMoney(totalNet);
-            if(window.trackerChart) {
-                const labels = Object.keys(serviceTotals).filter(k => serviceTotals[k] > 0);
-                const data = labels.map(k => serviceTotals[k]);
-                window.trackerChart.data.labels = labels;
-                window.trackerChart.data.datasets[0].data = data;
-                window.trackerChart.update();
-                window.trackerBarChart.data.labels = labels;
-                window.trackerBarChart.data.datasets[0].data = data;
-                window.trackerBarChart.update();
-            }
-        }
-
-        // --- EXPENSES TRACKER ---
-        const expenseCategories = ["Payroll", "Software / Tools", "Advertising", "Payment Processing Fees", "Tax", "Education / Coaching", "Miscellaneous"];
-        const expenseTypes = ["Fixed", "Variable"];
-        const expensePayments = ["Card", "Bank", "Cash", "Transfer"];
-        const expenseStatuses = ["Paid", "Pending", "Overdue"];
-        const expenseRecurring = ["Yes", "No"];
-
-        function renderExpenseTable() {
-            const tbody = document.getElementById('expenses-body');
-            tbody.innerHTML = '';
-            expenseRecords.forEach((record, index) => {
-                const recordYear = new Date(record.date).getFullYear();
-                if (!record.date || recordYear === currentYear) {
-                    const tr = createExpenseRow(record, index);
-                    tbody.appendChild(tr);
-                }
-            });
-        }
-
-        function createExpenseRow(record, index) {
-            const tr = document.createElement('tr');
-            tr.className = "hover:bg-white/20 transition-colors";
-            tr.setAttribute('data-id', record.id);
-            const createSelect = (options, selected) => {
-                let html = `<select class="editable-input text-slate-700 font-medium" onchange="updateExpenseRecord(this)">`;
-                options.forEach(opt => html += `<option value="${opt}" ${opt === selected ? 'selected' : ''}>${opt}</option>`);
-                html += `</select>`;
-                return html;
-            };
-
-            tr.innerHTML = `
-                <td class="px-4 py-3 border-r border-slate-200/60"><input type="date" value="${record.date || ''}" class="editable-input text-slate-700 font-medium" onchange="updateExpenseRecord(this)"></td>
-                <td class="px-4 py-3 border-r border-slate-200/60 text-slate-700" contenteditable="true">${record.vendor || 'Vendor Name'}</td>
-                <td class="px-4 py-3 border-r border-slate-200/60">${createSelect(expenseCategories, record.category)}</td>
-                <td class="px-4 py-3 border-r border-slate-200/60">${createSelect(expenseTypes, record.type)}</td>
-                <td class="px-4 py-3 border-r border-slate-200/60 text-slate-700" contenteditable="true">${record.service || 'General'}</td>
-                <td class="px-4 py-3 text-right border-r border-slate-200/60 text-slate-700" contenteditable="true">${formatMoney(record.amount || 0)}</td>
-                <td class="px-4 py-3 border-r border-slate-200/60">${createSelect(expensePayments, record.payment)}</td>
-                <td class="px-4 py-3 border-r border-slate-200/60">${createSelect(expenseStatuses, record.status)}</td>
-                <td class="px-4 py-3 border-r border-slate-200/60">${createSelect(expenseRecurring, record.recurring)}</td>
-                <td class="px-4 py-3 text-slate-700" contenteditable="true">${record.notes || ''}</td>
-                <td class="px-2 py-3 text-center no-print">
-                    <button onclick="deleteExpenseRow(this)" class="text-gray-400 hover:text-red-500 transition-colors">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    </button>
-                </td>
-            `;
-            tr.querySelectorAll('[contenteditable="true"]').forEach(cell => {
-                cell.addEventListener('blur', function() { updateExpenseRecordFromRow(tr); });
-                cell.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); this.blur(); } });
-            });
-            return tr;
         }
 
         function addExpenseRow() {
@@ -1434,11 +1442,11 @@
                 notes: ''
             };
             expenseRecords.push(newRecord);
+            paginationState.expenses.page = Math.ceil(expenseRecords.length / paginationState.expenses.limit);
             renderExpenseTable();
             scheduleSave(saveExpenseRecords);
         }
-
-        function updateExpenseRecord(element) { updateExpenseRecordFromRow(element.closest('tr')); }
+        function updateExpenseRecord(el) { updateExpenseRecordFromRow(el.closest('tr')); }
         function updateExpenseRecordFromRow(tr) {
             const id = tr.getAttribute('data-id');
             const index = expenseRecords.findIndex(r => r.id === id);
@@ -1460,62 +1468,12 @@
             cells[5].innerText = formatMoney(expenseRecords[index].amount);
             scheduleSave(saveExpenseRecords);
         }
-
         function deleteExpenseRow(btn) {
             const tr = btn.closest('tr');
             const id = tr.getAttribute('data-id');
             expenseRecords = expenseRecords.filter(r => r.id !== id);
-            tr.remove();
+            renderExpenseTable();
             scheduleSave(saveExpenseRecords);
-        }
-
-        // --- CASH OVERVIEW ---
-        const cashAcctNames = ["Philippine Bank", "Business Savings", "Stripe Balance", "PayPal Balance", "Wise Balance"];
-        const cashAcctCategories = ["Operating Cash", "Payment Processors", "Savings / Reserves", "Tax Reserve", "Other"];
-
-        function renderCashAccountsTable() {
-            const tbody = document.getElementById('cash-balances-body');
-            tbody.innerHTML = '';
-            cashAccounts.forEach((record, index) => {
-                const tr = createCashAccountRow(record, index);
-                tbody.appendChild(tr);
-            });
-        }
-
-        function createCashAccountRow(record, index) {
-            const tr = document.createElement('tr');
-            tr.className = "hover:bg-white/20 transition-colors";
-            tr.setAttribute('data-id', record.id);
-            const createSelect = (options, selected) => {
-                let html = `<select class="editable-input text-slate-700 font-medium" onchange="updateCashAccount(this)">`;
-                options.forEach(opt => html += `<option value="${opt}" ${opt === selected ? 'selected' : ''}>${opt}</option>`);
-                html += `</select>`;
-                return html;
-            };
-            const createMonthSelect = (selected) => {
-                let html = `<select class="editable-input text-slate-700 font-medium" onchange="updateCashAccount(this)">`;
-                MONTHS.forEach(m => html += `<option value="${m}" ${m === selected ? 'selected' : ''}>${m}</option>`);
-                html += `</select>`;
-                return html;
-            };
-
-            tr.innerHTML = `
-                <td class="px-6 py-4 border-r border-slate-200/60">${createMonthSelect(record.month)}</td>
-                <td class="px-6 py-4 border-r border-slate-200/60">${createSelect(cashAcctNames, record.accountName)}</td>
-                <td class="px-6 py-4 border-r border-slate-200/60">${createSelect(cashAcctCategories, record.category)}</td>
-                <td class="px-6 py-4 border-r border-slate-200/60 text-slate-700" contenteditable="true">${record.institution || 'Bank Name'}</td>
-                <td class="px-6 py-4 text-right text-slate-700 font-medium" contenteditable="true">${formatMoney(record.balance || 0)}</td>
-                <td class="px-2 py-3 text-center no-print">
-                    <button onclick="deleteCashAccount(this)" class="text-gray-400 hover:text-red-500 transition-colors">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    </button>
-                </td>
-            `;
-            tr.querySelectorAll('[contenteditable="true"]').forEach(cell => {
-                cell.addEventListener('blur', function() { updateCashAccountFromRow(tr); });
-                cell.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); this.blur(); } });
-            });
-            return tr;
         }
 
         function addCashAccountRow() {
@@ -1528,13 +1486,11 @@
                 balance: 0
             };
             cashAccounts.push(newRecord);
-            const tbody = document.getElementById('cash-balances-body');
-            const tr = createCashAccountRow(newRecord, cashAccounts.length - 1);
-            tbody.appendChild(tr);
+            paginationState.cash.page = Math.ceil(cashAccounts.length / paginationState.cash.limit);
+            renderCashAccountsTable();
             scheduleSave(saveCashAccounts);
         }
-
-        function updateCashAccount(element) { updateCashAccountFromRow(element.closest('tr')); }
+        function updateCashAccount(el) { updateCashAccountFromRow(el.closest('tr')); }
         function updateCashAccountFromRow(tr) {
             const id = tr.getAttribute('data-id');
             const index = cashAccounts.findIndex(r => r.id === id);
@@ -1551,71 +1507,65 @@
             cells[4].innerText = formatMoney(cashAccounts[index].balance);
             scheduleSave(saveCashAccounts);
         }
-
         function deleteCashAccount(btn) {
             const tr = btn.closest('tr');
             const id = tr.getAttribute('data-id');
             cashAccounts = cashAccounts.filter(r => r.id !== id);
-            tr.remove();
+            renderCashAccountsTable();
             scheduleSave(saveCashAccounts);
         }
 
-        function initCashMovement() {
-            const tbody = document.getElementById('cash-movement-body');
-            tbody.innerHTML = '';
-            MONTHS.forEach(month => {
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-white/20 transition-colors";
-                tr.setAttribute('data-month', month);
-                const startVal = cashMovement[`${month}_start`] || 0;
-                const endVal = cashMovement[`${month}_end`] || 0;
-                tr.innerHTML = `
-                    <td class="px-6 py-4 font-bold text-slate-700 border-r border-slate-200/60">${month}</td>
-                    <td class="px-6 py-4 text-right border-r border-slate-200/60 cash-start text-slate-600" contenteditable="true">${formatMoney(startVal)}</td>
-                    <td class="px-6 py-4 text-right border-r border-slate-200/60 cash-end text-slate-600" contenteditable="true">${formatMoney(endVal)}</td>
-                    <td class="px-6 py-4 text-right cash-net font-bold">-</td>
-                `;
-                tbody.appendChild(tr);
-            });
-            document.querySelectorAll('.cash-start, .cash-end').forEach(cell => {
-                cell.addEventListener('blur', function() {
-                    const row = this.closest('tr');
-                    const month = row.getAttribute('data-month');
-                    const val = parseMoney(this.innerText);
-                    if (this.classList.contains('cash-start')) { cashMovement[`${month}_start`] = val; } 
-                    else { cashMovement[`${month}_end`] = val; }
-                    this.innerText = formatMoney(val);
-                    calculateCashMovement();
-                    scheduleSave(saveCashMovement);
-                });
-                cell.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); this.blur(); } });
-            });
-            calculateCashMovement();
+        // --- INVOICE & CHARTS ---
+        function openInvoice(btn) {
+            const row = btn.closest('tr');
+            const cells = row.querySelectorAll('td');
+            const date = cells[0].querySelector('input') ? cells[0].querySelector('input').value : cells[0].innerText;
+            const client = cells[1].innerText;
+            const service = cells[2].querySelector('select') ? cells[2].querySelector('select').value : cells[2].innerText;
+            const amount = cells[5].innerText;
+            const ref = cells[8].innerText;
+            document.getElementById('inv-date').innerText = date;
+            document.getElementById('inv-num').innerText = ref || "001";
+            document.getElementById('inv-client').innerText = client || "Client Name";
+            document.getElementById('inv-service').innerText = service;
+            document.getElementById('inv-amount').innerText = amount;
+            document.getElementById('inv-total').innerText = amount;
+            document.getElementById('invoice-modal').classList.remove('hidden');
+            document.getElementById('invoice-modal').classList.add('flex');
+        }
+        function closeInvoice() {
+            document.getElementById('invoice-modal').classList.add('hidden');
+            document.getElementById('invoice-modal').classList.remove('flex');
         }
 
-        function calculateCashMovement() {
-            const rows = document.querySelectorAll('#cash-movement-body tr');
-            rows.forEach(row => {
-                const startCell = row.querySelector('.cash-start');
-                const endCell = row.querySelector('.cash-end');
-                const netCell = row.querySelector('.cash-net');
-                const start = parseMoney(startCell.innerText);
-                const end = parseMoney(endCell.innerText);
-                if(start !== 0 || end !== 0) {
-                    const net = end - start;
-                    const sign = net > 0 ? '+' : '';
-                    netCell.innerText = sign + formatMoney(net);
-                    if(net > 0) netCell.className = "px-6 py-4 text-right cash-net font-bold text-green-600";
-                    else if(net < 0) netCell.className = "px-6 py-4 text-right cash-net font-bold text-red-500";
-                    else netCell.className = "px-6 py-4 text-right cash-net font-bold text-slate-500";
-                } else {
-                    netCell.innerText = '-';
-                    netCell.className = "px-6 py-4 text-right cash-net font-bold text-gray-400";
+        function resizeChartsForView(viewId) {
+            requestAnimationFrame(function() {
+                if (viewId === 'dashboard') {
+                    if (window.revenueBarChart) window.revenueBarChart.resize();
+                    if (window.revenuePieChart) window.revenuePieChart.resize();
+                }
+                if (viewId === 'income') {
+                    if (window.trackerChart) window.trackerChart.resize();
+                    if (window.trackerBarChart) window.trackerBarChart.resize();
                 }
             });
         }
 
-        // --- CHARTS INIT ---
+        function switchView(viewId) {
+            const titles = { 'dashboard': 'Business Dashboard', 'income': 'Income Tracker', 'expenses': 'Expenses Tracker', 'cash': 'Cash Overview' };
+            document.getElementById('page-title').innerText = titles[viewId] || 'Finance Tracker';
+            document.querySelectorAll('section[id^="view-"]').forEach(el => el.classList.add('hidden'));
+            document.getElementById('view-' + viewId).classList.remove('hidden');
+            document.querySelectorAll('.nav-link').forEach(el => { el.classList.remove('active'); el.classList.add('text-slate-600'); });
+            document.getElementById('nav-' + viewId).classList.add('active');
+            if(viewId === 'income') { updateIncomeTracker(); renderIncomeTable(); }
+            if(viewId === 'expenses') renderExpenseTable();
+            if(viewId === 'dashboard') calculateDashboard();
+            if(viewId === 'cash') { calculateCashMovement(); renderCashAccountsTable(); }
+            closeSidebar();
+            resizeChartsForView(viewId);
+        }
+
         function initCharts() {
             const ctxTracker = document.getElementById('trackerServiceChart').getContext('2d');
             window.trackerChart = new Chart(ctxTracker, {
@@ -1623,21 +1573,18 @@
                 data: { labels: [], datasets: [{ data: [], backgroundColor: ['#34b0e5', '#84d0f0', '#1e6b8c', '#a0e0f8', '#0f4b63'], borderWidth: 2, borderColor: '#ffffff' }] },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 10 } } } }
             });
-            
             const ctxTrackerBar = document.getElementById('trackerBarChart').getContext('2d');
             window.trackerBarChart = new Chart(ctxTrackerBar, {
                 type: 'bar',
                 data: { labels: [], datasets: [{ label: 'Total Net Income', data: [], backgroundColor: '#34b0e5', borderRadius: 4 }] },
                 options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: { x: { beginAtZero: true } }, plugins: { legend: { display: false } } }
             });
-            
             const ctxBar = document.getElementById('revenueBarChart').getContext('2d');
             window.revenueBarChart = new Chart(ctxBar, {
                 type: 'bar',
                 data: { labels: [], datasets: [{ label: 'Net Revenue', data: [], backgroundColor: '#34b0e5', borderRadius: 4 }] },
                 options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true }, x: { grid: { display: false } } }, plugins: { legend: { display: false } } }
             });
-
             const ctxPie = document.getElementById('revenuePieChart').getContext('2d');
             window.revenuePieChart = new Chart(ctxPie, {
                 type: 'doughnut',
