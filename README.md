@@ -1,6 +1,6 @@
 # GN Travel Marketing LLC - Finance Tracker
 
-A comprehensive finance tracking application for GN Travel Marketing LLC with a Vercel backend and KV storage.
+A comprehensive finance tracking application for GN Travel Marketing LLC with a Vercel backend and **Supabase** (free) database.
 
 ## Features
 
@@ -17,104 +17,114 @@ A comprehensive finance tracking application for GN Travel Marketing LLC with a 
 
 - Frontend: HTML, Tailwind CSS, Chart.js
 - Backend: Vercel Serverless Functions (Node.js)
-- Database: Vercel KV (Redis)
+- Database: **Supabase** (PostgreSQL, free tier)
+
+## Setup: Supabase (Free)
+
+### Step 1: Create a Supabase project
+
+1. Go to [supabase.com](https://supabase.com) and sign in or create an account.
+2. Click **New project**.
+3. Choose an organization, name the project (e.g. `gn-finance-tracker`), set a database password, and pick a region.
+4. Click **Create new project** and wait for it to be ready.
+
+### Step 2: Run the database schema
+
+1. In your Supabase project, open **SQL Editor**.
+2. Open the file `supabase/schema.sql` in this repo and copy its full contents.
+3. Paste into the SQL Editor and click **Run**.
+4. Confirm that the tables and policies were created (no errors).
+
+### Step 3: Get your API keys
+
+1. In Supabase, go to **Project Settings** (gear icon) → **API**.
+2. Copy:
+   - **Project URL** (e.g. `https://xxxxx.supabase.co`)
+   - **anon public** key (for client or server; RLS applies), **or**
+   - **service_role** key (for server-only; bypasses RLS — use only in backend env, never in frontend)
+
+For the Vercel API routes, you can use either:
+- **anon** key + the RLS policies in `schema.sql`, or  
+- **service_role** key (simplest; no extra RLS setup).
 
 ## Deployment to Vercel
 
-### Prerequisites
+### Step 1: Deploy the app
 
-1. A [Vercel account](https://vercel.com/signup)
-2. [Vercel CLI](https://vercel.com/docs/cli) installed (optional, for local development)
+**Option A: Vercel Dashboard**
 
-### Step 1: Deploy to Vercel
+1. Push this project to GitHub/GitLab/Bitbucket.
+2. Go to [Vercel Dashboard](https://vercel.com/dashboard) → **Add New** → **Project**.
+3. Import the repo and deploy (default settings are fine).
 
-#### Option A: Deploy via Vercel Dashboard (Recommended)
-
-1. Push this project to a GitHub/GitLab/Bitbucket repository
-2. Go to [Vercel Dashboard](https://vercel.com/dashboard)
-3. Click "Add New" → "Project"
-4. Import your repository
-5. Vercel will auto-detect the configuration
-6. Click "Deploy"
-
-#### Option B: Deploy via CLI
+**Option B: Vercel CLI**
 
 ```bash
-# Install Vercel CLI if not installed
 npm i -g vercel
-
-# Login to Vercel
 vercel login
-
-# Deploy
 vercel --prod
 ```
 
-### Step 2: Set Up Vercel KV (Database)
+### Step 2: Add Supabase environment variables
 
-1. Go to your Vercel project dashboard
-2. Navigate to "Storage" tab
-3. Click "Create Database" → "KV"
-4. Give it a name (e.g., `gn-finance-db`)
-5. Select the same region as your deployment
-6. Click "Create"
-7. The KV store will automatically connect to your project
+1. In Vercel, open your project → **Settings** → **Environment Variables**.
+2. Add:
 
-### Step 3: Verify Environment Variables
+| Name | Value | Environment |
+|------|--------|-------------|
+| `SUPABASE_URL` | Your Supabase **Project URL** | Production, Preview, Development |
+| `SUPABASE_SERVICE_ROLE_KEY` | Your Supabase **service_role** key | Production, Preview, Development |
 
-After creating the KV store, Vercel automatically adds these environment variables:
-- `KV_URL`
-- `KV_REST_API_URL`
-- `KV_REST_API_TOKEN`
-- `KV_REST_API_READ_ONLY_TOKEN`
+If you prefer to use the anon key instead:
 
-These are required for the `@vercel/kv` package to work.
+| Name | Value |
+|------|--------|
+| `SUPABASE_URL` | Your Project URL |
+| `SUPABASE_ANON_KEY` | Your **anon public** key |
 
-### Step 4: Redeploy (if needed)
+The API uses `SUPABASE_SERVICE_ROLE_KEY` if set, otherwise `SUPABASE_ANON_KEY`.
 
-If you created the KV store after initial deployment:
+### Step 3: Redeploy
 
-```bash
-vercel --prod
-```
-
-Or trigger a redeploy from the Vercel dashboard.
+Trigger a new deployment (e.g. **Deployments** → **Redeploy**) so the new env vars are applied.
 
 ## Local Development
 
 ### Prerequisites
 
 - Node.js 18+
-- Vercel CLI
+- Vercel CLI (optional)
 
 ### Setup
 
 1. Install dependencies:
+
 ```bash
 npm install
 ```
 
-2. Link to your Vercel project (required for KV access):
-```bash
-vercel link
+2. Create a `.env.local` in the project root (same folder as `package.json`):
+
+```
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
 
-3. Pull environment variables:
-```bash
-vercel env pull .env.local
-```
+Or use `SUPABASE_ANON_KEY` if you prefer.
 
-4. Run development server:
+3. Run the dev server:
+
 ```bash
 npm run dev
 ```
 
 Or:
+
 ```bash
 vercel dev
 ```
 
-The app will be available at `http://localhost:3000`
+4. Open `http://localhost:3000` (or the port Vercel shows).
 
 ## API Endpoints
 
@@ -135,61 +145,31 @@ The app will be available at `http://localhost:3000`
 | `/api/business` | GET | Get business columns and data |
 | `/api/business` | POST | Save business data |
 
-## Data Structure
+## Data structure (API)
 
-### Income Record
-```json
-{
-  "id": "unique-id",
-  "date": "2026-01-15",
-  "clientName": "Client Name",
-  "serviceType": "Social Media Management",
-  "pricingModel": "Monthly Retainer",
-  "gross": 50000,
-  "net": 45000,
-  "paymentMode": "Bank Transfer",
-  "status": "Paid",
-  "refId": "INV-001",
-  "notes": "Optional notes"
-}
-```
+### Income record
 
-### Expense Record
-```json
-{
-  "id": "unique-id",
-  "date": "2026-01-15",
-  "vendor": "Vendor Name",
-  "category": "Software / Tools",
-  "type": "Fixed",
-  "service": "General",
-  "amount": 5000,
-  "payment": "Card",
-  "status": "Paid",
-  "recurring": "Yes",
-  "notes": "Optional notes"
-}
-```
+- `id`, `date`, `clientName`, `serviceType`, `pricingModel`, `gross`, `net`, `paymentMode`, `status`, `refId`, `notes`
+
+### Expense record
+
+- `id`, `date`, `vendor`, `category`, `type`, `service`, `amount`, `payment`, `status`, `recurring`, `notes`
 
 ## Troubleshooting
 
-### "KV not initialized" error
-- Make sure you've created a KV store in your Vercel project
-- Ensure the environment variables are properly set
-- Redeploy after creating the KV store
+### "Database not configured" or 503
 
-### Data not saving
-- Check browser console for API errors
-- Verify KV store is connected in Vercel dashboard
-- Check Vercel function logs for errors
+- Ensure `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` (or `SUPABASE_ANON_KEY`) are set in Vercel and in `.env.local` for local dev.
+- Redeploy after changing env vars.
 
-### CORS errors (local development)
-- Use `vercel dev` instead of serving files directly
-- Make sure you're accessing via `localhost:3000`
+### Data not saving / RLS errors
 
-## Support
+- If using **anon** key: ensure you ran `supabase/schema.sql` so RLS policies exist.
+- If using **service_role** key: RLS is bypassed; check Vercel function logs for other errors.
 
-For issues or questions, please contact the development team.
+### CORS / local dev
+
+- Use `vercel dev` or your normal dev server and open the app at the URL it prints (e.g. `http://localhost:3000`).
 
 ## License
 
