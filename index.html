@@ -73,30 +73,24 @@
             border: 1px dashed transparent;
             width: 100%;
             border-radius: 6px;
-            /* SMALLER FONT FOR BETTER FIT */
             font-size: 0.75rem !important; /* 12px */
             font-weight: 500;
         }
 
-        /* Specific Dropdown Styling */
         select.editable-input {
-            /* Reduced right padding to 1.75rem (approx 28px) - enough for arrow, but gives more space for text */
             padding: 6px 1.75rem 6px 8px; 
             text-overflow: ellipsis;
             white-space: nowrap;
             overflow: hidden;
             line-height: 1.25;
-            appearance: none; /* Reset native appearance to ensure consistent spacing */
+            appearance: none;
             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
             background-position: right 0.2rem center;
             background-repeat: no-repeat;
             background-size: 1.25em 1.25em;
         }
         
-        /* Text Input Styling */
-        td[contenteditable="true"], th[contenteditable="true"], input.editable-input {
-             padding: 6px 8px;
-        }
+        td[contenteditable="true"], th[contenteditable="true"], input.editable-input { padding: 6px 8px; }
 
         td[contenteditable="true"]:hover, th[contenteditable="true"]:hover, 
         select.editable-input:hover, input.editable-input:hover {
@@ -178,36 +172,98 @@
             body * { visibility: hidden; }
         }
 
-        /* --- PDF EXPORT STYLES --- */
+        /* --- PDF EXPORT STYLES (FIXED) --- */
         .pdf-mode {
             background: white !important;
-            width: 100% !important;
-            max-width: none !important;
+            /* Force Desktop Width for Snapshot */
+            width: 1200px !important;
+            min-width: 1200px !important;
+            max-width: 1200px !important;
+            padding: 20px !important;
+            margin: 0 auto !important;
+            
+            /* Positioning to ensure clean capture */
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            z-index: 9999 !important;
         }
-        .pdf-mode .glass {
-            background: #ffffff !important;
-            backdrop-filter: none !important;
-            border: 1px solid #e2e8f0 !important;
-            box-shadow: none !important;
+
+        /* Hide layout wrappers when exporting */
+        body.exporting {
+            overflow: hidden !important;
+            height: auto !important;
         }
-        .pdf-mode button, 
-        .pdf-mode .no-print,
-        .pdf-mode .mobile-menu-btn {
+        body.exporting #sidebar, 
+        body.exporting header, 
+        body.exporting .mobile-menu-btn,
+        body.exporting #save-indicator {
             display: none !important;
         }
+
+        /* Force Grid Layouts to Desktop view */
+        .pdf-mode .grid {
+            display: grid !important;
+        }
+        
+        /* Force KPIs to 4 columns */
+        .pdf-mode .grid-cols-1.md\:grid-cols-2.lg\:grid-cols-4 {
+            grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        }
+        
+        /* Force Charts to 3 columns */
+        .pdf-mode .grid-cols-1.lg\:grid-cols-3 {
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        }
+        
+        /* Force Tables to 2 columns */
+        .pdf-mode .grid-cols-1.xl\:grid-cols-2 {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        }
+        
+        /* Force Income View to 3 columns */
+        .pdf-mode .grid-cols-1.md\:grid-cols-3 {
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        }
+
+        /* Remove Glass effects for crisp PDF */
+        .pdf-mode .glass {
+            background: #ffffff !important;
+            border: 1px solid #e2e8f0 !important;
+            box-shadow: none !important;
+            backdrop-filter: none !important;
+            break-inside: avoid; /* Prevent page break inside cards */
+        }
+
+        /* Typography & Element cleanups */
+        .pdf-mode h3 { color: #34b0e5 !important; }
+        .pdf-mode table { font-size: 10px !important; }
+        .pdf-mode th, .pdf-mode td { padding: 6px !important; }
+        
+        /* Handle scrollbars */
         .pdf-mode .overflow-x-auto, 
         .pdf-mode .overflow-y-auto, 
         .pdf-mode .custom-scrollbar {
             overflow: visible !important;
             height: auto !important;
             max-height: none !important;
+            display: block !important;
         }
-        .pdf-mode input, 
-        .pdf-mode select { 
+
+        /* Clean inputs */
+        .pdf-mode input, .pdf-mode select { 
             border: none !important; 
             background: transparent !important; 
             appearance: none !important; 
             padding: 0 !important;
+            font-weight: 600 !important;
+            color: #334155 !important;
+        }
+        
+        /* Hide buttons */
+        .pdf-mode button, 
+        .pdf-mode .no-print {
+            display: none !important;
         }
     </style>
 </head>
@@ -908,60 +964,62 @@
             await apiPost('business', { columns: businessColumns, businessData: businessData, dashboardExpenses: dashboardExpenses });
         }
 
-        // --- PDF EXPORT FUNCTION ---
+        // --- PDF EXPORT FUNCTION (FIXED) ---
         function exportToPDF(viewId) {
-            // Close the dropdown immediately
+            // Close dropdown
             closeExportDropdown();
             
-            // Get the container element (e.g., 'view-income')
             const element = document.getElementById('view-' + viewId);
             if (!element) return;
 
-            // Handle hidden views: temporarily unhide them for capture
+            // Prepare UI for snapshot
             let wasHidden = false;
             if (element.classList.contains('hidden')) {
                 wasHidden = true;
                 element.classList.remove('hidden');
-                // If we are unhiding a view to print it, we should probably hide the CURRENT view 
-                // to prevent layout shifts, but for PDF generation, just unhiding the target is usually enough 
-                // because we pass that specific element to html2pdf.
             }
 
-            // Apply specific print styles (hides buttons, removes glass, etc.)
+            // Apply PDF mode class AND global export class
             element.classList.add('pdf-mode');
+            document.body.classList.add('exporting');
 
-            // Show loading spinner
+            // Force scroll to top
+            window.scrollTo(0, 0);
+
+            // Show loading
             const loader = document.getElementById('loading-overlay');
             loader.style.display = 'flex';
 
-            // PDF Configuration
-            const opt = {
-                margin:       0.25,
-                filename:     `${viewId}_report_${currentYear}.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true, logging: false },
-                jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
-            };
+            // Wait for charts to redraw if needed
+            setTimeout(() => {
+                const opt = {
+                    margin:       0.2,
+                    filename:     `${viewId}_report_${currentYear}.pdf`,
+                    image:        { type: 'jpeg', quality: 0.98 },
+                    html2canvas:  { 
+                        scale: 2, 
+                        useCORS: true, 
+                        logging: false,
+                        windowWidth: 1400 // Trick html2canvas into thinking it's a desktop
+                    },
+                    jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
+                };
 
-            // Generate PDF
-            html2pdf().from(element).set(opt).save().then(() => {
-                // CLEANUP: Remove print styles
-                element.classList.remove('pdf-mode');
-                
-                // If it was hidden, re-hide it
-                if (wasHidden) {
-                    element.classList.add('hidden');
-                }
-                
-                // Hide loading spinner
-                loader.style.display = 'none';
-            }).catch(err => {
-                console.error("PDF Export failed:", err);
-                element.classList.remove('pdf-mode');
-                if (wasHidden) element.classList.add('hidden');
-                loader.style.display = 'none';
-                alert("Failed to generate PDF. Please try again.");
-            });
+                html2pdf().from(element).set(opt).save().then(() => {
+                    // Cleanup
+                    element.classList.remove('pdf-mode');
+                    document.body.classList.remove('exporting');
+                    if (wasHidden) element.classList.add('hidden');
+                    loader.style.display = 'none';
+                }).catch(err => {
+                    console.error("PDF Export failed:", err);
+                    element.classList.remove('pdf-mode');
+                    document.body.classList.remove('exporting');
+                    if (wasHidden) element.classList.add('hidden');
+                    loader.style.display = 'none';
+                    alert("Failed to generate PDF. Please try again.");
+                });
+            }, 500);
         }
 
         // --- INVOICE GENERATOR ---
