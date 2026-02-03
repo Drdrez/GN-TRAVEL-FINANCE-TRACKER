@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -551,22 +550,16 @@
             <div class="glass rounded-2xl shadow-sm mb-8 overflow-hidden">
                 <div class="p-6 border-b border-slate-200/60 flex justify-between items-center">
                     <h3 class="text-lg font-bold text-[#34b0e5]">Monthly Cash Movement</h3>
-                    <div class="flex items-center gap-3">
-                         <div class="text-xs text-slate-500 italic">Net Cash Change is auto-calculated</div>
-                         <button onclick="addCashMovementRow()" class="glass text-[#34b0e5] px-3 py-1.5 rounded-md text-sm font-semibold hover:bg-blue-50 transition-colors flex items-center gap-1 no-print">
-                             Add Entry
-                         </button>
-                    </div>
+                    <div class="text-xs text-slate-500 italic">Net Cash Change is auto-calculated</div>
                 </div>
                 <div class="overflow-x-auto custom-scrollbar">
                     <table class="w-full text-sm text-left table-cell-padding min-w-[320px]">
                         <thead class="text-xs text-slate-700 uppercase bg-white/40 sticky top-0 z-10 backdrop-blur-md">
                             <tr>
-                                <th class="px-6 py-3 font-bold border-r border-slate-200/60">Month / Period</th>
+                                <th class="px-6 py-3 font-bold border-r border-slate-200/60">Month</th>
                                 <th class="px-6 py-3 font-bold text-right border-r border-slate-200/60">Starting Cash</th>
                                 <th class="px-6 py-3 font-bold text-right border-r border-slate-200/60">Ending Cash</th>
                                 <th class="px-6 py-3 font-bold text-right">Net Cash Change</th>
-                                <th class="px-2 py-3 no-print"></th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-200/60 font-medium" id="cash-movement-body"></tbody>
@@ -838,7 +831,7 @@
         let incomeRecords = [];
         let expenseRecords = [];
         let cashAccounts = [];
-        let cashMovement = { customRows: [] }; // Initialized with customRows array
+        let cashMovement = {};
         let payrollRecords = []; // Added for new section
         let businessColumns = ['Service A', 'Service B'];
         let businessData = {};
@@ -1014,10 +1007,7 @@
                 if (cashAccountsData) cashAccounts = cashAccountsData;
 
                 const cashMovementData = await apiGet('cash?type=movement');
-                if (cashMovementData) {
-                    cashMovement = cashMovementData;
-                    if(!cashMovement.customRows) cashMovement.customRows = [];
-                }
+                if (cashMovementData) cashMovement = cashMovementData;
 
                 const payrollData = await apiGet('payroll');
                 if (payrollData) payrollRecords = payrollData;
@@ -1850,133 +1840,38 @@
             scheduleSave(saveCashAccounts);
         }
 
-        // --- CASH MOVEMENT (MODIFIED FOR DYNAMIC ROWS) ---
+        // --- CASH MOVEMENT (RESTORED TO STATIC) ---
         function initCashMovement() {
             const tbody = document.getElementById('cash-movement-body');
             tbody.innerHTML = '';
-            
-            // 1. Render Standard Months (Fixed)
             MONTHS.forEach(month => {
-                renderCashMovementRow(tbody, month, false);
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-white/20 transition-colors";
+                tr.setAttribute('data-month', month);
+                const startVal = cashMovement[`${month}_start`] || 0;
+                const endVal = cashMovement[`${month}_end`] || 0;
+                tr.innerHTML = `
+                    <td class="px-6 py-4 font-bold text-slate-700 border-r border-slate-200/60">${month}</td>
+                    <td class="px-6 py-4 text-right border-r border-slate-200/60 cash-start text-slate-600" contenteditable="true">${formatMoney(startVal)}</td>
+                    <td class="px-6 py-4 text-right border-r border-slate-200/60 cash-end text-slate-600" contenteditable="true">${formatMoney(endVal)}</td>
+                    <td class="px-6 py-4 text-right cash-net font-bold">-</td>
+                `;
+                tbody.appendChild(tr);
             });
-
-            // 2. Render Custom Rows (Dynamic)
-            if (cashMovement.customRows && Array.isArray(cashMovement.customRows)) {
-                cashMovement.customRows.forEach((row, index) => {
-                    renderCashMovementRow(tbody, row.label, true, index);
-                });
-            }
-
-            calculateCashMovement();
-        }
-
-        function renderCashMovementRow(tbody, label, isCustom, index = null) {
-            const tr = document.createElement('tr');
-            tr.className = "hover:bg-white/20 transition-colors";
-            tr.setAttribute('data-label', label); // Using label as key for storage in flat object
-            if (isCustom) tr.setAttribute('data-custom-index', index);
-
-            const startVal = cashMovement[`${label}_start`] || 0;
-            const endVal = cashMovement[`${label}_end`] || 0;
-            
-            let labelCell = `<td class="px-6 py-4 font-bold text-slate-700 border-r border-slate-200/60">${label}</td>`;
-            if (isCustom) {
-                labelCell = `<td class="px-6 py-4 font-bold text-slate-700 border-r border-slate-200/60 editable-label" contenteditable="true">${label}</td>`;
-            }
-
-            let deleteBtn = '';
-            if (isCustom) {
-                deleteBtn = `
-                    <button onclick="removeCashMovementRow(this)" class="text-gray-400 hover:text-red-500 transition-colors">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    </button>`;
-            }
-
-            tr.innerHTML = `
-                ${labelCell}
-                <td class="px-6 py-4 text-right border-r border-slate-200/60 cash-start text-slate-600" contenteditable="true">${formatMoney(startVal)}</td>
-                <td class="px-6 py-4 text-right border-r border-slate-200/60 cash-end text-slate-600" contenteditable="true">${formatMoney(endVal)}</td>
-                <td class="px-6 py-4 text-right cash-net font-bold">-</td>
-                <td class="px-2 py-3 text-center no-print">${deleteBtn}</td>
-            `;
-            tbody.appendChild(tr);
-
-            // Attach Listeners
-            const startCell = tr.querySelector('.cash-start');
-            const endCell = tr.querySelector('.cash-end');
-            const labelEl = tr.querySelector('.editable-label');
-
-            const updateHandler = function() {
-                const row = this.closest('tr');
-                const currentLabel = row.getAttribute('data-label');
-                const val = parseMoney(this.innerText);
-                
-                if (this.classList.contains('cash-start')) { cashMovement[`${currentLabel}_start`] = val; } 
-                else { cashMovement[`${currentLabel}_end`] = val; }
-                
-                this.innerText = formatMoney(val);
-                calculateCashMovement();
-                scheduleSave(saveCashMovement);
-            };
-
-            startCell.addEventListener('blur', updateHandler);
-            endCell.addEventListener('blur', updateHandler);
-            
-            startCell.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); this.blur(); } });
-            endCell.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); this.blur(); } });
-
-            if (labelEl) {
-                labelEl.addEventListener('blur', function() {
+            document.querySelectorAll('.cash-start, .cash-end').forEach(cell => {
+                cell.addEventListener('blur', function() {
                     const row = this.closest('tr');
-                    const oldLabel = row.getAttribute('data-label');
-                    const newLabel = this.innerText.trim() || "Untitled";
-                    const idx = parseInt(row.getAttribute('data-custom-index'));
-                    
-                    if (oldLabel !== newLabel) {
-                        // Migrate data keys
-                        cashMovement[`${newLabel}_start`] = cashMovement[`${oldLabel}_start`];
-                        cashMovement[`${newLabel}_end`] = cashMovement[`${oldLabel}_end`];
-                        delete cashMovement[`${oldLabel}_start`];
-                        delete cashMovement[`${oldLabel}_end`];
-                        
-                        // Update Custom Row Array
-                        if (cashMovement.customRows[idx]) {
-                            cashMovement.customRows[idx].label = newLabel;
-                        }
-                        
-                        row.setAttribute('data-label', newLabel);
-                        scheduleSave(saveCashMovement);
-                    }
+                    const month = row.getAttribute('data-month');
+                    const val = parseMoney(this.innerText);
+                    if (this.classList.contains('cash-start')) { cashMovement[`${month}_start`] = val; } 
+                    else { cashMovement[`${month}_end`] = val; }
+                    this.innerText = formatMoney(val);
+                    calculateCashMovement();
+                    scheduleSave(saveCashMovement);
                 });
-                labelEl.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); this.blur(); } });
-            }
-        }
-
-        function addCashMovementRow() {
-            if (!cashMovement.customRows) cashMovement.customRows = [];
-            const newLabel = "New Entry";
-            cashMovement.customRows.push({ label: newLabel });
-            
-            const tbody = document.getElementById('cash-movement-body');
-            renderCashMovementRow(tbody, newLabel, true, cashMovement.customRows.length - 1);
-            scheduleSave(saveCashMovement);
-        }
-
-        function removeCashMovementRow(btn) {
-            const tr = btn.closest('tr');
-            const label = tr.getAttribute('data-label');
-            const idx = parseInt(tr.getAttribute('data-custom-index'));
-
-            // Remove data
-            delete cashMovement[`${label}_start`];
-            delete cashMovement[`${label}_end`];
-            
-            // Remove from array
-            cashMovement.customRows.splice(idx, 1);
-            
-            // Re-render to fix indices
-            initCashMovement();
-            scheduleSave(saveCashMovement);
+                cell.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); this.blur(); } });
+            });
+            calculateCashMovement();
         }
 
         function calculateCashMovement() {
@@ -2040,5 +1935,3 @@
     </script>
 </body>
 </html>
-}
-
