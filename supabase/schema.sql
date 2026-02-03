@@ -1,3 +1,4 @@
+
 -- 1. INCOME RECORDS
 CREATE TABLE IF NOT EXISTS income_records (
   id TEXT PRIMARY KEY,
@@ -44,13 +45,14 @@ CREATE TABLE IF NOT EXISTS cash_accounts (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 4. CASH MOVEMENT
+-- 4. CASH MOVEMENT (Fixes the missing rows issue)
 CREATE TABLE IF NOT EXISTS cash_movement (
   id INT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
   data JSONB DEFAULT '{}',
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Ensure the single row exists so the frontend can read/write to it
 INSERT INTO cash_movement (id, data) VALUES (1, '{}')
 ON CONFLICT (id) DO NOTHING;
 
@@ -67,7 +69,7 @@ INSERT INTO business_config (id, columns, business_data, dashboard_expenses)
 VALUES (1, '["Service A", "Service B"]', '{}', '{}')
 ON CONFLICT (id) DO NOTHING;
 
--- 6. PAYROLL RECORDS (New)
+-- 6. PAYROLL RECORDS
 CREATE TABLE IF NOT EXISTS payroll_records (
   id TEXT PRIMARY KEY,
   payout_date DATE,
@@ -87,7 +89,6 @@ CREATE TABLE IF NOT EXISTS payroll_records (
 );
 
 -- 7. ENABLE SECURITY (RLS)
--- This allows your API to read/write without complex policies for now.
 ALTER TABLE income_records ENABLE ROW LEVEL SECURITY;
 ALTER TABLE expense_records ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cash_accounts ENABLE ROW LEVEL SECURITY;
@@ -102,3 +103,4 @@ CREATE POLICY "Allow all cash_accounts" ON cash_accounts FOR ALL USING (true) WI
 CREATE POLICY "Allow all cash_movement" ON cash_movement FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all business_config" ON business_config FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all payroll" ON payroll_records FOR ALL USING (true) WITH CHECK (true);
+}
