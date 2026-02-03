@@ -15,7 +15,6 @@
             --primary-blue: #34b0e5;
             --text-dark: #334155;
             --text-light: #64748b;
-            --payroll-blue: #2d76b7; /* Darker blue from payroll image */
         }
 
         /* --- STATIC BACKGROUND --- */
@@ -140,29 +139,39 @@
         .save-indicator.show { display: flex; align-items: center; gap: 8px; }
         .save-indicator.error { background: #ef4444; }
 
-        /* --- PAYROLL SLIP SPECIFIC STYLES --- */
-        .payroll-input {
-            background: transparent;
+        /* --- PAYROLL SPECIFIC STYLES (THEME COMPLIANT) --- */
+        .payroll-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b; /* Slate 500 */
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+        .payroll-input-styled {
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 0.5rem 0.75rem;
             width: 100%;
-            color: white;
-            text-align: right;
-            border: none;
+            font-size: 0.875rem;
+            color: #334155;
+            transition: all 0.2s;
+        }
+        .payroll-input-styled:focus {
+            background: white;
+            border-color: #34b0e5;
             outline: none;
-            font-weight: bold;
+            box-shadow: 0 0 0 3px rgba(52, 176, 229, 0.1);
         }
-        .payroll-input::placeholder { color: rgba(255,255,255,0.7); }
-        
-        /* Darker inputs for white background sections */
-        .payroll-input-dark {
-            background: transparent;
-            width: 100%;
-            color: var(--text-dark);
-            border: 1px dashed transparent;
-            padding: 4px;
-            border-radius: 4px;
+        .payroll-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px dashed #e2e8f0;
         }
-        .payroll-input-dark:hover { border-color: #cbd5e1; }
-        .payroll-input-dark:focus { border-color: var(--payroll-blue); outline: none; background: white; }
+        .payroll-row:last-child { border-bottom: none; }
 
         /* Mobile Sidebar */
         @media (max-width: 1023px) {
@@ -185,6 +194,7 @@
             #invoice-print-area, #payroll-print-area { visibility: visible; position: absolute; left: 0; top: 0; width: 100%; background: white; padding: 20px; z-index: 9999; }
             body * { visibility: hidden; }
             #invoice-print-area *, #payroll-print-area * { visibility: visible; }
+            .no-print { display: none !important; }
         }
 
         /* PDF Styles */
@@ -235,6 +245,10 @@
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                 Cash Overview
             </div>
+            <div onclick="switchView('payroll')" id="nav-payroll" class="nav-link text-slate-600 flex items-center px-4 py-3 text-sm font-medium rounded-xl">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                Payroll Slip Generator
+            </div>
         </nav>
         
         <div class="p-4 border-t border-slate-200/60">
@@ -272,8 +286,11 @@
                         <a href="#" onclick="exportToPDF('expenses'); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-white/50">
                              <span class="font-bold text-[#34b0e5]">●</span> Export Expenses
                         </a>
-                         <a href="#" onclick="exportToPDF('cash'); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-white/50 last:rounded-b-lg">
+                         <a href="#" onclick="exportToPDF('cash'); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-white/50">
                              <span class="font-bold text-[#34b0e5]">●</span> Export Cash Flow
+                        </a>
+                         <a href="#" onclick="exportToPDF('payroll'); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-white/50 last:rounded-b-lg">
+                             <span class="font-bold text-[#34b0e5]">●</span> Export Payroll
                         </a>
                     </div>
                 </div>
@@ -446,10 +463,6 @@
                 <div class="p-6 border-b border-slate-200/60 flex justify-between items-center">
                     <h3 class="text-lg font-bold text-[#34b0e5]">Expenses Details</h3>
                     <div class="flex gap-2">
-                        <button onclick="openPayrollModal()" class="glass text-white bg-[#2d76b7] hover:bg-blue-600 px-3 py-1.5 rounded-md text-sm font-semibold transition-colors flex items-center gap-1 no-print">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                            Generate Payroll
-                        </button>
                         <button onclick="addExpenseRow()" class="glass text-[#34b0e5] px-3 py-1.5 rounded-md text-sm font-semibold hover:bg-blue-50 transition-colors flex items-center gap-1 no-print">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                             Add Expense
@@ -523,6 +536,33 @@
             </div>
         </section>
 
+        <section id="view-payroll" class="hidden pb-8">
+            <div class="glass rounded-2xl shadow-sm mb-8 overflow-hidden flex-1 flex flex-col">
+                <div class="p-6 border-b border-slate-200/60 flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-[#34b0e5]">Payroll History</h3>
+                    <button onclick="openPayrollModal()" class="glass text-[#34b0e5] hover:bg-blue-50 px-3 py-1.5 rounded-md text-sm font-semibold transition-colors flex items-center gap-1 no-print">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        New Payroll Slip
+                    </button>
+                </div>
+                <div class="overflow-x-auto custom-scrollbar flex-1">
+                    <table class="w-full text-sm text-left table-cell-padding min-w-[700px]" id="table-payroll">
+                        <thead class="text-xs text-slate-700 uppercase bg-white/40 sticky top-0 z-10 backdrop-blur-md">
+                            <tr>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60">Date</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60">Employee</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60">Role</th>
+                                <th class="px-4 py-3 font-bold border-r border-slate-200/60">Period</th>
+                                <th class="px-4 py-3 font-bold text-right border-r border-slate-200/60">Total Payout</th>
+                                <th class="px-2 py-3 font-bold no-print">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200/60 font-medium" id="payroll-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
     </main>
 
     <div id="invoice-modal" class="fixed inset-0 hidden items-center justify-center z-50 p-2 sm:p-4">
@@ -590,102 +630,118 @@
     </div>
 
     <div id="payroll-modal" class="fixed inset-0 hidden items-center justify-center z-50 p-2 sm:p-4" style="background-color: rgba(0,0,0,0.5); backdrop-filter: blur(5px);">
-        <div class="relative w-full max-w-[800px] bg-transparent shadow-2xl" id="payroll-print-area">
-            <div class="bg-white px-8 py-6 text-center border-b-8 border-[#2d76b7]">
-                <h1 class="text-4xl font-extrabold text-[#2d76b7] tracking-tight uppercase">Payroll Slip</h1>
+        <div class="glass modal-inner rounded-2xl shadow-2xl w-full max-w-[900px] max-h-[90vh] overflow-y-auto flex flex-col">
+            <div class="p-5 border-b border-slate-200/60 flex justify-between items-center bg-white/40 rounded-t-2xl">
+                <div>
+                     <h3 class="font-bold text-xl text-slate-800">Generate Payroll Slip</h3>
+                     <p class="text-xs text-slate-500">Create a new slip for an employee.</p>
+                </div>
+                <button onclick="closePayrollModal()" class="text-slate-400 hover:text-red-500 transition-colors p-1 rounded-md hover:bg-white/50">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
             </div>
 
-            <div class="flex flex-col md:flex-row bg-[#2d76b7] border-4 border-[#2d76b7]">
-                <div class="w-full md:w-1/2 flex flex-col border-r border-white/20">
-                    <div class="flex border-b border-white/30">
-                        <div class="w-1/3 p-3 font-bold text-white text-sm">Description</div>
-                        <div class="w-2/3 p-3 font-bold text-white text-sm border-l border-white/30">Details</div>
-                    </div>
-                    <div class="flex border-b border-white/30">
-                        <div class="w-1/3 p-3 text-white text-sm flex items-center">Name</div>
-                        <div class="w-2/3 p-3 text-white text-sm border-l border-white/30">
-                            <input type="text" id="pay-name" class="payroll-input-dark bg-white/10 text-white placeholder-blue-200" placeholder="Employee Name">
+            <div id="payroll-print-area" class="p-6 md:p-8 bg-white/60">
+                
+                <div class="text-center mb-8 pb-4 border-b-2 border-[#34b0e5]">
+                    <h1 class="text-3xl font-extrabold text-[#34b0e5] tracking-tight uppercase mb-1">PAYROLL SLIP</h1>
+                    <p class="text-sm font-bold text-slate-500 uppercase tracking-widest">GN Travel Marketing LLC</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="space-y-4">
+                        <h4 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2 border-b border-slate-200 pb-1">Employee Details</h4>
+                        
+                        <div>
+                            <div class="payroll-label">Employee Name</div>
+                            <input type="text" id="pay-name" class="payroll-input-styled" placeholder="e.g. Juan Dela Cruz">
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <div class="payroll-label">Role / Position</div>
+                                <input type="text" id="pay-role" class="payroll-input-styled" placeholder="e.g. VA">
+                            </div>
+                            <div>
+                                <div class="payroll-label">Employment Type</div>
+                                <select id="pay-type" class="payroll-input-styled cursor-pointer">
+                                    <option value="Part-Time">Part-Time</option>
+                                    <option value="Full-Time">Full-Time</option>
+                                    <option value="Contract">Contract</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="payroll-label">Project / Client</div>
+                            <input type="text" id="pay-client" class="payroll-input-styled" placeholder="e.g. Client A">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                             <div>
+                                <div class="payroll-label">Pay Period</div>
+                                <input type="text" id="pay-period" class="payroll-input-styled" placeholder="Jan 1 - 15">
+                            </div>
+                            <div>
+                                <div class="payroll-label">Payout Date</div>
+                                <input type="date" id="pay-date" class="payroll-input-styled">
+                            </div>
                         </div>
                     </div>
-                     <div class="flex border-b border-white/30">
-                        <div class="w-1/3 p-3 text-white text-sm flex items-center">Role / Position</div>
-                        <div class="w-2/3 p-3 text-white text-sm border-l border-white/30">
-                            <input type="text" id="pay-role" class="payroll-input-dark bg-white/10 text-white placeholder-blue-200" placeholder="Position">
-                        </div>
-                    </div>
-                     <div class="flex border-b border-white/30">
-                        <div class="w-1/3 p-3 text-white text-sm flex items-center">Project / Client</div>
-                        <div class="w-2/3 p-3 text-white text-sm border-l border-white/30">
-                            <input type="text" id="pay-client" class="payroll-input-dark bg-white/10 text-white placeholder-blue-200" placeholder="Client Name">
-                        </div>
-                    </div>
-                     <div class="flex border-b border-white/30">
-                        <div class="w-1/3 p-3 text-white text-sm flex items-center">Employment Type</div>
-                        <div class="w-2/3 p-3 text-white text-sm border-l border-white/30">
-                            <select id="pay-type" class="payroll-input-dark bg-yellow-500/20 text-yellow-300 font-bold border-none outline-none w-auto rounded px-2">
-                                <option value="Part-Time" class="text-black">Part-Time</option>
-                                <option value="Full-Time" class="text-black">Full-Time</option>
-                                <option value="Contract" class="text-black">Contract</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="flex border-b border-white/30">
-                        <div class="w-1/3 p-3 text-white text-sm flex items-center">Pay Period</div>
-                        <div class="w-2/3 p-3 text-white text-sm border-l border-white/30">
-                            <input type="text" id="pay-period" class="payroll-input-dark bg-white/10 text-white placeholder-blue-200" placeholder="Jan 1 - Jan 15">
-                        </div>
-                    </div>
-                    <div class="flex">
-                        <div class="w-1/3 p-3 text-white text-sm flex items-center">Payout Date</div>
-                        <div class="w-2/3 p-3 text-white text-sm border-l border-white/30">
-                            <input type="date" id="pay-date" class="payroll-input-dark bg-white/20 text-white rounded px-2 w-auto">
-                        </div>
+
+                    <div class="glass rounded-xl p-5 border border-white/50 shadow-inner">
+                         <h4 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-200 pb-1">Payment Breakdown</h4>
+
+                         <div class="grid grid-cols-2 gap-4 mb-4">
+                             <div>
+                                 <div class="payroll-label">Hourly Rate</div>
+                                 <div class="relative">
+                                     <span class="absolute left-3 top-2 text-slate-400 font-bold">₱</span>
+                                     <input type="number" id="pay-rate" class="payroll-input-styled pl-7 font-bold text-slate-700" placeholder="0.00" oninput="calculatePayroll()">
+                                 </div>
+                             </div>
+                             <div>
+                                 <div class="payroll-label">Total Hours</div>
+                                 <input type="number" id="pay-hours" class="payroll-input-styled font-bold text-slate-700" placeholder="0" oninput="calculatePayroll()">
+                             </div>
+                         </div>
+
+                         <div class="space-y-3">
+                             <div class="flex justify-between items-center py-2 border-b border-dashed border-slate-300">
+                                 <span class="text-sm font-semibold text-slate-600">Base Pay</span>
+                                 <span class="font-bold text-slate-700" id="pay-base">₱0.00</span>
+                             </div>
+
+                             <div class="flex justify-between items-center">
+                                 <span class="text-sm font-semibold text-green-600">Bonus Incentives (+)</span>
+                                 <div class="relative w-24">
+                                     <input type="number" id="pay-bonus" class="text-right bg-green-50 border border-green-200 rounded px-2 py-1 text-sm font-bold text-green-700 w-full focus:outline-none focus:border-green-400" placeholder="0.00" oninput="calculatePayroll()">
+                                 </div>
+                             </div>
+
+                             <div class="flex justify-between items-center pb-2 border-b border-slate-300">
+                                 <span class="text-sm font-semibold text-red-500">Deductions (-)</span>
+                                 <div class="relative w-24">
+                                     <input type="number" id="pay-deductions" class="text-right bg-red-50 border border-red-200 rounded px-2 py-1 text-sm font-bold text-red-700 w-full focus:outline-none focus:border-red-400" placeholder="0.00" oninput="calculatePayroll()">
+                                 </div>
+                             </div>
+
+                             <div class="flex justify-between items-center pt-2 mt-2">
+                                 <span class="text-lg font-extrabold text-slate-800 uppercase">Total Payout</span>
+                                 <span class="text-2xl font-extrabold text-[#34b0e5]" id="pay-total">₱0.00</span>
+                             </div>
+                         </div>
                     </div>
                 </div>
 
-                <div class="w-full md:w-1/2 flex flex-col">
-                    <div class="flex border-b border-white/30">
-                        <div class="w-1/2 p-3 font-bold text-white text-sm">Description</div>
-                        <div class="w-1/2 p-3 font-bold text-white text-sm text-right">Amount</div>
-                    </div>
-                    <div class="flex border-b border-white/30">
-                        <div class="w-1/2 p-3 text-white text-sm flex items-center">Rate</div>
-                        <div class="w-1/2 p-3 text-white text-sm border-l border-white/30">
-                             <input type="number" id="pay-rate" class="payroll-input" placeholder="0.00" oninput="calculatePayroll()">
-                        </div>
-                    </div>
-                    <div class="flex border-b border-white/30">
-                        <div class="w-1/2 p-3 text-white text-sm flex items-center">Total Hours</div>
-                        <div class="w-1/2 p-3 text-white text-sm border-l border-white/30">
-                             <input type="number" id="pay-hours" class="payroll-input" placeholder="0.00" oninput="calculatePayroll()">
-                        </div>
-                    </div>
-                    <div class="flex border-b border-white/30 bg-blue-600/20">
-                        <div class="w-1/2 p-3 text-white text-sm flex items-center font-bold">Base Pay</div>
-                        <div class="w-1/2 p-3 text-white text-sm border-l border-white/30 font-bold text-right" id="pay-base">₱0.00</div>
-                    </div>
-                    <div class="flex border-b border-white/30 bg-green-500">
-                        <div class="w-1/2 p-3 text-white text-sm flex items-center font-bold">Bonus Incentives</div>
-                        <div class="w-1/2 p-3 text-white text-sm border-l border-white/30">
-                            <input type="number" id="pay-bonus" class="payroll-input" placeholder="0.00" oninput="calculatePayroll()">
-                        </div>
-                    </div>
-                    <div class="flex border-b border-white/30 bg-red-500">
-                        <div class="w-1/2 p-3 text-white text-sm flex items-center font-bold">Deductions</div>
-                        <div class="w-1/2 p-3 text-white text-sm border-l border-white/30">
-                            <input type="number" id="pay-deductions" class="payroll-input" placeholder="0.00" oninput="calculatePayroll()">
-                        </div>
-                    </div>
-                    <div class="flex bg-white/10">
-                        <div class="w-1/2 p-3 text-white text-sm flex items-center font-extrabold text-lg">Total Payout</div>
-                        <div class="w-1/2 p-3 text-white text-lg border-l border-white/30 font-extrabold text-right" id="pay-total">₱0.00</div>
-                    </div>
+                <div class="mt-8 text-center text-xs text-slate-400">
+                    <p>Generated by GN Travel Marketing Finance Tracker</p>
                 </div>
             </div>
 
-            <div class="bg-white p-4 flex justify-end gap-2 no-print">
-                 <button onclick="closePayrollModal()" class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors font-medium">Cancel</button>
-                 <button onclick="saveAndPrintPayroll()" class="px-4 py-2 bg-[#2d76b7] hover:bg-blue-600 text-white rounded-lg shadow-md transition-all flex items-center gap-2 font-bold">
+            <div class="p-4 border-t border-slate-200/60 bg-white/40 flex justify-end gap-3 rounded-b-2xl no-print">
+                 <button onclick="closePayrollModal()" class="px-5 py-2.5 text-slate-600 hover:bg-white/60 rounded-xl transition-all font-semibold text-sm">Cancel</button>
+                 <button onclick="saveAndPrintPayroll()" class="px-5 py-2.5 bg-[#34b0e5] hover:bg-[#2d9acb] text-white rounded-xl shadow-lg shadow-blue-200 transition-all flex items-center gap-2 font-bold text-sm transform active:scale-95">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                     Save & Print
                 </button>
@@ -744,6 +800,7 @@
         let expenseRecords = [];
         let cashAccounts = [];
         let cashMovement = {};
+        let payrollRecords = []; // Added for new section
         let businessColumns = ['Service A', 'Service B'];
         let businessData = {};
         let dashboardExpenses = {};
@@ -866,6 +923,7 @@
             updateIncomeTracker();
             renderIncomeTable();
             renderExpenseTable();
+            renderPayrollTable();
             calculateCashMovement();
         }
 
@@ -875,6 +933,7 @@
             initDashboard(); 
             renderIncomeTable();
             renderExpenseTable();
+            renderPayrollTable();
             updateIncomeTracker();
             calculateDashboard(); 
         }
@@ -900,6 +959,9 @@
                 const cashMovementData = await apiGet('cash?type=movement');
                 if (cashMovementData) cashMovement = cashMovementData;
 
+                const payrollData = await apiGet('payroll');
+                if (payrollData) payrollRecords = payrollData;
+
                 const businessDataResult = await apiGet('business');
                 if (businessDataResult) {
                     businessColumns = businessDataResult.columns || ['Service A', 'Service B'];
@@ -910,6 +972,7 @@
                 initDashboard();
                 renderIncomeTable();
                 renderExpenseTable();
+                renderPayrollTable();
                 renderCashAccountsTable();
                 initCashMovement();
                 calculateDashboard();
@@ -991,6 +1054,28 @@
             document.getElementById('pay-total').innerText = '₱' + total.toFixed(2);
         }
 
+        function renderPayrollTable() {
+            const tbody = document.getElementById('payroll-body');
+            tbody.innerHTML = '';
+            payrollRecords.forEach(record => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-white/20 transition-colors";
+                tr.innerHTML = `
+                    <td class="px-4 py-3 border-r border-slate-200/60 text-slate-700">${record.payout_date || record.payoutDate}</td>
+                    <td class="px-4 py-3 border-r border-slate-200/60 font-bold text-slate-700">${record.employee_name || record.name}</td>
+                    <td class="px-4 py-3 border-r border-slate-200/60 text-slate-600">${record.role_position || record.role}</td>
+                    <td class="px-4 py-3 border-r border-slate-200/60 text-slate-600">${record.pay_period || record.period}</td>
+                    <td class="px-4 py-3 text-right border-r border-slate-200/60 font-bold text-[#34b0e5]">${formatMoney(record.total_payout || record.total)}</td>
+                    <td class="px-2 py-3 text-center no-print">
+                        <button class="text-slate-400 hover:text-blue-500 transition-colors">
+                           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
         async function saveAndPrintPayroll() {
             // Get values
             const name = document.getElementById('pay-name').value;
@@ -1011,9 +1096,13 @@
 
             // 2. Save detailed payroll record to Backend
             const payrollData = { name, role, client, type, period, payoutDate: date, rate, hours, basePay, bonus, deductions, total };
-            await apiPost('payroll', payrollData);
+            const savedRecord = await apiPost('payroll', payrollData);
+            
+            // 3. Update local payroll table
+            if (savedRecord) payrollRecords.unshift(savedRecord); // Add to top
+            renderPayrollTable();
 
-            // 3. Add to Expense Tracker
+            // 4. Add to Expense Tracker
             const newExpense = {
                 id: Date.now().toString(),
                 date: date || new Date().toISOString().split('T')[0],
@@ -1075,7 +1164,13 @@
         }
 
         function switchView(viewId) {
-            const titles = { 'dashboard': 'Business Dashboard', 'income': 'Income Tracker', 'expenses': 'Expenses Tracker', 'cash': 'Cash Overview' };
+            const titles = { 
+                'dashboard': 'Business Dashboard', 
+                'income': 'Income Tracker', 
+                'expenses': 'Expenses Tracker', 
+                'cash': 'Cash Overview',
+                'payroll': 'Payroll Generator'
+            };
             document.getElementById('page-title').innerText = titles[viewId] || 'Finance Tracker';
             
             document.querySelectorAll('section[id^="view-"]').forEach(el => el.classList.add('hidden'));
@@ -1091,6 +1186,7 @@
             if(viewId === 'income') updateIncomeTracker();
             if(viewId === 'dashboard') calculateDashboard();
             if(viewId === 'cash') calculateCashMovement();
+            if(viewId === 'payroll') renderPayrollTable();
 
             closeSidebar();
             resizeChartsForView(viewId);
