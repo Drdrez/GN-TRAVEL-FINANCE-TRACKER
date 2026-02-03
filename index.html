@@ -352,12 +352,12 @@
 
             <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
                 
-                <div class="glass rounded-2xl shadow-sm overflow-hidden">
-                    <div class="p-4 sm:p-6 border-b border-slate-200/60 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                <div class="glass rounded-2xl shadow-sm overflow-hidden flex flex-col h-full">
+                    <div class="p-4 sm:p-6 border-b border-slate-200/60 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 xl:min-h-[88px] justify-center">
                         <h3 class="text-base sm:text-lg font-bold text-[#34b0e5]">Income & Expenses Breakdown</h3>
                         <div class="text-xs text-slate-500 italic no-print">Edit 'Expenses' column. 'Income' is auto-calculated.</div>
                     </div>
-                    <div class="overflow-x-auto custom-scrollbar">
+                    <div class="overflow-x-auto custom-scrollbar flex-1">
                         <table class="w-full text-sm text-left table-cell-padding min-w-[600px]" id="table-main">
                             <thead class="text-xs text-slate-700 uppercase bg-white/40">
                                 <tr>
@@ -382,8 +382,8 @@
                     </div>
                 </div>
 
-                <div class="glass rounded-2xl shadow-sm overflow-hidden">
-                    <div class="p-4 sm:p-6 border-b border-slate-200/60 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+                <div class="glass rounded-2xl shadow-sm overflow-hidden flex flex-col h-full">
+                    <div class="p-4 sm:p-6 border-b border-slate-200/60 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 xl:min-h-[88px] justify-center">
                         <div>
                             <h3 class="text-base sm:text-lg font-bold text-[#34b0e5]">Business Income</h3>
                         </div>
@@ -398,7 +398,7 @@
                             </button>
                         </div>
                     </div>
-                    <div class="overflow-x-auto custom-scrollbar">
+                    <div class="overflow-x-auto custom-scrollbar flex-1">
                         <table class="w-full text-sm text-left table-cell-padding min-w-[400px]" id="table-business">
                             <thead class="text-xs text-slate-700 uppercase bg-white/40">
                                 <tr id="business-header-row">
@@ -512,7 +512,7 @@
             <div class="glass rounded-2xl shadow-sm mt-8 mb-8 overflow-hidden">
                 <div class="p-6 border-b border-slate-200/60 flex justify-between items-center">
                     <h3 class="text-lg font-bold text-[#34b0e5]">Monthly Expense Cash Flow</h3>
-                    <div class="text-xs text-slate-500 italic">Net Cash Change is auto-calculated</div>
+                    <div class="text-xs text-slate-500 italic">Independent of Cash Overview</div>
                 </div>
                 <div class="overflow-x-auto custom-scrollbar">
                     <table class="w-full text-sm text-left table-cell-padding min-w-[320px]">
@@ -1758,4 +1758,3 @@
     </script>
 </body>
 </html>
-
