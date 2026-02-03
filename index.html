@@ -1201,7 +1201,20 @@
         }
 
         function addBusinessColumn(defaultName = "New Service") {
-            const name = defaultName;
+            let name = defaultName;
+            let counter = 1;
+            // Check existing headers to avoid duplicate names
+            const headers = Array.from(document.querySelectorAll('#table-business thead th .editable-header')).map(el => el.innerText);
+            while(headers.includes(name)) {
+                name = `${defaultName} ${counter}`;
+                counter++;
+            }
+            
+            // CLEANUP FIX: Ensure no ghost data exists for this new column name
+            MONTHS.forEach(month => {
+                delete businessData[currentYear + '_' + name + '_' + month];
+            });
+
             businessColumns.push(name);
             addBusinessColumnUI(name);
             scheduleSave(saveBusinessData);
@@ -1214,7 +1227,10 @@
             const colName = th.querySelector('.editable-header').innerText;
             const colData = {};
             MONTHS.forEach(month => {
-                colData[month] = businessData[currentYear + '_' + colName + '_' + month] || 0;
+                const key = currentYear + '_' + colName + '_' + month;
+                colData[month] = businessData[key] || 0;
+                // CLEANUP FIX: Delete data from memory so it doesn't reappear
+                delete businessData[key]; 
             });
             deletedColumns.push({ name: colName, data: colData, index: colIndex - 1 });
             document.getElementById('restore-btn').disabled = false;
