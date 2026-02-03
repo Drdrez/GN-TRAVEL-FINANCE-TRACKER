@@ -259,6 +259,11 @@
             </div>
             
             <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                <button onclick="exportToCSV()" class="glass rounded-lg px-3 py-2 text-sm shadow-sm flex items-center gap-2 hover:bg-green-50 text-green-600 transition-colors font-bold" title="Download Excel CSV">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <span>Export</span>
+                </button>
+
                 <div class="glass rounded-lg px-1 py-1 text-sm shadow-sm flex items-center">
                     <button onclick="toggleCurrency('PHP')" id="btn-php" class="px-3 py-1 rounded-md text-xs font-bold bg-blue-100 text-blue-600 transition-colors">PHP</button>
                     <button onclick="toggleCurrency('USD')" id="btn-usd" class="px-3 py-1 rounded-md text-xs font-bold text-gray-500 hover:bg-white/50 transition-colors">USD</button>
@@ -667,7 +672,9 @@
         let businessColumns = ['Service A', 'Service B'];
         let businessData = {};
         let dashboardExpenses = {};
-        let deletedColumns = [];
+        
+        // UPDATED: Use LocalStorage for deleted columns memory
+        let deletedColumns = JSON.parse(localStorage.getItem('deletedColumns_GN')) || [];
 
         // --- PAGINATION STATE ---
         const ROWS_PER_PAGE = 10;
@@ -805,9 +812,12 @@
             return symbol + val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
+        // UPDATED: Secure toggleCurrency to prevent editing corruption
         function toggleCurrency(curr) {
             if(curr === currentCurrency) return;
             currentCurrency = curr;
+            
+            // UI Button Toggles
             if(curr === 'PHP') {
                 document.getElementById('btn-php').className = "px-3 py-1 rounded-md text-xs font-bold bg-blue-100 text-blue-600 transition-colors";
                 document.getElementById('btn-usd').className = "px-3 py-1 rounded-md text-xs font-bold text-gray-500 hover:bg-white/50 transition-colors";
@@ -815,6 +825,21 @@
                 document.getElementById('btn-usd').className = "px-3 py-1 rounded-md text-xs font-bold bg-blue-100 text-blue-600 transition-colors";
                 document.getElementById('btn-php').className = "px-3 py-1 rounded-md text-xs font-bold text-gray-500 hover:bg-white/50 transition-colors";
             }
+
+            // CRITICAL FIX: DISABLE EDITING IN USD
+            const isEditable = (curr === 'PHP');
+            document.querySelectorAll('[contenteditable="true"]').forEach(el => {
+                el.contentEditable = isEditable;
+                el.style.cursor = isEditable ? 'text' : 'not-allowed';
+                el.style.opacity = isEditable ? '1' : '0.7'; 
+            });
+            document.querySelectorAll('.editable-input').forEach(el => {
+                el.disabled = !isEditable;
+                el.style.opacity = isEditable ? '1' : '0.7';
+                el.style.cursor = isEditable ? 'pointer' : 'not-allowed';
+            });
+
+            // Re-render
             calculateDashboard();
             updateIncomeTracker();
             renderIncomeTable();
@@ -839,6 +864,38 @@
         function scheduleSave(saveFunction) {
             if (saveTimeout) clearTimeout(saveTimeout);
             saveTimeout = setTimeout(saveFunction, SAVE_DELAY);
+        }
+
+        // --- NEW: CSV EXPORT FUNCTION ---
+        function exportToCSV() {
+            // 1. Setup Headers
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "TYPE,DATE,CLIENT/VENDOR,CATEGORY/SERVICE,AMOUNT,STATUS,NOTES\n";
+
+            // 2. Add Income Data
+            incomeRecords.forEach(row => {
+                const client = (row.clientName || "").replace(/,/g, " ");
+                const notes = (row.notes || "").replace(/,/g, " ");
+                const cleanAmount = row.net || 0;
+                csvContent += `INCOME,${row.date},${client},${row.serviceType},${cleanAmount},${row.status},${notes}\n`;
+            });
+
+            // 3. Add Expense Data
+            expenseRecords.forEach(row => {
+                const vendor = (row.vendor || "").replace(/,/g, " ");
+                const notes = (row.notes || "").replace(/,/g, " ");
+                const cleanAmount = row.amount || 0;
+                csvContent += `EXPENSE,${row.date},${vendor},${row.category},-${cleanAmount},${row.status},${notes}\n`;
+            });
+
+            // 4. Trigger Download
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `GN_Finance_Data_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
         // --- DATA PERSISTENCE ---
@@ -1141,39 +1198,58 @@
             scheduleSave(saveBusinessData);
         }
 
+        // UPDATED: Logic to save deleted columns to LocalStorage
         function removeBusinessColumn(btn) {
+            if (!confirm("Are you sure you want to remove this column? It will be moved to the 'Restore' stack.")) return;
+
             const th = btn.closest('th');
             const headRow = th.parentElement;
             const colIndex = Array.from(headRow.children).indexOf(th);
             const colName = th.querySelector('.editable-header').innerText;
             const colData = {};
+            
             MONTHS.forEach(month => {
                 const key = currentYear + '_' + colName + '_' + month;
                 colData[month] = businessData[key] || 0;
                 delete businessData[key]; 
             });
+
+            // Add to array & Save to LocalStorage
             deletedColumns.push({ name: colName, data: colData, index: colIndex - 1 });
+            localStorage.setItem('deletedColumns_GN', JSON.stringify(deletedColumns));
+
             document.getElementById('restore-btn').disabled = false;
+            
             const arrayIndex = colIndex - 1;
             if (arrayIndex >= 0) { businessColumns.splice(arrayIndex, 1); }
+            
             th.remove();
             const bodyRows = document.querySelectorAll('#table-business tbody tr');
             bodyRows.forEach(row => { if (row.children[colIndex]) row.children[colIndex].remove(); });
+            
             const footerRow = document.getElementById('business-footer-row');
             if (footerRow.children[colIndex]) footerRow.children[colIndex].remove();
+            
             calculateDashboard();
             scheduleSave(saveBusinessData);
         }
 
+        // UPDATED: Logic to restore from memory/LocalStorage
         function restoreColumn() {
             if (deletedColumns.length === 0) return;
+            
             const restored = deletedColumns.pop();
+            // Update LocalStorage
+            localStorage.setItem('deletedColumns_GN', JSON.stringify(deletedColumns));
+            
             businessColumns.splice(restored.index, 0, restored.name);
             MONTHS.forEach(month => {
                 businessData[currentYear + '_' + restored.name + '_' + month] = restored.data[month];
             });
+            
             initDashboard();
             calculateDashboard();
+            
             if (deletedColumns.length === 0) document.getElementById('restore-btn').disabled = true;
             scheduleSave(saveBusinessData);
         }
@@ -1782,8 +1858,12 @@
             initCharts();
             loadAllData();
             fetchLiveExchangeRate();
+
+            // Enable Restore button if local history exists
+            if (deletedColumns.length > 0) {
+                document.getElementById('restore-btn').disabled = false;
+            }
         };
     </script>
 </body>
 </html>
-
