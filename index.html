@@ -8,7 +8,6 @@
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
         :root {
@@ -83,7 +82,7 @@
             white-space: nowrap;
             overflow: hidden;
             line-height: 1.25;
-            appearance: none;
+            appearance: none; 
             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
             background-position: right 0.2rem center;
             background-repeat: no-repeat;
@@ -171,99 +170,26 @@
             #invoice-print-area { position: absolute; left: 0; top: 0; width: 100%; background: white; padding: 20px; }
             body * { visibility: hidden; }
         }
-
-        /* --- PDF EXPORT STYLES (FIXED) --- */
-        .pdf-mode {
-            background: white !important;
-            /* Force Desktop Width for Snapshot */
-            width: 1200px !important;
-            min-width: 1200px !important;
-            max-width: 1200px !important;
-            padding: 20px !important;
-            margin: 0 auto !important;
-            
-            /* Positioning to ensure clean capture */
-            position: absolute !important;
-            top: 0 !important;
-            left: 0 !important;
-            z-index: 9999 !important;
-        }
-
-        /* Hide layout wrappers when exporting */
-        body.exporting {
-            overflow: hidden !important;
-            height: auto !important;
-        }
-        body.exporting #sidebar, 
-        body.exporting header, 
-        body.exporting .mobile-menu-btn,
-        body.exporting #save-indicator {
-            display: none !important;
-        }
-
-        /* Force Grid Layouts to Desktop view */
-        .pdf-mode .grid {
-            display: grid !important;
-        }
         
-        /* Force KPIs to 4 columns */
-        .pdf-mode .grid-cols-1.md\:grid-cols-2.lg\:grid-cols-4 {
-            grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        /* Pagination Styles */
+        .pagination-btn {
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.2s;
+            background: rgba(255,255,255,0.6);
+            border: 1px solid rgba(203, 213, 225, 0.6);
+            color: var(--text-dark);
         }
-        
-        /* Force Charts to 3 columns */
-        .pdf-mode .grid-cols-1.lg\:grid-cols-3 {
-            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        .pagination-btn:hover:not(:disabled) {
+            background: white;
+            border-color: var(--primary-blue);
+            color: var(--primary-blue);
         }
-        
-        /* Force Tables to 2 columns */
-        .pdf-mode .grid-cols-1.xl\:grid-cols-2 {
-            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-        }
-        
-        /* Force Income View to 3 columns */
-        .pdf-mode .grid-cols-1.md\:grid-cols-3 {
-            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-        }
-
-        /* Remove Glass effects for crisp PDF */
-        .pdf-mode .glass {
-            background: #ffffff !important;
-            border: 1px solid #e2e8f0 !important;
-            box-shadow: none !important;
-            backdrop-filter: none !important;
-            break-inside: avoid; /* Prevent page break inside cards */
-        }
-
-        /* Typography & Element cleanups */
-        .pdf-mode h3 { color: #34b0e5 !important; }
-        .pdf-mode table { font-size: 10px !important; }
-        .pdf-mode th, .pdf-mode td { padding: 6px !important; }
-        
-        /* Handle scrollbars */
-        .pdf-mode .overflow-x-auto, 
-        .pdf-mode .overflow-y-auto, 
-        .pdf-mode .custom-scrollbar {
-            overflow: visible !important;
-            height: auto !important;
-            max-height: none !important;
-            display: block !important;
-        }
-
-        /* Clean inputs */
-        .pdf-mode input, .pdf-mode select { 
-            border: none !important; 
-            background: transparent !important; 
-            appearance: none !important; 
-            padding: 0 !important;
-            font-weight: 600 !important;
-            color: #334155 !important;
-        }
-        
-        /* Hide buttons */
-        .pdf-mode button, 
-        .pdf-mode .no-print {
-            display: none !important;
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
     </style>
 </head>
@@ -333,27 +259,6 @@
             </div>
             
             <div class="flex flex-wrap items-center gap-2 sm:gap-3">
-                <div class="relative" id="export-dropdown-wrap">
-                    <button type="button" class="glass rounded-lg px-4 py-2 text-sm shadow-sm flex items-center gap-2 hover:bg-white/80 transition-all text-slate-700 font-medium" onclick="toggleExportDropdown(event)" id="export-btn">
-                        <svg class="w-4 h-4 text-slate-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                        <span>Export PDF</span>
-                    </button>
-                    <div id="export-dropdown" class="absolute right-0 mt-2 w-56 glass rounded-lg shadow-xl border border-white/60 z-50 hidden">
-                        <a href="#" onclick="exportToPDF('dashboard'); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-white/50 first:rounded-t-lg">
-                             <span class="font-bold text-[#34b0e5]">●</span> Export Dashboard
-                        </a>
-                        <a href="#" onclick="exportToPDF('income'); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-white/50">
-                             <span class="font-bold text-[#34b0e5]">●</span> Export Income
-                        </a>
-                        <a href="#" onclick="exportToPDF('expenses'); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-white/50">
-                             <span class="font-bold text-[#34b0e5]">●</span> Export Expenses
-                        </a>
-                        <a href="#" onclick="exportToPDF('cash'); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-white/50 last:rounded-b-lg">
-                             <span class="font-bold text-[#34b0e5]">●</span> Export Cash Flow
-                        </a>
-                    </div>
-                </div>
-
                 <div class="glass rounded-lg px-1 py-1 text-sm shadow-sm flex items-center">
                     <button onclick="toggleCurrency('PHP')" id="btn-php" class="px-3 py-1 rounded-md text-xs font-bold bg-blue-100 text-blue-600 transition-colors">PHP</button>
                     <button onclick="toggleCurrency('USD')" id="btn-usd" class="px-3 py-1 rounded-md text-xs font-bold text-gray-500 hover:bg-white/50 transition-colors">USD</button>
@@ -531,6 +436,15 @@
                         <tbody class="divide-y divide-slate-200/60 font-medium" id="tracker-body"></tbody>
                     </table>
                 </div>
+                <div class="flex flex-col sm:flex-row justify-between items-center p-4 border-t border-slate-200/60 bg-white/40 gap-3">
+                    <span class="text-xs sm:text-sm text-slate-500 font-medium order-2 sm:order-1">
+                        Showing <span id="income-start" class="font-bold text-slate-700">0</span> to <span id="income-end" class="font-bold text-slate-700">0</span> of <span id="income-total" class="font-bold text-slate-700">0</span> entries
+                    </span>
+                    <div class="flex gap-2 order-1 sm:order-2">
+                        <button onclick="changePage('income', -1)" id="btn-prev-income" class="pagination-btn disabled:opacity-50 disabled:cursor-not-allowed" disabled>Previous</button>
+                        <button onclick="changePage('income', 1)" id="btn-next-income" class="pagination-btn disabled:opacity-50 disabled:cursor-not-allowed" disabled>Next</button>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -562,6 +476,15 @@
                         </thead>
                         <tbody class="divide-y divide-slate-200/60 font-medium" id="expenses-body"></tbody>
                     </table>
+                </div>
+                <div class="flex flex-col sm:flex-row justify-between items-center p-4 border-t border-slate-200/60 bg-white/40 gap-3">
+                    <span class="text-xs sm:text-sm text-slate-500 font-medium order-2 sm:order-1">
+                        Showing <span id="expense-start" class="font-bold text-slate-700">0</span> to <span id="expense-end" class="font-bold text-slate-700">0</span> of <span id="expense-total" class="font-bold text-slate-700">0</span> entries
+                    </span>
+                    <div class="flex gap-2 order-1 sm:order-2">
+                        <button onclick="changePage('expense', -1)" id="btn-prev-expense" class="pagination-btn disabled:opacity-50 disabled:cursor-not-allowed" disabled>Previous</button>
+                        <button onclick="changePage('expense', 1)" id="btn-next-expense" class="pagination-btn disabled:opacity-50 disabled:cursor-not-allowed" disabled>Next</button>
+                    </div>
                 </div>
             </div>
 
@@ -609,6 +532,15 @@
                         </thead>
                         <tbody class="divide-y divide-slate-200/60 font-medium" id="cash-balances-body"></tbody>
                     </table>
+                </div>
+                <div class="flex flex-col sm:flex-row justify-between items-center p-4 border-t border-slate-200/60 bg-white/40 gap-3">
+                    <span class="text-xs sm:text-sm text-slate-500 font-medium order-2 sm:order-1">
+                        Showing <span id="cash-start" class="font-bold text-slate-700">0</span> to <span id="cash-end" class="font-bold text-slate-700">0</span> of <span id="cash-total" class="font-bold text-slate-700">0</span> entries
+                    </span>
+                    <div class="flex gap-2 order-1 sm:order-2">
+                        <button onclick="changePage('cash', -1)" id="btn-prev-cash" class="pagination-btn disabled:opacity-50 disabled:cursor-not-allowed" disabled>Previous</button>
+                        <button onclick="changePage('cash', 1)" id="btn-next-cash" class="pagination-btn disabled:opacity-50 disabled:cursor-not-allowed" disabled>Next</button>
+                    </div>
                 </div>
             </div>
 
@@ -721,24 +653,6 @@
             overlay.classList.remove('sidebar-open');
             overlay.setAttribute('aria-hidden', 'true');
         }
-
-        // --- EXPORT DROPDOWN ---
-        function toggleExportDropdown(e) {
-            e.stopPropagation();
-            const dd = document.getElementById('export-dropdown');
-            if (dd) dd.classList.toggle('hidden');
-        }
-        function closeExportDropdown() {
-            const dd = document.getElementById('export-dropdown');
-            if (dd) dd.classList.add('hidden');
-        }
-        document.addEventListener('click', function(e) {
-            const wrap = document.getElementById('export-dropdown-wrap');
-            const dd = document.getElementById('export-dropdown');
-            if (dd && !dd.classList.contains('hidden') && wrap && !wrap.contains(e.target)) {
-                closeExportDropdown();
-            }
-        });
         
         // --- LIVE CURRENCY ---
         let currentCurrency = 'PHP';
@@ -754,6 +668,12 @@
         let businessData = {};
         let dashboardExpenses = {};
         let deletedColumns = [];
+
+        // --- PAGINATION STATE ---
+        const ROWS_PER_PAGE = 10;
+        let pgIncome = 1;
+        let pgExpense = 1;
+        let pgCash = 1;
 
         // --- SAVE DEBOUNCE ---
         let saveTimeout = null;
@@ -907,6 +827,9 @@
             currentYear = parseInt(year);
             document.getElementById('year-selector').value = year;
             initDashboard(); 
+            // Reset pagination on filter change
+            pgIncome = 1;
+            pgExpense = 1;
             renderIncomeTable();
             renderExpenseTable();
             updateIncomeTracker();
@@ -946,7 +869,7 @@
                 renderExpenseTable();
                 renderCashAccountsTable();
                 initCashMovement();
-                initExpensesMovement(); // New Independent Table
+                initExpensesMovement(); 
                 calculateDashboard();
                 resizeChartsForView('dashboard');
             } catch (error) {
@@ -962,64 +885,6 @@
         async function saveCashMovement() { await apiPost('cash?type=movement', cashMovement); }
         async function saveBusinessData() {
             await apiPost('business', { columns: businessColumns, businessData: businessData, dashboardExpenses: dashboardExpenses });
-        }
-
-        // --- PDF EXPORT FUNCTION (FIXED) ---
-        function exportToPDF(viewId) {
-            // Close dropdown
-            closeExportDropdown();
-            
-            const element = document.getElementById('view-' + viewId);
-            if (!element) return;
-
-            // Prepare UI for snapshot
-            let wasHidden = false;
-            if (element.classList.contains('hidden')) {
-                wasHidden = true;
-                element.classList.remove('hidden');
-            }
-
-            // Apply PDF mode class AND global export class
-            element.classList.add('pdf-mode');
-            document.body.classList.add('exporting');
-
-            // Force scroll to top
-            window.scrollTo(0, 0);
-
-            // Show loading
-            const loader = document.getElementById('loading-overlay');
-            loader.style.display = 'flex';
-
-            // Wait for charts to redraw if needed
-            setTimeout(() => {
-                const opt = {
-                    margin:       0.2,
-                    filename:     `${viewId}_report_${currentYear}.pdf`,
-                    image:        { type: 'jpeg', quality: 0.98 },
-                    html2canvas:  { 
-                        scale: 2, 
-                        useCORS: true, 
-                        logging: false,
-                        windowWidth: 1400 // Trick html2canvas into thinking it's a desktop
-                    },
-                    jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
-                };
-
-                html2pdf().from(element).set(opt).save().then(() => {
-                    // Cleanup
-                    element.classList.remove('pdf-mode');
-                    document.body.classList.remove('exporting');
-                    if (wasHidden) element.classList.add('hidden');
-                    loader.style.display = 'none';
-                }).catch(err => {
-                    console.error("PDF Export failed:", err);
-                    element.classList.remove('pdf-mode');
-                    document.body.classList.remove('exporting');
-                    if (wasHidden) element.classList.add('hidden');
-                    loader.style.display = 'none';
-                    alert("Failed to generate PDF. Please try again.");
-                });
-            }, 500);
         }
 
         // --- INVOICE GENERATOR ---
@@ -1261,14 +1126,12 @@
         function addBusinessColumn(defaultName = "New Service") {
             let name = defaultName;
             let counter = 1;
-            // Check existing headers to avoid duplicate names
             const headers = Array.from(document.querySelectorAll('#table-business thead th .editable-header')).map(el => el.innerText);
             while(headers.includes(name)) {
                 name = `${defaultName} ${counter}`;
                 counter++;
             }
             
-            // CLEANUP FIX: Ensure no ghost data exists for this new column name
             MONTHS.forEach(month => {
                 delete businessData[currentYear + '_' + name + '_' + month];
             });
@@ -1287,7 +1150,6 @@
             MONTHS.forEach(month => {
                 const key = currentYear + '_' + colName + '_' + month;
                 colData[month] = businessData[key] || 0;
-                // CLEANUP FIX: Delete data from memory so it doesn't reappear
                 delete businessData[key]; 
             });
             deletedColumns.push({ name: colName, data: colData, index: colIndex - 1 });
@@ -1332,7 +1194,7 @@
             });
         }
 
-        // --- INCOME TRACKER ---
+        // --- INCOME TRACKER WITH PAGINATION ---
         const serviceOptions = ["Social Media Management", "Virtual Assistance", "Paid Ads", "Branding", "Graphic Design"];
         const pricingOptions = ["Monthly Retainer", "Project-Based"];
         const statusOptions = ["Paid", "Pending", "Overdue"];
@@ -1340,13 +1202,37 @@
         function renderIncomeTable() {
             const tbody = document.getElementById('tracker-body');
             tbody.innerHTML = '';
-            incomeRecords.forEach((record, index) => {
+            
+            // Filter first
+            const filtered = incomeRecords.filter(record => {
                 const recordYear = new Date(record.date).getFullYear();
-                if (!record.date || recordYear === currentYear) {
-                    const tr = createIncomeRow(record, index);
-                    tbody.appendChild(tr);
-                }
+                return !record.date || recordYear === currentYear;
             });
+
+            // Calculate pagination
+            const totalItems = filtered.length;
+            const totalPages = Math.ceil(totalItems / ROWS_PER_PAGE);
+            if (pgIncome > totalPages) pgIncome = totalPages || 1;
+            if (pgIncome < 1) pgIncome = 1;
+
+            // Slice data for current page
+            const start = (pgIncome - 1) * ROWS_PER_PAGE;
+            const end = start + ROWS_PER_PAGE;
+            const pageData = filtered.slice(start, end);
+
+            // Render Rows
+            pageData.forEach((record, index) => {
+                const tr = createIncomeRow(record, index);
+                tbody.appendChild(tr);
+            });
+
+            // Update UI Controls
+            document.getElementById('income-start').innerText = totalItems === 0 ? 0 : start + 1;
+            document.getElementById('income-end').innerText = Math.min(end, totalItems);
+            document.getElementById('income-total').innerText = totalItems;
+            document.getElementById('btn-prev-income').disabled = pgIncome <= 1;
+            document.getElementById('btn-next-income').disabled = pgIncome >= totalPages;
+
             updateIncomeTracker();
         }
 
@@ -1402,6 +1288,14 @@
                 notes: ''
             };
             incomeRecords.push(newRecord);
+            
+            // Jump to last page to see new entry
+            const filtered = incomeRecords.filter(record => {
+                const recordYear = new Date(record.date).getFullYear();
+                return !record.date || recordYear === currentYear;
+            });
+            pgIncome = Math.ceil(filtered.length / ROWS_PER_PAGE) || 1;
+            
             renderIncomeTable();
             scheduleSave(saveIncomeRecords);
         }
@@ -1435,8 +1329,7 @@
             const tr = btn.closest('tr');
             const id = tr.getAttribute('data-id');
             incomeRecords = incomeRecords.filter(r => r.id !== id);
-            tr.remove();
-            updateIncomeTracker();
+            renderIncomeTable(); // Re-render to update pagination
             scheduleSave(saveIncomeRecords);
         }
 
@@ -1467,7 +1360,7 @@
             }
         }
 
-        // --- EXPENSES TRACKER ---
+        // --- EXPENSES TRACKER WITH PAGINATION ---
         const expenseCategories = ["Payroll", "Software / Tools", "Advertising", "Payment Processing Fees", "Tax", "Education / Coaching", "Miscellaneous"];
         const expenseTypes = ["Fixed", "Variable"];
         const expensePayments = ["Card", "Bank", "Cash", "Transfer"];
@@ -1477,13 +1370,33 @@
         function renderExpenseTable() {
             const tbody = document.getElementById('expenses-body');
             tbody.innerHTML = '';
-            expenseRecords.forEach((record, index) => {
+            
+            const filtered = expenseRecords.filter(record => {
                 const recordYear = new Date(record.date).getFullYear();
-                if (!record.date || recordYear === currentYear) {
-                    const tr = createExpenseRow(record, index);
-                    tbody.appendChild(tr);
-                }
+                return !record.date || recordYear === currentYear;
             });
+
+            // Pagination Logic
+            const totalItems = filtered.length;
+            const totalPages = Math.ceil(totalItems / ROWS_PER_PAGE);
+            if (pgExpense > totalPages) pgExpense = totalPages || 1;
+            if (pgExpense < 1) pgExpense = 1;
+
+            const start = (pgExpense - 1) * ROWS_PER_PAGE;
+            const end = start + ROWS_PER_PAGE;
+            const pageData = filtered.slice(start, end);
+
+            pageData.forEach((record, index) => {
+                const tr = createExpenseRow(record, index);
+                tbody.appendChild(tr);
+            });
+
+            // Update UI
+            document.getElementById('expense-start').innerText = totalItems === 0 ? 0 : start + 1;
+            document.getElementById('expense-end').innerText = Math.min(end, totalItems);
+            document.getElementById('expense-total').innerText = totalItems;
+            document.getElementById('btn-prev-expense').disabled = pgExpense <= 1;
+            document.getElementById('btn-next-expense').disabled = pgExpense >= totalPages;
         }
 
         function createExpenseRow(record, index) {
@@ -1536,6 +1449,13 @@
                 notes: ''
             };
             expenseRecords.push(newRecord);
+            
+            const filtered = expenseRecords.filter(record => {
+                const recordYear = new Date(record.date).getFullYear();
+                return !record.date || recordYear === currentYear;
+            });
+            pgExpense = Math.ceil(filtered.length / ROWS_PER_PAGE) || 1;
+
             renderExpenseTable();
             scheduleSave(saveExpenseRecords);
         }
@@ -1567,7 +1487,7 @@
             const tr = btn.closest('tr');
             const id = tr.getAttribute('data-id');
             expenseRecords = expenseRecords.filter(r => r.id !== id);
-            tr.remove();
+            renderExpenseTable();
             scheduleSave(saveExpenseRecords);
         }
 
@@ -1647,17 +1567,35 @@
             });
         }
 
-        // --- CASH OVERVIEW ---
+        // --- CASH OVERVIEW WITH PAGINATION ---
         const cashAcctNames = ["Philippine Bank", "Business Savings", "Stripe Balance", "PayPal Balance", "Wise Balance"];
         const cashAcctCategories = ["Operating Cash", "Payment Processors", "Savings / Reserves", "Tax Reserve", "Other"];
 
         function renderCashAccountsTable() {
             const tbody = document.getElementById('cash-balances-body');
             tbody.innerHTML = '';
-            cashAccounts.forEach((record, index) => {
+            
+            // Pagination Logic for Cash Accounts
+            const totalItems = cashAccounts.length;
+            const totalPages = Math.ceil(totalItems / ROWS_PER_PAGE);
+            if (pgCash > totalPages) pgCash = totalPages || 1;
+            if (pgCash < 1) pgCash = 1;
+
+            const start = (pgCash - 1) * ROWS_PER_PAGE;
+            const end = start + ROWS_PER_PAGE;
+            const pageData = cashAccounts.slice(start, end);
+
+            pageData.forEach((record, index) => {
                 const tr = createCashAccountRow(record, index);
                 tbody.appendChild(tr);
             });
+
+            // Update UI
+            document.getElementById('cash-start').innerText = totalItems === 0 ? 0 : start + 1;
+            document.getElementById('cash-end').innerText = Math.min(end, totalItems);
+            document.getElementById('cash-total').innerText = totalItems;
+            document.getElementById('btn-prev-cash').disabled = pgCash <= 1;
+            document.getElementById('btn-next-cash').disabled = pgCash >= totalPages;
         }
 
         function createCashAccountRow(record, index) {
@@ -1706,9 +1644,11 @@
                 balance: 0
             };
             cashAccounts.push(newRecord);
-            const tbody = document.getElementById('cash-balances-body');
-            const tr = createCashAccountRow(newRecord, cashAccounts.length - 1);
-            tbody.appendChild(tr);
+            
+            // Jump to last page
+            pgCash = Math.ceil(cashAccounts.length / ROWS_PER_PAGE) || 1;
+
+            renderCashAccountsTable();
             scheduleSave(saveCashAccounts);
         }
 
@@ -1734,7 +1674,7 @@
             const tr = btn.closest('tr');
             const id = tr.getAttribute('data-id');
             cashAccounts = cashAccounts.filter(r => r.id !== id);
-            tr.remove();
+            renderCashAccountsTable();
             scheduleSave(saveCashAccounts);
         }
 
@@ -1822,6 +1762,20 @@
                 data: { labels: [], datasets: [{ data: [], backgroundColor: ['#34b0e5', '#84d0f0'], borderWidth: 2, borderColor: '#ffffff' }] },
                 options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 10 } } } }
             });
+        }
+
+        // --- PAGINATION HANDLER ---
+        function changePage(type, direction) {
+            if (type === 'income') {
+                pgIncome += direction;
+                renderIncomeTable();
+            } else if (type === 'expense') {
+                pgExpense += direction;
+                renderExpenseTable();
+            } else if (type === 'cash') {
+                pgCash += direction;
+                renderCashAccountsTable();
+            }
         }
 
         window.onload = function() {
