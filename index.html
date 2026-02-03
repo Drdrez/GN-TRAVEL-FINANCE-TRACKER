@@ -508,7 +508,27 @@
                     </table>
                 </div>
             </div>
-        </section>
+
+            <div class="glass rounded-2xl shadow-sm mt-8 mb-8 overflow-hidden">
+                <div class="p-6 border-b border-slate-200/60 flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-[#34b0e5]">Monthly Expense Cash Flow</h3>
+                    <div class="text-xs text-slate-500 italic">Independent of Cash Overview</div>
+                </div>
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-sm text-left table-cell-padding min-w-[320px]">
+                        <thead class="text-xs text-slate-700 uppercase bg-white/40 sticky top-0 z-10 backdrop-blur-md">
+                            <tr>
+                                <th class="px-6 py-3 font-bold border-r border-slate-200/60">Month</th>
+                                <th class="px-6 py-3 font-bold text-right border-r border-slate-200/60">Starting Cash</th>
+                                <th class="px-6 py-3 font-bold text-right border-r border-slate-200/60">Ending Cash</th>
+                                <th class="px-6 py-3 font-bold text-right">Net Cash Change</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200/60 font-medium" id="expenses-movement-body"></tbody>
+                    </table>
+                </div>
+            </div>
+            </section>
 
         <section id="view-cash" class="hidden pb-8">
             <div class="glass rounded-2xl shadow-sm mb-8 overflow-hidden">
@@ -783,6 +803,7 @@
                         renderIncomeTable();
                         renderExpenseTable();
                         calculateCashMovement();
+                        calculateExpensesMovement();
                     }
                 }
             } catch (error) {
@@ -823,6 +844,7 @@
             renderIncomeTable();
             renderExpenseTable();
             calculateCashMovement();
+            calculateExpensesMovement();
         }
 
         function changeYear(year) {
@@ -868,6 +890,7 @@
                 renderExpenseTable();
                 renderCashAccountsTable();
                 initCashMovement();
+                initExpensesMovement(); // New Independent Table
                 calculateDashboard();
                 resizeChartsForView('dashboard');
             } catch (error) {
@@ -998,6 +1021,7 @@
             if(viewId === 'income') updateIncomeTracker();
             if(viewId === 'dashboard') calculateDashboard();
             if(viewId === 'cash') calculateCashMovement();
+            if(viewId === 'expenses') calculateExpensesMovement();
 
             closeSidebar();
             resizeChartsForView(viewId);
@@ -1471,6 +1495,82 @@
             expenseRecords = expenseRecords.filter(r => r.id !== id);
             tr.remove();
             scheduleSave(saveExpenseRecords);
+        }
+
+        // --- NEW: INDEPENDENT EXPENSES MOVEMENT LOGIC ---
+        function initExpensesMovement() {
+            const tbody = document.getElementById('expenses-movement-body');
+            if (!tbody) return;
+
+            tbody.innerHTML = '';
+            MONTHS.forEach(month => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-white/20 transition-colors";
+                tr.setAttribute('data-month', month);
+                
+                // Note the 'exp_' prefix here to keep data separate
+                const startVal = cashMovement[`exp_${month}_start`] || 0;
+                const endVal = cashMovement[`exp_${month}_end`] || 0;
+                
+                tr.innerHTML = `
+                    <td class="px-6 py-4 font-bold text-slate-700 border-r border-slate-200/60">${month}</td>
+                    <td class="px-6 py-4 text-right border-r border-slate-200/60 exp-cash-start text-slate-600" contenteditable="true">${formatMoney(startVal)}</td>
+                    <td class="px-6 py-4 text-right border-r border-slate-200/60 exp-cash-end text-slate-600" contenteditable="true">${formatMoney(endVal)}</td>
+                    <td class="px-6 py-4 text-right exp-cash-net font-bold">-</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Attach listeners specific to this table
+            tbody.querySelectorAll('.exp-cash-start, .exp-cash-end').forEach(cell => {
+                cell.addEventListener('blur', function() {
+                    const row = this.closest('tr');
+                    const month = row.getAttribute('data-month');
+                    const val = parseMoney(this.innerText);
+                    
+                    // Save to 'exp_' keys
+                    if (this.classList.contains('exp-cash-start')) { 
+                        cashMovement[`exp_${month}_start`] = val; 
+                    } else { 
+                        cashMovement[`exp_${month}_end`] = val; 
+                    }
+                    
+                    this.innerText = formatMoney(val);
+                    calculateExpensesMovement();
+                    scheduleSave(saveCashMovement); // Saves to the same DB location
+                });
+                
+                cell.addEventListener('keydown', function(e) { 
+                    if (e.key === 'Enter') { e.preventDefault(); this.blur(); } 
+                });
+            });
+
+            calculateExpensesMovement();
+        }
+
+        function calculateExpensesMovement() {
+            const rows = document.querySelectorAll('#expenses-movement-body tr');
+            rows.forEach(row => {
+                const startCell = row.querySelector('.exp-cash-start');
+                const endCell = row.querySelector('.exp-cash-end');
+                const netCell = row.querySelector('.exp-cash-net');
+                
+                const start = parseMoney(startCell.innerText);
+                const end = parseMoney(endCell.innerText);
+                
+                if(start !== 0 || end !== 0) {
+                    const net = end - start;
+                    const sign = net > 0 ? '+' : '';
+                    netCell.innerText = sign + formatMoney(net);
+                    
+                    if(net > 0) netCell.className = "px-6 py-4 text-right exp-cash-net font-bold text-green-600";
+                    else if(net < 0) netCell.className = "px-6 py-4 text-right exp-cash-net font-bold text-red-500";
+                    else netCell.className = "px-6 py-4 text-right exp-cash-net font-bold text-slate-500";
+                } else {
+                    netCell.innerText = '-';
+                    netCell.className = "px-6 py-4 text-right exp-cash-net font-bold text-gray-400";
+                }
+            });
         }
 
         // --- CASH OVERVIEW ---
