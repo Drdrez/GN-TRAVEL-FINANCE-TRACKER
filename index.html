@@ -64,7 +64,7 @@
         /* Table Styles */
         th, td { white-space: nowrap; }
         
-        /* --- EDITABLE INPUTS & DROPDOWNS --- */
+        /* --- EDITABLE INPUTS & DROPDOWNS (OPTIMIZED) --- */
         td[contenteditable="true"], th[contenteditable="true"], select.editable-input, input.editable-input {
             background-color: transparent;
             cursor: text;
@@ -73,20 +73,30 @@
             border: 1px dashed transparent;
             width: 100%;
             border-radius: 6px;
-            font-size: 0.75rem !important; 
+            /* SMALLER FONT FOR BETTER FIT */
+            font-size: 0.75rem !important; /* 12px */
             font-weight: 500;
         }
 
+        /* Specific Dropdown Styling */
         select.editable-input {
+            /* Reduced right padding to 1.75rem (approx 28px) - enough for arrow, but gives more space for text */
             padding: 6px 1.75rem 6px 8px; 
-            appearance: none; 
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+            line-height: 1.25;
+            appearance: none; /* Reset native appearance to ensure consistent spacing */
             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
             background-position: right 0.2rem center;
             background-repeat: no-repeat;
             background-size: 1.25em 1.25em;
         }
         
-        td[contenteditable="true"], th[contenteditable="true"], input.editable-input { padding: 6px 8px; }
+        /* Text Input Styling */
+        td[contenteditable="true"], th[contenteditable="true"], input.editable-input {
+             padding: 6px 8px;
+        }
 
         td[contenteditable="true"]:hover, th[contenteditable="true"]:hover, 
         select.editable-input:hover, input.editable-input:hover {
@@ -109,6 +119,12 @@
         }
 
         .hidden { display: none !important; }
+
+        /* Invoice Modal */
+        #invoice-modal {
+            background-color: rgba(0,0,0,0.4);
+            backdrop-filter: blur(4px);
+        }
 
         /* Loading Overlay */
         .loading-overlay {
@@ -138,34 +154,8 @@
         }
         .save-indicator.show { display: flex; align-items: center; gap: 8px; }
         .save-indicator.error { background: #ef4444; }
-
-        /* --- PAYROLL SPECIFIC STYLES --- */
-        .payroll-label {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: #64748b; /* Slate 500 */
-            font-weight: 700;
-            margin-bottom: 0.25rem;
-        }
-        .payroll-input-styled {
-            background: rgba(255, 255, 255, 0.5);
-            border: 1px solid #e2e8f0;
-            border-radius: 0.5rem;
-            padding: 0.5rem 0.75rem;
-            width: 100%;
-            font-size: 0.875rem;
-            color: #334155;
-            transition: all 0.2s;
-        }
-        .payroll-input-styled:focus {
-            background: white;
-            border-color: #34b0e5;
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(52, 176, 229, 0.1);
-        }
         
-        /* Mobile Sidebar */
+        /* Mobile */
         @media (max-width: 1023px) {
             #sidebar {
                 position: fixed; left: 0; top: 0; z-index: 40; height: 100%;
@@ -181,72 +171,60 @@
         }
         @media (min-width: 1024px) { .mobile-menu-btn { display: none; } }
         
-        /* PRINT SPECIFIC STYLES - FIXES THE ISSUE */
         @media print {
-            body { 
-                background: white !important; 
-                -webkit-print-color-adjust: exact; 
-                print-color-adjust: exact;
-            }
-            /* Hide everything by default */
+            body { background: white; }
+            #invoice-print-area, #invoice-print-area * { visibility: visible; }
+            #invoice-print-area { position: absolute; left: 0; top: 0; width: 100%; background: white; padding: 20px; }
             body * { visibility: hidden; }
-            
-            /* Show only the print areas */
-            #invoice-print-area, #invoice-print-area *,
-            #payroll-print-area, #payroll-print-area * { 
-                visibility: visible; 
-            }
-
-            /* Positioning */
-            #invoice-print-area, #payroll-print-area {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                margin: 0;
-                padding: 20px;
-                background: white !important;
-                border: none !important;
-                box-shadow: none !important;
-                z-index: 9999;
-            }
-            
-            /* Hide UI elements during print */
-            .no-print { display: none !important; }
-
-            /* Ensure Inputs Print correctly by removing styling and borders */
-            input, select, textarea {
-                border: none !important;
-                background: transparent !important;
-                box-shadow: none !important;
-                padding: 0 !important;
-                margin: 0 !important;
-                font-weight: bold;
-                color: #000 !important;
-                -webkit-appearance: none;
-            }
-            /* Specific fix for placeholders not printing */
-            ::placeholder { color: transparent; }
         }
 
-        /* PDF Styles */
-        .pdf-mode { background: white !important; width: 100% !important; max-width: none !important; }
-        .pdf-mode .glass { background: #ffffff !important; backdrop-filter: none !important; border: 1px solid #e2e8f0 !important; box-shadow: none !important; }
-        .pdf-mode button, .pdf-mode .no-print, .pdf-mode .mobile-menu-btn { display: none !important; }
-        .pdf-mode .overflow-x-auto, .pdf-mode .overflow-y-auto { overflow: visible !important; height: auto !important; }
-        .pdf-mode input, .pdf-mode select { border: none !important; background: transparent !important; appearance: none !important; padding: 0 !important; }
+        /* --- PDF EXPORT STYLES --- */
+        .pdf-mode {
+            background: white !important;
+            width: 100% !important;
+            max-width: none !important;
+        }
+        .pdf-mode .glass {
+            background: #ffffff !important;
+            backdrop-filter: none !important;
+            border: 1px solid #e2e8f0 !important;
+            box-shadow: none !important;
+        }
+        .pdf-mode button, 
+        .pdf-mode .no-print,
+        .pdf-mode .mobile-menu-btn {
+            display: none !important;
+        }
+        .pdf-mode .overflow-x-auto, 
+        .pdf-mode .overflow-y-auto, 
+        .pdf-mode .custom-scrollbar {
+            overflow: visible !important;
+            height: auto !important;
+            max-height: none !important;
+        }
+        .pdf-mode input, 
+        .pdf-mode select { 
+            border: none !important; 
+            background: transparent !important; 
+            appearance: none !important; 
+            padding: 0 !important;
+        }
     </style>
 </head>
 <body class="flex h-screen overflow-hidden min-h-0">
 
     <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()" aria-hidden="true"></div>
-    <div id="loading-overlay" class="loading-overlay"><div class="loading-spinner"></div></div>
+
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+    </div>
+
     <div id="save-indicator" class="save-indicator">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
         <span>Saved</span>
     </div>
 
-    <aside id="sidebar" class="w-64 glass-sidebar flex-shrink-0 flex flex-col h-full overflow-y-auto lg:translate-x-0">
+    <aside id="sidebar" class="w-64 glass-sidebar flex-shrink-0 flex flex-col h-full overflow-y-auto lg:translate-x-0" aria-label="Main navigation">
         <div class="p-4 lg:p-6 flex items-center justify-between gap-3">
             <div class="flex items-center gap-3 min-w-0">
                 <img src="GN ICON.png" alt="GN Logo" class="w-10 h-10 rounded-lg object-contain flex-shrink-0 shadow-sm">
@@ -276,10 +254,6 @@
             <div onclick="switchView('cash')" id="nav-cash" class="nav-link text-slate-600 flex items-center px-4 py-3 text-sm font-medium rounded-xl">
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                 Cash Overview
-            </div>
-            <div onclick="switchView('payroll')" id="nav-payroll" class="nav-link text-slate-600 flex items-center px-4 py-3 text-sm font-medium rounded-xl">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                Payroll Slip Generator
             </div>
         </nav>
         
@@ -318,11 +292,8 @@
                         <a href="#" onclick="exportToPDF('expenses'); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-white/50">
                              <span class="font-bold text-[#34b0e5]">●</span> Export Expenses
                         </a>
-                         <a href="#" onclick="exportToPDF('cash'); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-white/50">
+                        <a href="#" onclick="exportToPDF('cash'); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-white/50 last:rounded-b-lg">
                              <span class="font-bold text-[#34b0e5]">●</span> Export Cash Flow
-                        </a>
-                         <a href="#" onclick="exportToPDF('payroll'); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-white/50 last:rounded-b-lg">
-                             <span class="font-bold text-[#34b0e5]">●</span> Export Payroll
                         </a>
                     </div>
                 </div>
@@ -380,10 +351,11 @@
             </div>
 
             <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
+                
                 <div class="glass rounded-2xl shadow-sm overflow-hidden">
                     <div class="p-4 sm:p-6 border-b border-slate-200/60 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                         <h3 class="text-base sm:text-lg font-bold text-[#34b0e5]">Income & Expenses Breakdown</h3>
-                        <div class="text-xs text-slate-500 italic no-print">Edit 'Expenses' column.</div>
+                        <div class="text-xs text-slate-500 italic no-print">Edit 'Expenses' column. 'Income' is auto-calculated.</div>
                     </div>
                     <div class="overflow-x-auto custom-scrollbar">
                         <table class="w-full text-sm text-left table-cell-padding min-w-[600px]" id="table-main">
@@ -393,7 +365,7 @@
                                     <th class="px-6 py-4 font-bold text-right">Income</th>
                                     <th class="px-6 py-4 font-bold text-right">Expenses</th>
                                     <th class="px-6 py-4 font-bold text-right">Net Income</th>
-                                    <th class="px-6 py-4 font-bold text-right">Margin %</th>
+                                    <th class="px-6 py-4 font-bold text-right">Profit Margin %</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-200/60 font-medium"></tbody>
@@ -412,10 +384,18 @@
 
                 <div class="glass rounded-2xl shadow-sm overflow-hidden">
                     <div class="p-4 sm:p-6 border-b border-slate-200/60 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-                        <h3 class="text-base sm:text-lg font-bold text-[#34b0e5]">Business Income</h3>
+                        <div>
+                            <h3 class="text-base sm:text-lg font-bold text-[#34b0e5]">Business Income</h3>
+                        </div>
                         <div class="flex gap-2 flex-shrink-0 no-print">
-                            <button id="restore-btn" onclick="restoreColumn()" disabled class="glass px-3 py-1.5 rounded-md text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-green-50 hover:text-green-600 flex items-center gap-2">Restore</button>
-                            <button onclick="addBusinessColumn()" class="glass text-[#34b0e5] px-3 py-1.5 rounded-md text-sm font-semibold hover:bg-blue-50 transition-colors flex items-center gap-2">Add Business</button>
+                            <button id="restore-btn" onclick="restoreColumn()" disabled class="glass px-3 py-1.5 rounded-md text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:bg-green-50 hover:text-green-600 flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
+                                Restore
+                            </button>
+                            <button onclick="addBusinessColumn()" class="glass text-[#34b0e5] px-3 py-1.5 rounded-md text-sm font-semibold hover:bg-blue-50 transition-colors flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                Add Business
+                            </button>
                         </div>
                     </div>
                     <div class="overflow-x-auto custom-scrollbar">
@@ -436,8 +416,9 @@
                         </table>
                     </div>
                 </div>
+
             </div>
-        </section>
+            </section>
 
         <section id="view-income" class="hidden pb-8">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -445,10 +426,12 @@
                     <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Total Gross Income</h3>
                     <div class="text-3xl font-extrabold text-[#34b0e5]" id="tracker-total-gross">₱0.00</div>
                 </div>
+                
                 <div class="glass p-6 rounded-2xl shadow-sm flex flex-col justify-center items-center text-center">
                     <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Total Net Income</h3>
                     <div class="text-3xl font-extrabold text-green-500" id="tracker-total-net">₱0.00</div>
                 </div>
+
                 <div class="glass p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center relative">
                     <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2 absolute top-4 left-4">Income by Service</h3>
                     <div class="h-40 w-full flex justify-center mt-6">
@@ -456,16 +439,21 @@
                     </div>
                 </div>
             </div>
+
             <div class="glass p-6 rounded-2xl shadow-sm mb-8">
                 <h3 class="text-lg font-bold text-[#34b0e5] mb-4">Monthly Income Per Service</h3>
                 <div class="relative h-64 w-full">
                     <canvas id="trackerBarChart"></canvas>
                 </div>
             </div>
+
             <div class="glass rounded-2xl shadow-sm mb-8 overflow-hidden">
                 <div class="p-6 border-b border-slate-200/60 flex justify-between items-center">
                     <h3 class="text-lg font-bold text-[#34b0e5]">Income Tracker Details</h3>
-                    <button onclick="addIncomeRow()" class="glass text-[#34b0e5] px-3 py-1.5 rounded-md text-sm font-semibold hover:bg-blue-50 transition-colors flex items-center gap-1 no-print">Add Entry</button>
+                    <button onclick="addIncomeRow()" class="glass text-[#34b0e5] px-3 py-1.5 rounded-md text-sm font-semibold hover:bg-blue-50 transition-colors flex items-center gap-1 no-print">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        Add Entry
+                    </button>
                 </div>
                 <div class="overflow-x-auto custom-scrollbar">
                     <table class="w-full text-sm text-left table-cell-padding min-w-[700px]" id="table-income-tracker">
@@ -494,12 +482,10 @@
             <div class="glass rounded-2xl shadow-sm mb-8 overflow-hidden flex-1 flex flex-col">
                 <div class="p-6 border-b border-slate-200/60 flex justify-between items-center">
                     <h3 class="text-lg font-bold text-[#34b0e5]">Expenses Details</h3>
-                    <div class="flex gap-2">
-                        <button onclick="addExpenseRow()" class="glass text-[#34b0e5] px-3 py-1.5 rounded-md text-sm font-semibold hover:bg-blue-50 transition-colors flex items-center gap-1 no-print">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                            Add Expense
-                        </button>
-                    </div>
+                    <button onclick="addExpenseRow()" class="glass text-[#34b0e5] px-3 py-1.5 rounded-md text-sm font-semibold hover:bg-blue-50 transition-colors flex items-center gap-1 no-print">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        Add Expense
+                    </button>
                 </div>
                 <div class="overflow-x-auto custom-scrollbar flex-1">
                     <table class="w-full text-sm text-left table-cell-padding min-w-[700px]" id="table-expenses">
@@ -528,7 +514,10 @@
             <div class="glass rounded-2xl shadow-sm mb-8 overflow-hidden">
                 <div class="p-6 border-b border-slate-200/60 flex justify-between items-center">
                     <h3 class="text-lg font-bold text-[#34b0e5]">Cash Account Balances</h3>
-                    <button onclick="addCashAccountRow()" class="glass text-[#34b0e5] px-3 py-1.5 rounded-md text-sm font-semibold hover:bg-blue-50 transition-colors flex items-center gap-1 no-print">Add Entry</button>
+                    <button onclick="addCashAccountRow()" class="glass text-[#34b0e5] px-3 py-1.5 rounded-md text-sm font-semibold hover:bg-blue-50 transition-colors flex items-center gap-1 no-print">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        Add Account Entry
+                    </button>
                 </div>
                 <div class="overflow-x-auto custom-scrollbar">
                     <table class="w-full text-sm text-left table-cell-padding min-w-[500px]">
@@ -563,33 +552,6 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-200/60 font-medium" id="cash-movement-body"></tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <section id="view-payroll" class="hidden pb-8">
-            <div class="glass rounded-2xl shadow-sm mb-8 overflow-hidden flex-1 flex flex-col">
-                <div class="p-6 border-b border-slate-200/60 flex justify-between items-center">
-                    <h3 class="text-lg font-bold text-[#34b0e5]">Payroll History</h3>
-                    <button onclick="openPayrollModal()" class="glass text-[#34b0e5] hover:bg-blue-50 px-3 py-1.5 rounded-md text-sm font-semibold transition-colors flex items-center gap-1 no-print">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                        New Payroll Slip
-                    </button>
-                </div>
-                <div class="overflow-x-auto custom-scrollbar flex-1">
-                    <table class="w-full text-sm text-left table-cell-padding min-w-[700px]" id="table-payroll">
-                        <thead class="text-xs text-slate-700 uppercase bg-white/40 sticky top-0 z-10 backdrop-blur-md">
-                            <tr>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60">Date</th>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60">Employee</th>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60">Role</th>
-                                <th class="px-4 py-3 font-bold border-r border-slate-200/60">Period</th>
-                                <th class="px-4 py-3 font-bold text-right border-r border-slate-200/60">Total Payout</th>
-                                <th class="px-2 py-3 font-bold no-print">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-200/60 font-medium" id="payroll-body"></tbody>
                     </table>
                 </div>
             </div>
@@ -661,126 +623,6 @@
         </div>
     </div>
 
-    <div id="payroll-modal" class="fixed inset-0 hidden items-center justify-center z-50 p-2 sm:p-4" style="background-color: rgba(0,0,0,0.5); backdrop-filter: blur(5px);">
-        <div class="glass modal-inner rounded-2xl shadow-2xl w-full max-w-[900px] max-h-[90vh] overflow-y-auto flex flex-col">
-            <div class="p-5 border-b border-slate-200/60 flex justify-between items-center bg-white/40 rounded-t-2xl no-print">
-                <div>
-                     <h3 class="font-bold text-xl text-slate-800">Generate Payroll Slip</h3>
-                     <p class="text-xs text-slate-500">Create a new slip for an employee.</p>
-                </div>
-                <button onclick="closePayrollModal()" class="text-slate-400 hover:text-red-500 transition-colors p-1 rounded-md hover:bg-white/50">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
-
-            <div id="payroll-print-area" class="p-6 md:p-8 bg-white/60">
-                
-                <div class="text-center mb-8 pb-4 border-b-2 border-[#34b0e5]">
-                    <h1 class="text-3xl font-extrabold text-[#34b0e5] tracking-tight uppercase mb-1">PAYROLL SLIP</h1>
-                    <p class="text-sm font-bold text-slate-500 uppercase tracking-widest">GN Travel Marketing LLC</p>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div class="space-y-4">
-                        <h4 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2 border-b border-slate-200 pb-1">Employee Details</h4>
-                        
-                        <div>
-                            <div class="payroll-label">Employee Name</div>
-                            <input type="text" id="pay-name" class="payroll-input-styled" placeholder="e.g. Juan Dela Cruz">
-                        </div>
-                        
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <div class="payroll-label">Role / Position</div>
-                                <input type="text" id="pay-role" class="payroll-input-styled" placeholder="e.g. VA">
-                            </div>
-                            <div>
-                                <div class="payroll-label">Employment Type</div>
-                                <select id="pay-type" class="payroll-input-styled cursor-pointer">
-                                    <option value="Part-Time">Part-Time</option>
-                                    <option value="Full-Time">Full-Time</option>
-                                    <option value="Contract">Contract</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div>
-                            <div class="payroll-label">Project / Client</div>
-                            <input type="text" id="pay-client" class="payroll-input-styled" placeholder="e.g. Client A">
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-4">
-                             <div>
-                                <div class="payroll-label">Pay Period</div>
-                                <input type="text" id="pay-period" class="payroll-input-styled" placeholder="Jan 1 - 15">
-                            </div>
-                            <div>
-                                <div class="payroll-label">Payout Date</div>
-                                <input type="date" id="pay-date" class="payroll-input-styled">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="glass rounded-xl p-5 border border-white/50 shadow-inner">
-                         <h4 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-200 pb-1">Payment Breakdown</h4>
-
-                         <div class="grid grid-cols-2 gap-4 mb-4">
-                             <div>
-                                 <div class="payroll-label">Hourly Rate</div>
-                                 <div class="relative">
-                                     <span class="absolute left-3 top-2 text-slate-400 font-bold">₱</span>
-                                     <input type="number" id="pay-rate" class="payroll-input-styled pl-7 font-bold text-slate-700" placeholder="0.00" oninput="calculatePayroll()">
-                                 </div>
-                             </div>
-                             <div>
-                                 <div class="payroll-label">Total Hours</div>
-                                 <input type="number" id="pay-hours" class="payroll-input-styled font-bold text-slate-700" placeholder="0" oninput="calculatePayroll()">
-                             </div>
-                         </div>
-
-                         <div class="space-y-3">
-                             <div class="flex justify-between items-center py-2 border-b border-dashed border-slate-300">
-                                 <span class="text-sm font-semibold text-slate-600">Base Pay</span>
-                                 <span class="font-bold text-slate-700" id="pay-base">₱0.00</span>
-                             </div>
-
-                             <div class="flex justify-between items-center">
-                                 <span class="text-sm font-semibold text-green-600">Bonus Incentives (+)</span>
-                                 <div class="relative w-24">
-                                     <input type="number" id="pay-bonus" class="text-right bg-green-50 border border-green-200 rounded px-2 py-1 text-sm font-bold text-green-700 w-full focus:outline-none focus:border-green-400" placeholder="0.00" oninput="calculatePayroll()">
-                                 </div>
-                             </div>
-
-                             <div class="flex justify-between items-center pb-2 border-b border-slate-300">
-                                 <span class="text-sm font-semibold text-red-500">Deductions (-)</span>
-                                 <div class="relative w-24">
-                                     <input type="number" id="pay-deductions" class="text-right bg-red-50 border border-red-200 rounded px-2 py-1 text-sm font-bold text-red-700 w-full focus:outline-none focus:border-red-400" placeholder="0.00" oninput="calculatePayroll()">
-                                 </div>
-                             </div>
-
-                             <div class="flex justify-between items-center pt-2 mt-2">
-                                 <span class="text-lg font-extrabold text-slate-800 uppercase">Total Payout</span>
-                                 <span class="text-2xl font-extrabold text-[#34b0e5]" id="pay-total">₱0.00</span>
-                             </div>
-                         </div>
-                    </div>
-                </div>
-
-                <div class="mt-8 text-center text-xs text-slate-400">
-                    <p>Generated by GN Travel Marketing Finance Tracker</p>
-                </div>
-            </div>
-
-            <div class="p-4 border-t border-slate-200/60 bg-white/40 flex justify-end gap-3 rounded-b-2xl no-print">
-                 <button onclick="closePayrollModal()" class="px-5 py-2.5 text-slate-600 hover:bg-white/60 rounded-xl transition-all font-semibold text-sm">Cancel</button>
-                 <button onclick="saveAndPrintPayroll()" class="px-5 py-2.5 bg-[#34b0e5] hover:bg-[#2d9acb] text-white rounded-xl shadow-lg shadow-blue-200 transition-all flex items-center gap-2 font-bold text-sm transform active:scale-95">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                    Save & Print
-                </button>
-            </div>
-        </div>
-    </div>
-
     <script>
         // --- CONFIG ---
         const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -832,7 +674,6 @@
         let expenseRecords = [];
         let cashAccounts = [];
         let cashMovement = {};
-        let payrollRecords = []; // Added for new section
         let businessColumns = ['Service A', 'Service B'];
         let businessData = {};
         let dashboardExpenses = {};
@@ -894,7 +735,7 @@
                 return null;
             }
         }
-        
+
         async function apiDelete(endpoint, id) {
             try {
                 const response = await fetch(`${API_BASE}/${endpoint}?id=${id}`, {
@@ -933,18 +774,26 @@
                 const data = await response.json();
                 if (data && data.rates && data.rates.PHP) {
                     exchangeRate = data.rates.PHP;
+                    console.log('Live Exchange Rate Fetched:', exchangeRate);
                     const usdBtn = document.getElementById('btn-usd');
                     if (usdBtn) usdBtn.setAttribute('title', `Current Rate: ₱${exchangeRate.toFixed(2)} = $1 USD`);
+                    if (currentCurrency === 'USD') {
+                        calculateDashboard();
+                        updateIncomeTracker();
+                        renderIncomeTable();
+                        renderExpenseTable();
+                        calculateCashMovement();
+                    }
                 }
             } catch (error) {
-                console.warn('Failed to fetch live rate');
+                console.warn('Failed to fetch live rate, using default.', error);
             }
         }
 
         // --- GLOBAL UTILS ---
         function parseMoney(str) {
             if (!str) return 0;
-            const clean = str.toString().replace(/[₱$₱,\s]/g, '');
+            const clean = str.replace(/[₱$₱,\s]/g, '');
             const num = parseFloat(clean);
             return isNaN(num) ? 0 : num;
         }
@@ -973,7 +822,6 @@
             updateIncomeTracker();
             renderIncomeTable();
             renderExpenseTable();
-            renderPayrollTable();
             calculateCashMovement();
         }
 
@@ -983,7 +831,6 @@
             initDashboard(); 
             renderIncomeTable();
             renderExpenseTable();
-            renderPayrollTable();
             updateIncomeTracker();
             calculateDashboard(); 
         }
@@ -1009,9 +856,6 @@
                 const cashMovementData = await apiGet('cash?type=movement');
                 if (cashMovementData) cashMovement = cashMovementData;
 
-                const payrollData = await apiGet('payroll');
-                if (payrollData) payrollRecords = payrollData;
-
                 const businessDataResult = await apiGet('business');
                 if (businessDataResult) {
                     businessColumns = businessDataResult.columns || ['Service A', 'Service B'];
@@ -1022,7 +866,6 @@
                 initDashboard();
                 renderIncomeTable();
                 renderExpenseTable();
-                renderPayrollTable();
                 renderCashAccountsTable();
                 initCashMovement();
                 calculateDashboard();
@@ -1044,38 +887,31 @@
 
         // --- PDF EXPORT FUNCTION ---
         function exportToPDF(viewId) {
+            // Close the dropdown immediately
             closeExportDropdown();
             
-            // SPECIAL HANDLING FOR PAYROLL:
-            // If we are exporting "payroll", check if the modal is open. 
-            // If yes, export the MODAL content (the slip). If no, export the TABLE.
-            let element;
-            const modal = document.getElementById('payroll-modal');
-            const isPayrollModalOpen = !modal.classList.contains('hidden');
-
-            if (viewId === 'payroll' && isPayrollModalOpen) {
-                // Export the SLIP
-                element = document.getElementById('payroll-print-area');
-            } else {
-                // Export the TABLE (or other view)
-                element = document.getElementById('view-' + viewId);
-            }
-
+            // Get the container element (e.g., 'view-income')
+            const element = document.getElementById('view-' + viewId);
             if (!element) return;
 
+            // Handle hidden views: temporarily unhide them for capture
             let wasHidden = false;
-            // Only check hidden if it's NOT the modal print area (which is inside a hidden modal wrapper)
-            if (viewId !== 'payroll' || !isPayrollModalOpen) {
-                if (element.classList.contains('hidden')) {
-                    wasHidden = true;
-                    element.classList.remove('hidden');
-                }
+            if (element.classList.contains('hidden')) {
+                wasHidden = true;
+                element.classList.remove('hidden');
+                // If we are unhiding a view to print it, we should probably hide the CURRENT view 
+                // to prevent layout shifts, but for PDF generation, just unhiding the target is usually enough 
+                // because we pass that specific element to html2pdf.
             }
 
+            // Apply specific print styles (hides buttons, removes glass, etc.)
             element.classList.add('pdf-mode');
+
+            // Show loading spinner
             const loader = document.getElementById('loading-overlay');
             loader.style.display = 'flex';
 
+            // PDF Configuration
             const opt = {
                 margin:       0.25,
                 filename:     `${viewId}_report_${currentYear}.pdf`,
@@ -1084,9 +920,17 @@
                 jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
             };
 
+            // Generate PDF
             html2pdf().from(element).set(opt).save().then(() => {
+                // CLEANUP: Remove print styles
                 element.classList.remove('pdf-mode');
-                if (wasHidden) element.classList.add('hidden');
+                
+                // If it was hidden, re-hide it
+                if (wasHidden) {
+                    element.classList.add('hidden');
+                }
+                
+                // Hide loading spinner
                 loader.style.display = 'none';
             }).catch(err => {
                 console.error("PDF Export failed:", err);
@@ -1095,119 +939,6 @@
                 loader.style.display = 'none';
                 alert("Failed to generate PDF. Please try again.");
             });
-        }
-
-        // --- PAYROLL FUNCTIONS ---
-        function openPayrollModal() {
-            document.getElementById('payroll-modal').classList.remove('hidden');
-            document.getElementById('payroll-modal').classList.add('flex');
-            document.getElementById('pay-date').valueAsDate = new Date();
-        }
-
-        function closePayrollModal() {
-            document.getElementById('payroll-modal').classList.add('hidden');
-            document.getElementById('payroll-modal').classList.remove('flex');
-        }
-
-        function calculatePayroll() {
-            const rate = parseFloat(document.getElementById('pay-rate').value) || 0;
-            const hours = parseFloat(document.getElementById('pay-hours').value) || 0;
-            const bonus = parseFloat(document.getElementById('pay-bonus').value) || 0;
-            const deductions = parseFloat(document.getElementById('pay-deductions').value) || 0;
-            
-            const basePay = rate * hours;
-            const total = basePay + bonus - deductions;
-
-            document.getElementById('pay-base').innerText = '₱' + basePay.toFixed(2);
-            document.getElementById('pay-total').innerText = '₱' + total.toFixed(2);
-        }
-
-        function renderPayrollTable() {
-            const tbody = document.getElementById('payroll-body');
-            tbody.innerHTML = '';
-            payrollRecords.forEach((record, index) => {
-                const tr = document.createElement('tr');
-                tr.setAttribute('data-id', record.id); // Add ID for deletion
-                tr.className = "hover:bg-white/20 transition-colors";
-                tr.innerHTML = `
-                    <td class="px-4 py-3 border-r border-slate-200/60 text-slate-700">${record.payout_date || record.payoutDate}</td>
-                    <td class="px-4 py-3 border-r border-slate-200/60 font-bold text-slate-700">${record.employee_name || record.name}</td>
-                    <td class="px-4 py-3 border-r border-slate-200/60 text-slate-600">${record.role_position || record.role}</td>
-                    <td class="px-4 py-3 border-r border-slate-200/60 text-slate-600">${record.pay_period || record.period}</td>
-                    <td class="px-4 py-3 text-right border-r border-slate-200/60 font-bold text-[#34b0e5]">${formatMoney(record.total_payout || record.total)}</td>
-                    <td class="px-2 py-3 text-center no-print flex justify-center gap-2">
-                         <button onclick="deletePayrollRow(this)" class="text-gray-400 hover:text-red-500 transition-colors" title="Delete">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-        
-        // NEW DELETE FUNCTION FOR PAYROLL
-        async function deletePayrollRow(btn) {
-            if(!confirm("Are you sure you want to delete this payroll record?")) return;
-
-            const tr = btn.closest('tr');
-            const id = tr.getAttribute('data-id');
-            
-            // 1. Delete from Backend
-            const success = await apiDelete('payroll', id);
-            
-            if (success) {
-                // 2. Remove from Local Array
-                payrollRecords = payrollRecords.filter(r => r.id !== id);
-                // 3. Remove from UI
-                tr.remove();
-            }
-        }
-
-        async function saveAndPrintPayroll() {
-            // Get values
-            const name = document.getElementById('pay-name').value;
-            const role = document.getElementById('pay-role').value;
-            const client = document.getElementById('pay-client').value;
-            const type = document.getElementById('pay-type').value;
-            const period = document.getElementById('pay-period').value;
-            const date = document.getElementById('pay-date').value;
-            const rate = parseFloat(document.getElementById('pay-rate').value) || 0;
-            const hours = parseFloat(document.getElementById('pay-hours').value) || 0;
-            const bonus = parseFloat(document.getElementById('pay-bonus').value) || 0;
-            const deductions = parseFloat(document.getElementById('pay-deductions').value) || 0;
-            const basePay = rate * hours;
-            const total = basePay + bonus - deductions;
-
-            // 1. Trigger Print (Browser will handle the input values now)
-            window.print();
-
-            // 2. Save detailed payroll record to Backend
-            const payrollData = { name, role, client, type, period, payoutDate: date, rate, hours, basePay, bonus, deductions, total };
-            const savedRecord = await apiPost('payroll', payrollData);
-            
-            // 3. Update local payroll table
-            if (savedRecord) payrollRecords.unshift(savedRecord); // Add to top
-            renderPayrollTable();
-
-            // 4. Add to Expense Tracker
-            const newExpense = {
-                id: Date.now().toString(),
-                date: date || new Date().toISOString().split('T')[0],
-                vendor: name || 'Employee',
-                category: 'Payroll',
-                type: 'Variable',
-                service: role || 'General',
-                amount: total,
-                payment: 'Transfer',
-                status: 'Paid',
-                recurring: 'No',
-                notes: `Payroll: ${period} - ${client}`
-            };
-            expenseRecords.push(newExpense);
-            renderExpenseTable();
-            scheduleSave(saveExpenseRecords);
-            
-            closePayrollModal();
         }
 
         // --- INVOICE GENERATOR ---
@@ -1251,13 +982,7 @@
         }
 
         function switchView(viewId) {
-            const titles = { 
-                'dashboard': 'Business Dashboard', 
-                'income': 'Income Tracker', 
-                'expenses': 'Expenses Tracker', 
-                'cash': 'Cash Overview',
-                'payroll': 'Payroll Generator'
-            };
+            const titles = { 'dashboard': 'Business Dashboard', 'income': 'Income Tracker', 'expenses': 'Expenses Tracker', 'cash': 'Cash Overview' };
             document.getElementById('page-title').innerText = titles[viewId] || 'Finance Tracker';
             
             document.querySelectorAll('section[id^="view-"]').forEach(el => el.classList.add('hidden'));
@@ -1273,7 +998,6 @@
             if(viewId === 'income') updateIncomeTracker();
             if(viewId === 'dashboard') calculateDashboard();
             if(viewId === 'cash') calculateCashMovement();
-            if(viewId === 'payroll') renderPayrollTable();
 
             closeSidebar();
             resizeChartsForView(viewId);
