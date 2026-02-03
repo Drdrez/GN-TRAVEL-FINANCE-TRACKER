@@ -1,7 +1,4 @@
--- GN Travel Finance Tracker - Supabase Schema
--- Run this in Supabase Dashboard → SQL Editor
-
--- Income records
+-- 1. INCOME RECORDS
 CREATE TABLE IF NOT EXISTS income_records (
   id TEXT PRIMARY KEY,
   date DATE,
@@ -18,7 +15,7 @@ CREATE TABLE IF NOT EXISTS income_records (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Expense records
+-- 2. EXPENSE RECORDS
 CREATE TABLE IF NOT EXISTS expense_records (
   id TEXT PRIMARY KEY,
   date DATE,
@@ -35,7 +32,7 @@ CREATE TABLE IF NOT EXISTS expense_records (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Cash account balances
+-- 3. CASH ACCOUNTS
 CREATE TABLE IF NOT EXISTS cash_accounts (
   id TEXT PRIMARY KEY,
   month TEXT DEFAULT '',
@@ -47,7 +44,7 @@ CREATE TABLE IF NOT EXISTS cash_accounts (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Cash movement (one row per app - stores JSON: { "January_start": 0, "January_end": 0, ... })
+-- 4. CASH MOVEMENT
 CREATE TABLE IF NOT EXISTS cash_movement (
   id INT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
   data JSONB DEFAULT '{}',
@@ -57,7 +54,7 @@ CREATE TABLE IF NOT EXISTS cash_movement (
 INSERT INTO cash_movement (id, data) VALUES (1, '{}')
 ON CONFLICT (id) DO NOTHING;
 
--- Business config (dashboard columns, business data, expenses - single row)
+-- 5. BUSINESS CONFIG
 CREATE TABLE IF NOT EXISTS business_config (
   id INT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
   columns JSONB DEFAULT '["Service A", "Service B"]',
@@ -70,7 +67,7 @@ INSERT INTO business_config (id, columns, business_data, dashboard_expenses)
 VALUES (1, '["Service A", "Service B"]', '{}', '{}')
 ON CONFLICT (id) DO NOTHING;
 
--- Table for detailed Payroll Slips
+-- 6. PAYROLL RECORDS (New)
 CREATE TABLE IF NOT EXISTS payroll_records (
   id TEXT PRIMARY KEY,
   payout_date DATE,
@@ -89,22 +86,19 @@ CREATE TABLE IF NOT EXISTS payroll_records (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Enable security (optional, based on your previous setup)
-ALTER TABLE payroll_records ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow all for payroll_records" ON payroll_records FOR ALL USING (true) WITH CHECK (true);
--- Enable RLS but allow all for server-side use with service role key
--- If you use anon key, add policies. With service_role key, RLS is bypassed.
+-- 7. ENABLE SECURITY (RLS)
+-- This allows your API to read/write without complex policies for now.
 ALTER TABLE income_records ENABLE ROW LEVEL SECURITY;
 ALTER TABLE expense_records ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cash_accounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cash_movement ENABLE ROW LEVEL SECURITY;
 ALTER TABLE business_config ENABLE ROW LEVEL SECURITY;
+ALTER TABLE payroll_records ENABLE ROW LEVEL SECURITY;
 
--- Allow all operations for authenticated and anon (for server-side API using service role, these aren't needed)
--- Policy: allow all for service_role. For anon/key, add:
-CREATE POLICY "Allow all for income_records" ON income_records FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all for expense_records" ON expense_records FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all for cash_accounts" ON cash_accounts FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all for cash_movement" ON cash_movement FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all for business_config" ON business_config FOR ALL USING (true) WITH CHECK (true);
-
+-- 8. ALLOW ACCESS POLICIES
+CREATE POLICY "Allow all income" ON income_records FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all expense" ON expense_records FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all cash_accounts" ON cash_accounts FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all cash_movement" ON cash_movement FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all business_config" ON business_config FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all payroll" ON payroll_records FOR ALL USING (true) WITH CHECK (true);
