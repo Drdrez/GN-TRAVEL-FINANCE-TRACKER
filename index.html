@@ -9,7 +9,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
 
     <style>
         :root {
@@ -18,6 +17,7 @@
             --text-light: #64748b;
         }
 
+        /* --- STATIC BACKGROUND --- */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f5f3ff 100%);
@@ -27,7 +27,7 @@
             padding-right: env(safe-area-inset-right);
         }
 
-        /* GLASSMORPHISM */
+        /* --- GLASSMORPHISM CLASSES --- */
         .glass {
             background: rgba(255, 255, 255, 0.75);
             backdrop-filter: blur(12px);
@@ -43,11 +43,13 @@
             border-right: 1px solid rgba(255, 255, 255, 0.6);
         }
 
+        /* Custom Scrollbar */
         .custom-scrollbar::-webkit-scrollbar { height: 8px; width: 8px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
+        /* Sidebar Link Active State */
         .nav-link { cursor: pointer; transition: all 0.2s ease; }
         .nav-link:hover { background: rgba(255,255,255,0.6); }
         .nav-link.active {
@@ -59,8 +61,10 @@
 
         .kpi-card { border-top: 4px solid var(--primary-blue); }
 
+        /* Table Styles */
         th, td { white-space: nowrap; }
         
+        /* --- EDITABLE INPUTS & DROPDOWNS --- */
         td[contenteditable="true"], th[contenteditable="true"], select.editable-input, input.editable-input {
             background-color: transparent;
             cursor: text;
@@ -106,7 +110,7 @@
 
         .hidden { display: none !important; }
 
-        /* Loading & Save */
+        /* Loading Overlay */
         .loading-overlay {
             position: fixed; inset: 0;
             background: rgba(255,255,255,0.5);
@@ -123,6 +127,7 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* Save indicator */
         .save-indicator {
             position: fixed; bottom: 20px; right: 20px;
             background: #10b981; color: white;
@@ -134,12 +139,12 @@
         .save-indicator.show { display: flex; align-items: center; gap: 8px; }
         .save-indicator.error { background: #ef4444; }
 
-        /* Payroll Styles */
+        /* --- PAYROLL SPECIFIC STYLES --- */
         .payroll-label {
             font-size: 0.75rem;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            color: #64748b;
+            color: #64748b; /* Slate 500 */
             font-weight: 700;
             margin-bottom: 0.25rem;
         }
@@ -160,7 +165,7 @@
             box-shadow: 0 0 0 3px rgba(52, 176, 229, 0.1);
         }
         
-        /* Mobile */
+        /* Mobile Sidebar */
         @media (max-width: 1023px) {
             #sidebar {
                 position: fixed; left: 0; top: 0; z-index: 40; height: 100%;
@@ -176,14 +181,51 @@
         }
         @media (min-width: 1024px) { .mobile-menu-btn { display: none; } }
         
-        /* PRINT STYLES */
+        /* PRINT SPECIFIC STYLES - FIXES THE ISSUE */
         @media print {
-            body { background: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            body { 
+                background: white !important; 
+                -webkit-print-color-adjust: exact; 
+                print-color-adjust: exact;
+            }
+            /* Hide everything by default */
             body * { visibility: hidden; }
-            #invoice-print-area, #invoice-print-area * { visibility: visible; }
-            #invoice-print-area { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 20px; background: white !important; z-index: 9999; }
+            
+            /* Show only the print areas */
+            #invoice-print-area, #invoice-print-area *,
+            #payroll-print-area, #payroll-print-area * { 
+                visibility: visible; 
+            }
+
+            /* Positioning */
+            #invoice-print-area, #payroll-print-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                margin: 0;
+                padding: 20px;
+                background: white !important;
+                border: none !important;
+                box-shadow: none !important;
+                z-index: 9999;
+            }
+            
+            /* Hide UI elements during print */
             .no-print { display: none !important; }
-            input, select, textarea { border: none !important; background: transparent !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; font-weight: bold; color: #000 !important; -webkit-appearance: none; }
+
+            /* Ensure Inputs Print correctly by removing styling and borders */
+            input, select, textarea {
+                border: none !important;
+                background: transparent !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-weight: bold;
+                color: #000 !important;
+                -webkit-appearance: none;
+            }
+            /* Specific fix for placeholders not printing */
             ::placeholder { color: transparent; }
         }
 
@@ -267,11 +309,21 @@
                         <span>Export PDF</span>
                     </button>
                     <div id="export-dropdown" class="absolute right-0 mt-2 w-56 glass rounded-lg shadow-xl border border-white/60 z-50 hidden">
-                        <a href="#" onclick="exportToPDF('dashboard'); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-white/50 first:rounded-t-lg"><span class="font-bold text-[#34b0e5]">●</span> Export Dashboard</a>
-                        <a href="#" onclick="exportToPDF('income'); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-white/50"><span class="font-bold text-[#34b0e5]">●</span> Export Income</a>
-                        <a href="#" onclick="exportToPDF('expenses'); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-white/50"><span class="font-bold text-[#34b0e5]">●</span> Export Expenses</a>
-                        <a href="#" onclick="exportToPDF('cash'); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-white/50"><span class="font-bold text-[#34b0e5]">●</span> Export Cash Flow</a>
-                        <a href="#" onclick="exportToPDF('payroll'); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-white/50 last:rounded-b-lg"><span class="font-bold text-[#34b0e5]">●</span> Export Payroll</a>
+                        <a href="#" onclick="exportToPDF('dashboard'); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-white/50 first:rounded-t-lg">
+                             <span class="font-bold text-[#34b0e5]">●</span> Export Dashboard
+                        </a>
+                        <a href="#" onclick="exportToPDF('income'); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-white/50">
+                             <span class="font-bold text-[#34b0e5]">●</span> Export Income
+                        </a>
+                        <a href="#" onclick="exportToPDF('expenses'); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-white/50">
+                             <span class="font-bold text-[#34b0e5]">●</span> Export Expenses
+                        </a>
+                         <a href="#" onclick="exportToPDF('cash'); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-white/50">
+                             <span class="font-bold text-[#34b0e5]">●</span> Export Cash Flow
+                        </a>
+                         <a href="#" onclick="exportToPDF('payroll'); return false;" class="block px-4 py-2 text-sm text-gray-700 hover:bg-white/50 last:rounded-b-lg">
+                             <span class="font-bold text-[#34b0e5]">●</span> Export Payroll
+                        </a>
                     </div>
                 </div>
 
@@ -621,7 +673,7 @@
                 </button>
             </div>
 
-            <div id="payroll-print-area" class="p-6 md:p-8 bg-white/90">
+            <div id="payroll-print-area" class="p-6 md:p-8 bg-white/60">
                 
                 <div class="text-center mb-8 pb-4 border-b-2 border-[#34b0e5]">
                     <h1 class="text-3xl font-extrabold text-[#34b0e5] tracking-tight uppercase mb-1">PAYROLL SLIP</h1>
@@ -721,9 +773,9 @@
 
             <div class="p-4 border-t border-slate-200/60 bg-white/40 flex justify-end gap-3 rounded-b-2xl no-print">
                  <button onclick="closePayrollModal()" class="px-5 py-2.5 text-slate-600 hover:bg-white/60 rounded-xl transition-all font-semibold text-sm">Cancel</button>
-                 <button onclick="saveAndDownloadImage()" class="px-5 py-2.5 bg-[#34b0e5] hover:bg-[#2d9acb] text-white rounded-xl shadow-lg shadow-blue-200 transition-all flex items-center gap-2 font-bold text-sm transform active:scale-95">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                    Save & Download Image
+                 <button onclick="saveAndPrintPayroll()" class="px-5 py-2.5 bg-[#34b0e5] hover:bg-[#2d9acb] text-white rounded-xl shadow-lg shadow-blue-200 transition-all flex items-center gap-2 font-bold text-sm transform active:scale-95">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                    Save & Print
                 </button>
             </div>
         </div>
@@ -780,7 +832,7 @@
         let expenseRecords = [];
         let cashAccounts = [];
         let cashMovement = {};
-        let payrollRecords = [];
+        let payrollRecords = []; // Added for new section
         let businessColumns = ['Service A', 'Service B'];
         let businessData = {};
         let dashboardExpenses = {};
@@ -993,19 +1045,26 @@
         // --- PDF EXPORT FUNCTION ---
         function exportToPDF(viewId) {
             closeExportDropdown();
+            
+            // SPECIAL HANDLING FOR PAYROLL:
+            // If we are exporting "payroll", check if the modal is open. 
+            // If yes, export the MODAL content (the slip). If no, export the TABLE.
             let element;
             const modal = document.getElementById('payroll-modal');
             const isPayrollModalOpen = !modal.classList.contains('hidden');
 
             if (viewId === 'payroll' && isPayrollModalOpen) {
+                // Export the SLIP
                 element = document.getElementById('payroll-print-area');
             } else {
+                // Export the TABLE (or other view)
                 element = document.getElementById('view-' + viewId);
             }
 
             if (!element) return;
 
             let wasHidden = false;
+            // Only check hidden if it's NOT the modal print area (which is inside a hidden modal wrapper)
             if (viewId !== 'payroll' || !isPayrollModalOpen) {
                 if (element.classList.contains('hidden')) {
                     wasHidden = true;
@@ -1068,7 +1127,7 @@
             tbody.innerHTML = '';
             payrollRecords.forEach((record, index) => {
                 const tr = document.createElement('tr');
-                tr.setAttribute('data-id', record.id);
+                tr.setAttribute('data-id', record.id); // Add ID for deletion
                 tr.className = "hover:bg-white/20 transition-colors";
                 tr.innerHTML = `
                     <td class="px-4 py-3 border-r border-slate-200/60 text-slate-700">${record.payout_date || record.payoutDate}</td>
@@ -1086,19 +1145,26 @@
             });
         }
         
+        // NEW DELETE FUNCTION FOR PAYROLL
         async function deletePayrollRow(btn) {
             if(!confirm("Are you sure you want to delete this payroll record?")) return;
+
             const tr = btn.closest('tr');
             const id = tr.getAttribute('data-id');
+            
+            // 1. Delete from Backend
             const success = await apiDelete('payroll', id);
+            
             if (success) {
+                // 2. Remove from Local Array
                 payrollRecords = payrollRecords.filter(r => r.id !== id);
+                // 3. Remove from UI
                 tr.remove();
             }
         }
 
-        // Save Payroll as Image (Replaces Print)
-        async function saveAndDownloadImage() {
+        async function saveAndPrintPayroll() {
+            // Get values
             const name = document.getElementById('pay-name').value;
             const role = document.getElementById('pay-role').value;
             const client = document.getElementById('pay-client').value;
@@ -1112,32 +1178,18 @@
             const basePay = rate * hours;
             const total = basePay + bonus - deductions;
 
-            // 1. Generate and Download Image
-            const element = document.getElementById('payroll-print-area');
-            const originalBg = element.style.background;
-            element.style.background = 'white'; // Force white background for image
-            
-            try {
-                const canvas = await html2canvas(element, { scale: 2, useCORS: true });
-                const link = document.createElement('a');
-                link.download = `Payroll_Slip_${name.replace(/\s+/g,'_')}_${date}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-            } catch (err) {
-                console.error("Image generation failed:", err);
-                alert("Failed to save image.");
-            } finally {
-                element.style.background = originalBg;
-            }
+            // 1. Trigger Print (Browser will handle the input values now)
+            window.print();
 
             // 2. Save detailed payroll record to Backend
             const payrollData = { name, role, client, type, period, payoutDate: date, rate, hours, basePay, bonus, deductions, total };
             const savedRecord = await apiPost('payroll', payrollData);
             
-            if (savedRecord) payrollRecords.unshift(savedRecord);
+            // 3. Update local payroll table
+            if (savedRecord) payrollRecords.unshift(savedRecord); // Add to top
             renderPayrollTable();
 
-            // 3. Add to Expense Tracker
+            // 4. Add to Expense Tracker
             const newExpense = {
                 id: Date.now().toString(),
                 date: date || new Date().toISOString().split('T')[0],
@@ -1458,21 +1510,345 @@
             });
         }
 
-        // --- CASH MOVEMENT ---
+        // --- INCOME TRACKER ---
+        const serviceOptions = ["Social Media Management", "Virtual Assistance", "Paid Ads", "Branding", "Graphic Design"];
+        const pricingOptions = ["Monthly Retainer", "Project-Based"];
+        const statusOptions = ["Paid", "Pending", "Overdue"];
+
+        function renderIncomeTable() {
+            const tbody = document.getElementById('tracker-body');
+            tbody.innerHTML = '';
+            incomeRecords.forEach((record, index) => {
+                const recordYear = new Date(record.date).getFullYear();
+                if (!record.date || recordYear === currentYear) {
+                    const tr = createIncomeRow(record, index);
+                    tbody.appendChild(tr);
+                }
+            });
+            updateIncomeTracker();
+        }
+
+        function createIncomeRow(record, index) {
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-white/20 transition-colors";
+            tr.setAttribute('data-id', record.id);
+            const createSelect = (options, selected) => {
+                let html = `<select class="editable-input text-slate-700 font-medium" onchange="updateIncomeRecord(this)">`;
+                options.forEach(opt => html += `<option value="${opt}" ${opt === selected ? 'selected' : ''}>${opt}</option>`);
+                html += `</select>`;
+                return html;
+            };
+
+            tr.innerHTML = `
+                <td class="px-4 py-3 border-r border-slate-200/60"><input type="date" value="${record.date || ''}" class="editable-input text-slate-700 font-medium" onchange="updateIncomeRecord(this)"></td>
+                <td class="px-4 py-3 border-r border-slate-200/60 text-slate-700" contenteditable="true">${record.clientName || 'Client Name'}</td>
+                <td class="px-4 py-3 border-r border-slate-200/60">${createSelect(serviceOptions, record.serviceType)}</td>
+                <td class="px-4 py-3 border-r border-slate-200/60">${createSelect(pricingOptions, record.pricingModel)}</td>
+                <td class="px-4 py-3 text-right border-r border-slate-200/60 text-slate-700" contenteditable="true">${formatMoney(record.gross || 0)}</td>
+                <td class="px-4 py-3 text-right border-r border-slate-200/60 text-slate-700" contenteditable="true">${formatMoney(record.net || 0)}</td>
+                <td class="px-4 py-3 border-r border-slate-200/60 text-slate-700" contenteditable="true">${record.paymentMode || 'Bank Transfer'}</td>
+                <td class="px-4 py-3 border-r border-slate-200/60">${createSelect(statusOptions, record.status)}</td>
+                <td class="px-4 py-3 border-r border-slate-200/60 text-slate-700" contenteditable="true">${record.refId || 'INV-001'}</td>
+                <td class="px-4 py-3 text-slate-700" contenteditable="true">${record.notes || ''}</td>
+                <td class="px-2 py-3 text-center flex gap-1 justify-center no-print">
+                    <button onclick="openInvoice(this)" class="text-blue-400 hover:text-blue-600 transition-colors" title="Generate Invoice">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    </button>
+                    <button onclick="deleteIncomeRow(this)" class="text-gray-400 hover:text-red-500 transition-colors" title="Delete">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                </td>
+            `;
+            tr.querySelectorAll('[contenteditable="true"]').forEach(cell => {
+                cell.addEventListener('blur', function() { updateIncomeRecordFromRow(tr); });
+                cell.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); this.blur(); } });
+            });
+            return tr;
+        }
+
+        function addIncomeRow() {
+            const newRecord = {
+                id: Date.now().toString(),
+                date: new Date().toISOString().split('T')[0],
+                clientName: 'Client Name',
+                serviceType: serviceOptions[0],
+                pricingModel: pricingOptions[0],
+                gross: 0, net: 0,
+                paymentMode: 'Bank Transfer',
+                status: statusOptions[0],
+                refId: `INV-${String(incomeRecords.length + 1).padStart(3, '0')}`,
+                notes: ''
+            };
+            incomeRecords.push(newRecord);
+            renderIncomeTable();
+            scheduleSave(saveIncomeRecords);
+        }
+
+        function updateIncomeRecord(element) { updateIncomeRecordFromRow(element.closest('tr')); }
+        function updateIncomeRecordFromRow(tr) {
+            const id = tr.getAttribute('data-id');
+            const index = incomeRecords.findIndex(r => r.id === id);
+            if (index === -1) return;
+            const cells = tr.querySelectorAll('td');
+            incomeRecords[index] = {
+                ...incomeRecords[index],
+                date: cells[0].querySelector('input').value,
+                clientName: cells[1].innerText,
+                serviceType: cells[2].querySelector('select').value,
+                pricingModel: cells[3].querySelector('select').value,
+                gross: parseMoney(cells[4].innerText),
+                net: parseMoney(cells[5].innerText),
+                paymentMode: cells[6].innerText,
+                status: cells[7].querySelector('select').value,
+                refId: cells[8].innerText,
+                notes: cells[9].innerText
+            };
+            cells[4].innerText = formatMoney(incomeRecords[index].gross);
+            cells[5].innerText = formatMoney(incomeRecords[index].net);
+            updateIncomeTracker();
+            scheduleSave(saveIncomeRecords);
+        }
+
+        function deleteIncomeRow(btn) {
+            const tr = btn.closest('tr');
+            const id = tr.getAttribute('data-id');
+            incomeRecords = incomeRecords.filter(r => r.id !== id);
+            tr.remove();
+            updateIncomeTracker();
+            scheduleSave(saveIncomeRecords);
+        }
+
+        function updateIncomeTracker() {
+            let totalGross = 0;
+            let totalNet = 0;
+            let serviceTotals = {};
+            serviceOptions.forEach(s => serviceTotals[s] = 0);
+            incomeRecords.forEach(record => {
+                const recordYear = new Date(record.date).getFullYear();
+                if (!record.date || recordYear === currentYear) {
+                    totalGross += record.gross || 0;
+                    totalNet += record.net || 0;
+                    if (serviceTotals[record.serviceType] !== undefined) serviceTotals[record.serviceType] += record.net || 0;
+                }
+            });
+            document.getElementById('tracker-total-gross').innerText = formatMoney(totalGross);
+            document.getElementById('tracker-total-net').innerText = formatMoney(totalNet);
+            if(window.trackerChart) {
+                const labels = Object.keys(serviceTotals).filter(k => serviceTotals[k] > 0);
+                const data = labels.map(k => serviceTotals[k]);
+                window.trackerChart.data.labels = labels;
+                window.trackerChart.data.datasets[0].data = data;
+                window.trackerChart.update();
+                window.trackerBarChart.data.labels = labels;
+                window.trackerBarChart.data.datasets[0].data = data;
+                window.trackerBarChart.update();
+            }
+        }
+
+        // --- EXPENSES TRACKER ---
+        const expenseCategories = ["Payroll", "Software / Tools", "Advertising", "Payment Processing Fees", "Tax", "Education / Coaching", "Miscellaneous"];
+        const expenseTypes = ["Fixed", "Variable"];
+        const expensePayments = ["Card", "Bank", "Cash", "Transfer"];
+        const expenseStatuses = ["Paid", "Pending", "Overdue"];
+        const expenseRecurring = ["Yes", "No"];
+
+        function renderExpenseTable() {
+            const tbody = document.getElementById('expenses-body');
+            tbody.innerHTML = '';
+            expenseRecords.forEach((record, index) => {
+                const recordYear = new Date(record.date).getFullYear();
+                if (!record.date || recordYear === currentYear) {
+                    const tr = createExpenseRow(record, index);
+                    tbody.appendChild(tr);
+                }
+            });
+        }
+
+        function createExpenseRow(record, index) {
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-white/20 transition-colors";
+            tr.setAttribute('data-id', record.id);
+            const createSelect = (options, selected) => {
+                let html = `<select class="editable-input text-slate-700 font-medium" onchange="updateExpenseRecord(this)">`;
+                options.forEach(opt => html += `<option value="${opt}" ${opt === selected ? 'selected' : ''}>${opt}</option>`);
+                html += `</select>`;
+                return html;
+            };
+
+            tr.innerHTML = `
+                <td class="px-4 py-3 border-r border-slate-200/60"><input type="date" value="${record.date || ''}" class="editable-input text-slate-700 font-medium" onchange="updateExpenseRecord(this)"></td>
+                <td class="px-4 py-3 border-r border-slate-200/60 text-slate-700" contenteditable="true">${record.vendor || 'Vendor Name'}</td>
+                <td class="px-4 py-3 border-r border-slate-200/60">${createSelect(expenseCategories, record.category)}</td>
+                <td class="px-4 py-3 border-r border-slate-200/60">${createSelect(expenseTypes, record.type)}</td>
+                <td class="px-4 py-3 border-r border-slate-200/60 text-slate-700" contenteditable="true">${record.service || 'General'}</td>
+                <td class="px-4 py-3 text-right border-r border-slate-200/60 text-slate-700" contenteditable="true">${formatMoney(record.amount || 0)}</td>
+                <td class="px-4 py-3 border-r border-slate-200/60">${createSelect(expensePayments, record.payment)}</td>
+                <td class="px-4 py-3 border-r border-slate-200/60">${createSelect(expenseStatuses, record.status)}</td>
+                <td class="px-4 py-3 border-r border-slate-200/60">${createSelect(expenseRecurring, record.recurring)}</td>
+                <td class="px-4 py-3 text-slate-700" contenteditable="true">${record.notes || ''}</td>
+                <td class="px-2 py-3 text-center no-print">
+                    <button onclick="deleteExpenseRow(this)" class="text-gray-400 hover:text-red-500 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </td>
+            `;
+            tr.querySelectorAll('[contenteditable="true"]').forEach(cell => {
+                cell.addEventListener('blur', function() { updateExpenseRecordFromRow(tr); });
+                cell.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); this.blur(); } });
+            });
+            return tr;
+        }
+
+        function addExpenseRow() {
+            const newRecord = {
+                id: Date.now().toString(),
+                date: new Date().toISOString().split('T')[0],
+                vendor: 'Vendor Name',
+                category: expenseCategories[0],
+                type: expenseTypes[0],
+                service: 'General',
+                amount: 0,
+                payment: expensePayments[0],
+                status: expenseStatuses[0],
+                recurring: expenseRecurring[1],
+                notes: ''
+            };
+            expenseRecords.push(newRecord);
+            renderExpenseTable();
+            scheduleSave(saveExpenseRecords);
+        }
+
+        function updateExpenseRecord(element) { updateExpenseRecordFromRow(element.closest('tr')); }
+        function updateExpenseRecordFromRow(tr) {
+            const id = tr.getAttribute('data-id');
+            const index = expenseRecords.findIndex(r => r.id === id);
+            if (index === -1) return;
+            const cells = tr.querySelectorAll('td');
+            expenseRecords[index] = {
+                ...expenseRecords[index],
+                date: cells[0].querySelector('input').value,
+                vendor: cells[1].innerText,
+                category: cells[2].querySelector('select').value,
+                type: cells[3].querySelector('select').value,
+                service: cells[4].innerText,
+                amount: parseMoney(cells[5].innerText),
+                payment: cells[6].querySelector('select').value,
+                status: cells[7].querySelector('select').value,
+                recurring: cells[8].querySelector('select').value,
+                notes: cells[9].innerText
+            };
+            cells[5].innerText = formatMoney(expenseRecords[index].amount);
+            scheduleSave(saveExpenseRecords);
+        }
+
+        function deleteExpenseRow(btn) {
+            const tr = btn.closest('tr');
+            const id = tr.getAttribute('data-id');
+            expenseRecords = expenseRecords.filter(r => r.id !== id);
+            tr.remove();
+            scheduleSave(saveExpenseRecords);
+        }
+
+        // --- CASH OVERVIEW ---
+        const cashAcctNames = ["Philippine Bank", "Business Savings", "Stripe Balance", "PayPal Balance", "Wise Balance"];
+        const cashAcctCategories = ["Operating Cash", "Payment Processors", "Savings / Reserves", "Tax Reserve", "Other"];
+
+        function renderCashAccountsTable() {
+            const tbody = document.getElementById('cash-balances-body');
+            tbody.innerHTML = '';
+            cashAccounts.forEach((record, index) => {
+                const tr = createCashAccountRow(record, index);
+                tbody.appendChild(tr);
+            });
+        }
+
+        function createCashAccountRow(record, index) {
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-white/20 transition-colors";
+            tr.setAttribute('data-id', record.id);
+            const createSelect = (options, selected) => {
+                let html = `<select class="editable-input text-slate-700 font-medium" onchange="updateCashAccount(this)">`;
+                options.forEach(opt => html += `<option value="${opt}" ${opt === selected ? 'selected' : ''}>${opt}</option>`);
+                html += `</select>`;
+                return html;
+            };
+            const createMonthSelect = (selected) => {
+                let html = `<select class="editable-input text-slate-700 font-medium" onchange="updateCashAccount(this)">`;
+                MONTHS.forEach(m => html += `<option value="${m}" ${m === selected ? 'selected' : ''}>${m}</option>`);
+                html += `</select>`;
+                return html;
+            };
+
+            tr.innerHTML = `
+                <td class="px-6 py-4 border-r border-slate-200/60">${createMonthSelect(record.month)}</td>
+                <td class="px-6 py-4 border-r border-slate-200/60">${createSelect(cashAcctNames, record.accountName)}</td>
+                <td class="px-6 py-4 border-r border-slate-200/60">${createSelect(cashAcctCategories, record.category)}</td>
+                <td class="px-6 py-4 border-r border-slate-200/60 text-slate-700" contenteditable="true">${record.institution || 'Bank Name'}</td>
+                <td class="px-6 py-4 text-right text-slate-700 font-medium" contenteditable="true">${formatMoney(record.balance || 0)}</td>
+                <td class="px-2 py-3 text-center no-print">
+                    <button onclick="deleteCashAccount(this)" class="text-gray-400 hover:text-red-500 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </td>
+            `;
+            tr.querySelectorAll('[contenteditable="true"]').forEach(cell => {
+                cell.addEventListener('blur', function() { updateCashAccountFromRow(tr); });
+                cell.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); this.blur(); } });
+            });
+            return tr;
+        }
+
+        function addCashAccountRow() {
+            const newRecord = {
+                id: Date.now().toString(),
+                month: MONTHS[0],
+                accountName: cashAcctNames[0],
+                category: cashAcctCategories[0],
+                institution: 'Bank Name',
+                balance: 0
+            };
+            cashAccounts.push(newRecord);
+            const tbody = document.getElementById('cash-balances-body');
+            const tr = createCashAccountRow(newRecord, cashAccounts.length - 1);
+            tbody.appendChild(tr);
+            scheduleSave(saveCashAccounts);
+        }
+
+        function updateCashAccount(element) { updateCashAccountFromRow(element.closest('tr')); }
+        function updateCashAccountFromRow(tr) {
+            const id = tr.getAttribute('data-id');
+            const index = cashAccounts.findIndex(r => r.id === id);
+            if (index === -1) return;
+            const cells = tr.querySelectorAll('td');
+            cashAccounts[index] = {
+                ...cashAccounts[index],
+                month: cells[0].querySelector('select').value,
+                accountName: cells[1].querySelector('select').value,
+                category: cells[2].querySelector('select').value,
+                institution: cells[3].innerText,
+                balance: parseMoney(cells[4].innerText)
+            };
+            cells[4].innerText = formatMoney(cashAccounts[index].balance);
+            scheduleSave(saveCashAccounts);
+        }
+
+        function deleteCashAccount(btn) {
+            const tr = btn.closest('tr');
+            const id = tr.getAttribute('data-id');
+            cashAccounts = cashAccounts.filter(r => r.id !== id);
+            tr.remove();
+            scheduleSave(saveCashAccounts);
+        }
+
         function initCashMovement() {
             const tbody = document.getElementById('cash-movement-body');
-            if (!tbody) return;
             tbody.innerHTML = '';
-            
             MONTHS.forEach(month => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-white/20 transition-colors";
                 tr.setAttribute('data-month', month);
-                
-                // Use safe defaults if backend data is missing/empty
-                const startVal = (cashMovement && cashMovement[`${month}_start`]) || 0;
-                const endVal = (cashMovement && cashMovement[`${month}_end`]) || 0;
-
+                const startVal = cashMovement[`${month}_start`] || 0;
+                const endVal = cashMovement[`${month}_end`] || 0;
                 tr.innerHTML = `
                     <td class="px-6 py-4 font-bold text-slate-700 border-r border-slate-200/60">${month}</td>
                     <td class="px-6 py-4 text-right border-r border-slate-200/60 cash-start text-slate-600" contenteditable="true">${formatMoney(startVal)}</td>
@@ -1481,20 +1857,13 @@
                 `;
                 tbody.appendChild(tr);
             });
-
-            // Listeners
             document.querySelectorAll('.cash-start, .cash-end').forEach(cell => {
                 cell.addEventListener('blur', function() {
                     const row = this.closest('tr');
                     const month = row.getAttribute('data-month');
                     const val = parseMoney(this.innerText);
-                    
-                    if (this.classList.contains('cash-start')) { 
-                        cashMovement[`${month}_start`] = val; 
-                    } else { 
-                        cashMovement[`${month}_end`] = val; 
-                    }
-                    
+                    if (this.classList.contains('cash-start')) { cashMovement[`${month}_start`] = val; } 
+                    else { cashMovement[`${month}_end`] = val; }
                     this.innerText = formatMoney(val);
                     calculateCashMovement();
                     scheduleSave(saveCashMovement);
