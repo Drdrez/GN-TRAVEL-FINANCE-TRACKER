@@ -259,11 +259,7 @@
             </div>
             
             <div class="flex flex-wrap items-center gap-2 sm:gap-3">
-                <button onclick="exportToCSV()" class="glass rounded-lg px-3 py-2 text-sm shadow-sm flex items-center gap-2 hover:bg-green-50 text-green-600 transition-colors font-bold" title="Download Excel CSV">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    <span>Export</span>
-                </button>
-
+                
                 <div class="glass rounded-lg px-1 py-1 text-sm shadow-sm flex items-center">
                     <button onclick="toggleCurrency('PHP')" id="btn-php" class="px-3 py-1 rounded-md text-xs font-bold bg-blue-100 text-blue-600 transition-colors">PHP</button>
                     <button onclick="toggleCurrency('USD')" id="btn-usd" class="px-3 py-1 rounded-md text-xs font-bold text-gray-500 hover:bg-white/50 transition-colors">USD</button>
@@ -321,7 +317,13 @@
                 <div class="glass rounded-2xl shadow-sm overflow-hidden flex flex-col h-full">
                     <div class="p-4 sm:p-6 border-b border-slate-200/60 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 xl:min-h-[88px] justify-center">
                         <h3 class="text-base sm:text-lg font-bold text-[#34b0e5]">Income & Expenses Breakdown</h3>
-                        <div class="text-xs text-slate-500 italic no-print">Edit 'Expenses' column. 'Income' is auto-calculated.</div>
+                        <div class="flex items-center gap-2">
+                             <div class="text-xs text-slate-500 italic no-print hidden sm:block">Edit 'Expenses' column.</div>
+                             <button onclick="exportToCSV('summary')" class="glass text-green-600 px-3 py-1.5 rounded-md text-sm font-bold hover:bg-green-50 transition-colors flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                Export Report
+                            </button>
+                        </div>
                     </div>
                     <div class="overflow-x-auto custom-scrollbar flex-1">
                         <table class="w-full text-sm text-left table-cell-padding min-w-[600px]" id="table-main">
@@ -416,10 +418,16 @@
             <div class="glass rounded-2xl shadow-sm mb-8 overflow-hidden">
                 <div class="p-6 border-b border-slate-200/60 flex justify-between items-center">
                     <h3 class="text-lg font-bold text-[#34b0e5]">Income Tracker Details</h3>
-                    <button onclick="addIncomeRow()" class="glass text-[#34b0e5] px-3 py-1.5 rounded-md text-sm font-semibold hover:bg-blue-50 transition-colors flex items-center gap-1 no-print">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                        Add Entry
-                    </button>
+                    <div class="flex gap-2">
+                        <button onclick="exportToCSV('income')" class="glass text-green-600 px-3 py-1.5 rounded-md text-sm font-bold hover:bg-green-50 transition-colors flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            Export CSV
+                        </button>
+                        <button onclick="addIncomeRow()" class="glass text-[#34b0e5] px-3 py-1.5 rounded-md text-sm font-semibold hover:bg-blue-50 transition-colors flex items-center gap-1 no-print">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            Add Entry
+                        </button>
+                    </div>
                 </div>
                 <div class="overflow-x-auto custom-scrollbar">
                     <table class="w-full text-sm text-left table-cell-padding min-w-[700px]" id="table-income-tracker">
@@ -457,10 +465,16 @@
             <div class="glass rounded-2xl shadow-sm mb-8 overflow-hidden flex-1 flex flex-col">
                 <div class="p-6 border-b border-slate-200/60 flex justify-between items-center">
                     <h3 class="text-lg font-bold text-[#34b0e5]">Expenses Details</h3>
-                    <button onclick="addExpenseRow()" class="glass text-[#34b0e5] px-3 py-1.5 rounded-md text-sm font-semibold hover:bg-blue-50 transition-colors flex items-center gap-1 no-print">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                        Add Expense
-                    </button>
+                    <div class="flex gap-2">
+                        <button onclick="exportToCSV('expenses')" class="glass text-green-600 px-3 py-1.5 rounded-md text-sm font-bold hover:bg-green-50 transition-colors flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            Export CSV
+                        </button>
+                        <button onclick="addExpenseRow()" class="glass text-[#34b0e5] px-3 py-1.5 rounded-md text-sm font-semibold hover:bg-blue-50 transition-colors flex items-center gap-1 no-print">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            Add Expense
+                        </button>
+                    </div>
                 </div>
                 <div class="overflow-x-auto custom-scrollbar flex-1">
                     <table class="w-full text-sm text-left table-cell-padding min-w-[700px]" id="table-expenses">
@@ -518,10 +532,16 @@
             <div class="glass rounded-2xl shadow-sm mb-8 overflow-hidden">
                 <div class="p-6 border-b border-slate-200/60 flex justify-between items-center">
                     <h3 class="text-lg font-bold text-[#34b0e5]">Cash Account Balances</h3>
-                    <button onclick="addCashAccountRow()" class="glass text-[#34b0e5] px-3 py-1.5 rounded-md text-sm font-semibold hover:bg-blue-50 transition-colors flex items-center gap-1 no-print">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                        Add Account Entry
-                    </button>
+                    <div class="flex gap-2">
+                        <button onclick="exportToCSV('cash')" class="glass text-green-600 px-3 py-1.5 rounded-md text-sm font-bold hover:bg-green-50 transition-colors flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            Export CSV
+                        </button>
+                        <button onclick="addCashAccountRow()" class="glass text-[#34b0e5] px-3 py-1.5 rounded-md text-sm font-semibold hover:bg-blue-50 transition-colors flex items-center gap-1 no-print">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            Add Account Entry
+                        </button>
+                    </div>
                 </div>
                 <div class="overflow-x-auto custom-scrollbar">
                     <table class="w-full text-sm text-left table-cell-padding min-w-[500px]">
@@ -641,7 +661,6 @@
         const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
         const API_BASE = '/api';
         
-        // Default view tracking
         let currentView = 'dashboard';
 
         // --- MOBILE SIDEBAR ---
@@ -828,7 +847,7 @@
                 document.getElementById('btn-php').className = "px-3 py-1 rounded-md text-xs font-bold text-gray-500 hover:bg-white/50 transition-colors";
             }
 
-            // CRITICAL FIX: DISABLE EDITING IN USD
+            // DISABLE EDITING IN USD TO PREVENT DATA CORRUPTION
             const isEditable = (curr === 'PHP');
             document.querySelectorAll('[contenteditable="true"]').forEach(el => {
                 el.contentEditable = isEditable;
@@ -868,46 +887,53 @@
             saveTimeout = setTimeout(saveFunction, SAVE_DELAY);
         }
 
-        // --- NEW: SMART CSV EXPORT (CONTEXT AWARE) ---
-        function exportToCSV() {
+        // --- NEW: EXPORT CSV FUNCTION (BY TYPE) ---
+        function exportToCSV(type) {
             let csvContent = "data:text/csv;charset=utf-8,";
             let filename = "Export.csv";
             const clean = (text) => (text || "").replace(/,/g, " ").replace(/\n/g, " ");
 
-            if (currentView === 'income') {
-                // EXPORT INCOME ONLY
+            if (type === 'income') {
+                // EXPORT INCOME RECORDS
                 csvContent += "Date,Client Name,Service Type,Pricing Model,Gross,Net,Payment Mode,Status,Ref ID,Notes\n";
                 incomeRecords.forEach(row => {
                     csvContent += `${row.date},${clean(row.clientName)},${clean(row.serviceType)},${clean(row.pricingModel)},${row.gross},${row.net},${clean(row.paymentMode)},${clean(row.status)},${clean(row.refId)},${clean(row.notes)}\n`;
                 });
                 filename = `Income_Data_${new Date().toISOString().slice(0,10)}.csv`;
 
-            } else if (currentView === 'expenses') {
-                // EXPORT EXPENSES ONLY
+            } else if (type === 'expenses') {
+                // EXPORT EXPENSE RECORDS
                 csvContent += "Date,Vendor,Category,Type,Service,Amount,Payment,Status,Recurring,Notes\n";
                 expenseRecords.forEach(row => {
                     csvContent += `${row.date},${clean(row.vendor)},${clean(row.category)},${clean(row.type)},${clean(row.service)},${row.amount},${clean(row.payment)},${clean(row.status)},${clean(row.recurring)},${clean(row.notes)}\n`;
                 });
                 filename = `Expenses_Data_${new Date().toISOString().slice(0,10)}.csv`;
 
-            } else if (currentView === 'cash') {
-                // EXPORT CASH ACCOUNTS ONLY
+            } else if (type === 'cash') {
+                // EXPORT CASH ACCOUNTS
                 csvContent += "Month,Account Name,Category,Institution,Balance\n";
                 cashAccounts.forEach(row => {
                     csvContent += `${clean(row.month)},${clean(row.accountName)},${clean(row.category)},${clean(row.institution)},${row.balance}\n`;
                 });
                 filename = `Cash_Data_${new Date().toISOString().slice(0,10)}.csv`;
 
-            } else {
-                // DASHBOARD: EXPORT EVERYTHING
-                csvContent += "TYPE,DATE,CLIENT/VENDOR,CATEGORY/SERVICE,AMOUNT,STATUS,NOTES\n";
-                incomeRecords.forEach(row => {
-                    csvContent += `INCOME,${row.date},${clean(row.clientName)},${clean(row.serviceType)},${row.net},${clean(row.status)},${clean(row.notes)}\n`;
+            } else if (type === 'summary') {
+                // EXPORT DASHBOARD SUMMARY REPORT
+                csvContent += "Year,Month,Total Income,Total Expense,Net Income,Margin %\n";
+                
+                // Recalculate summary data for export
+                MONTHS.forEach(month => {
+                    let totalIncome = 0;
+                    businessColumns.forEach(col => {
+                        totalIncome += (businessData[currentYear + '_' + col + '_' + month] || 0);
+                    });
+                    const expense = dashboardExpenses[currentYear + '_' + month] || 0;
+                    const net = totalIncome - expense;
+                    const margin = totalIncome > 0 ? ((net / totalIncome) * 100).toFixed(2) : 0;
+                    
+                    csvContent += `${currentYear},${month},${totalIncome},${expense},${net},${margin}%\n`;
                 });
-                expenseRecords.forEach(row => {
-                    csvContent += `EXPENSE,${row.date},${clean(row.vendor)},${clean(row.category)},-${row.amount},${clean(row.status)},${clean(row.notes)}\n`;
-                });
-                filename = `All_Business_Data_${new Date().toISOString().slice(0,10)}.csv`;
+                filename = `Annual_Report_${currentYear}.csv`;
             }
 
             // Trigger Download
@@ -1007,7 +1033,6 @@
         }
 
         function switchView(viewId) {
-            // Track current view for Export logic
             currentView = viewId;
 
             const titles = { 'dashboard': 'Business Dashboard', 'income': 'Income Tracker', 'expenses': 'Expenses Tracker', 'cash': 'Cash Overview' };
