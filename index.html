@@ -8,7 +8,6 @@
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
         :root {
@@ -242,7 +241,7 @@
         
         <div class="p-4 border-t border-slate-200/60">
             <div class="text-xs text-slate-400 text-center">
-                <span id="sync-status" class="text-green-500">●</span> Real-time enabled
+                <span id="sync-status" class="text-green-500">●</span> Auto-saving enabled
             </div>
         </div>
     </aside>
@@ -662,13 +661,6 @@
         const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
         const API_BASE = '/api';
         
-        // !!! IMPORTANT: REPLACE THESE WITH YOUR SUPABASE CREDENTIALS !!!
-        const SUPABASE_URL = 'https://udlnhhngwcqdjdwcheyd.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkbG5oaG5nd2NxZGpkd2NoZXlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk5ODM1NzMsImV4cCI6MjA4NTU1OTU3M30.3WeLLTCqvl3IT4YhfS77bA8cx7R2fVfyEXZ3mJaYG5w';
-
-        // Initialize Supabase for Realtime subscriptions
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
         let currentView = 'dashboard';
 
         // --- MOBILE SIDEBAR ---
@@ -691,7 +683,7 @@
         
         // --- LIVE CURRENCY ---
         let currentCurrency = 'PHP';
-        let exchangeRate = 58; 
+        let exchangeRate = 58; // Fallback
         let currentYear = new Date().getFullYear();
 
         // --- DATA STORES ---
@@ -703,6 +695,7 @@
         let businessData = {};
         let dashboardExpenses = {};
         
+        // Persistent Memory for deleted columns
         let deletedColumns = JSON.parse(localStorage.getItem('deletedColumns_GN')) || [];
 
         // --- PAGINATION STATE ---
@@ -728,6 +721,26 @@
             }
         }
 
+        async function apiPost(endpoint, data) {
+            try {
+                const response = await fetch(`${API_BASE}/${endpoint}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                if (result.success) {
+                    showSaveIndicator();
+                    return result.data || result;
+                }
+                throw new Error(result.error);
+            } catch (error) {
+                console.error(`API POST ${endpoint} error:`, error);
+                showSaveIndicator(true);
+                return null;
+            }
+        }
+
         async function apiPut(endpoint, data) {
             try {
                 const response = await fetch(`${API_BASE}/${endpoint}`, {
@@ -743,26 +756,6 @@
                 throw new Error(result.error);
             } catch (error) {
                 console.error(`API PUT ${endpoint} error:`, error);
-                showSaveIndicator(true);
-                return null;
-            }
-        }
-
-        async function apiPost(endpoint, data) {
-             try {
-                const response = await fetch(`${API_BASE}/${endpoint}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                const result = await response.json();
-                if (result.success) {
-                    showSaveIndicator();
-                    return result.data || result;
-                }
-                throw new Error(result.error);
-            } catch (error) {
-                console.error(`API POST ${endpoint} error:`, error);
                 showSaveIndicator(true);
                 return null;
             }
@@ -799,16 +792,23 @@
             setTimeout(() => indicator.classList.remove('show'), 2000);
         }
 
+        // --- LIVE CURRENCY FETCHER ---
         async function fetchLiveExchangeRate() {
             try {
                 const response = await fetch('https://open.er-api.com/v6/latest/USD');
                 const data = await response.json();
                 if (data && data.rates && data.rates.PHP) {
                     exchangeRate = data.rates.PHP;
+                    console.log('Live Exchange Rate Fetched:', exchangeRate);
                     const usdBtn = document.getElementById('btn-usd');
                     if (usdBtn) usdBtn.setAttribute('title', `Current Rate: ₱${exchangeRate.toFixed(2)} = $1 USD`);
                     if (currentCurrency === 'USD') {
-                        refreshAllViews();
+                        calculateDashboard();
+                        updateIncomeTracker();
+                        renderIncomeTable();
+                        renderExpenseTable();
+                        calculateCashMovement();
+                        calculateExpensesMovement();
                     }
                 }
             } catch (error) {
@@ -816,19 +816,9 @@
             }
         }
 
-        function refreshAllViews() {
-            calculateDashboard();
-            updateIncomeTracker();
-            renderIncomeTable();
-            renderExpenseTable();
-            calculateCashMovement();
-            calculateExpensesMovement();
-        }
-
         // --- GLOBAL UTILS ---
         function parseMoney(str) {
             if (!str) return 0;
-            if (typeof str === 'number') return str;
             const clean = str.replace(/[₱$₱,\s]/g, '');
             const num = parseFloat(clean);
             return isNaN(num) ? 0 : num;
@@ -848,6 +838,7 @@
             if(curr === currentCurrency) return;
             currentCurrency = curr;
             
+            // UI Button Toggles
             if(curr === 'PHP') {
                 document.getElementById('btn-php').className = "px-3 py-1 rounded-md text-xs font-bold bg-blue-100 text-blue-600 transition-colors";
                 document.getElementById('btn-usd').className = "px-3 py-1 rounded-md text-xs font-bold text-gray-500 hover:bg-white/50 transition-colors";
@@ -856,6 +847,7 @@
                 document.getElementById('btn-php').className = "px-3 py-1 rounded-md text-xs font-bold text-gray-500 hover:bg-white/50 transition-colors";
             }
 
+            // DISABLE EDITING IN USD TO PREVENT DATA CORRUPTION
             const isEditable = (curr === 'PHP');
             document.querySelectorAll('[contenteditable="true"]').forEach(el => {
                 el.contentEditable = isEditable;
@@ -868,14 +860,22 @@
                 el.style.cursor = isEditable ? 'pointer' : 'not-allowed';
             });
 
-            refreshAllViews();
+            // Re-render
+            calculateDashboard();
+            updateIncomeTracker();
+            renderIncomeTable();
+            renderExpenseTable();
+            calculateCashMovement();
+            calculateExpensesMovement();
         }
 
         function changeYear(year) {
             currentYear = parseInt(year);
             document.getElementById('year-selector').value = year;
             initDashboard(); 
-            pgIncome = 1; pgExpense = 1;
+            // Reset pagination on filter change
+            pgIncome = 1;
+            pgExpense = 1;
             renderIncomeTable();
             renderExpenseTable();
             updateIncomeTracker();
@@ -887,32 +887,41 @@
             saveTimeout = setTimeout(saveFunction, SAVE_DELAY);
         }
 
-        // --- EXPORT CSV ---
+        // --- NEW: EXPORT CSV FUNCTION (BY TYPE) ---
         function exportToCSV(type) {
             let csvContent = "data:text/csv;charset=utf-8,";
             let filename = "Export.csv";
             const clean = (text) => (text || "").replace(/,/g, " ").replace(/\n/g, " ");
 
             if (type === 'income') {
+                // EXPORT INCOME RECORDS
                 csvContent += "Date,Client Name,Service Type,Pricing Model,Gross,Net,Payment Mode,Status,Ref ID,Notes\n";
                 incomeRecords.forEach(row => {
                     csvContent += `${row.date},${clean(row.clientName)},${clean(row.serviceType)},${clean(row.pricingModel)},${row.gross},${row.net},${clean(row.paymentMode)},${clean(row.status)},${clean(row.refId)},${clean(row.notes)}\n`;
                 });
                 filename = `Income_Data_${new Date().toISOString().slice(0,10)}.csv`;
+
             } else if (type === 'expenses') {
+                // EXPORT EXPENSE RECORDS
                 csvContent += "Date,Vendor,Category,Type,Service,Amount,Payment,Status,Recurring,Notes\n";
                 expenseRecords.forEach(row => {
                     csvContent += `${row.date},${clean(row.vendor)},${clean(row.category)},${clean(row.type)},${clean(row.service)},${row.amount},${clean(row.payment)},${clean(row.status)},${clean(row.recurring)},${clean(row.notes)}\n`;
                 });
                 filename = `Expenses_Data_${new Date().toISOString().slice(0,10)}.csv`;
+
             } else if (type === 'cash') {
+                // EXPORT CASH ACCOUNTS
                 csvContent += "Month,Account Name,Category,Institution,Balance\n";
                 cashAccounts.forEach(row => {
                     csvContent += `${clean(row.month)},${clean(row.accountName)},${clean(row.category)},${clean(row.institution)},${row.balance}\n`;
                 });
                 filename = `Cash_Data_${new Date().toISOString().slice(0,10)}.csv`;
+
             } else if (type === 'summary') {
+                // EXPORT DASHBOARD SUMMARY REPORT
                 csvContent += "Year,Month,Total Income,Total Expense,Net Income,Margin %\n";
+                
+                // Recalculate summary data for export
                 MONTHS.forEach(month => {
                     let totalIncome = 0;
                     businessColumns.forEach(col => {
@@ -921,10 +930,13 @@
                     const expense = dashboardExpenses[currentYear + '_' + month] || 0;
                     const net = totalIncome - expense;
                     const margin = totalIncome > 0 ? ((net / totalIncome) * 100).toFixed(2) : 0;
+                    
                     csvContent += `${currentYear},${month},${totalIncome},${expense},${net},${margin}%\n`;
                 });
                 filename = `Annual_Report_${currentYear}.csv`;
             }
+
+            // Trigger Download
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
@@ -934,7 +946,7 @@
             document.body.removeChild(link);
         }
 
-        // --- REALTIME & DATA LOADING ---
+        // --- DATA PERSISTENCE ---
         async function loadAllData() {
             document.getElementById('loading-overlay').style.display = 'flex';
             try {
@@ -965,10 +977,6 @@
                 initExpensesMovement(); 
                 calculateDashboard();
                 resizeChartsForView('dashboard');
-                
-                // START LISTENING
-                setupRealtimeListeners();
-
             } catch (error) {
                 console.error('Error loading data:', error);
             } finally {
@@ -976,107 +984,9 @@
             }
         }
 
-        // --- REALTIME SUBSCRIPTION LOGIC ---
-        function setupRealtimeListeners() {
-            const channel = supabaseClient.channel('db-changes')
-            
-            // 1. Listen for Income Changes
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'income_records' }, payload => {
-                handleIncomeRealtime(payload);
-            })
-            // 2. Listen for Expense Changes
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'expense_records' }, payload => {
-                handleExpenseRealtime(payload);
-            })
-            // 3. Listen for Cash Account Changes
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'cash_accounts' }, payload => {
-                handleCashRealtime(payload);
-            })
-            // 4. Listen for Cash Movement (JSON Update)
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'cash_movement' }, payload => {
-                if(payload.new && payload.new.data) {
-                    cashMovement = payload.new.data;
-                    calculateCashMovement();
-                    calculateExpensesMovement();
-                }
-            })
-            // 5. Listen for Business Config (Dashboard)
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'business_config' }, payload => {
-                if(payload.new) {
-                    if (payload.new.columns) businessColumns = payload.new.columns;
-                    if (payload.new.business_data) businessData = payload.new.business_data;
-                    if (payload.new.dashboard_expenses) dashboardExpenses = payload.new.dashboard_expenses;
-                    // We re-init to handle column changes
-                    initDashboard(); 
-                    calculateDashboard();
-                }
-            })
-            .subscribe();
-            
-            console.log("Realtime listeners active.");
-        }
-
-        // --- REALTIME HANDLERS ---
-        const toIncomeFE = (row) => ({
-            id: row.id, date: row.date, clientName: row.client_name, serviceType: row.service_type,
-            pricingModel: row.pricing_model, gross: Number(row.gross)||0, net: Number(row.net)||0,
-            paymentMode: row.payment_mode, status: row.status, refId: row.ref_id, notes: row.notes
-        });
-
-        function handleIncomeRealtime(payload) {
-            if (payload.eventType === 'INSERT') {
-                const exists = incomeRecords.find(r => r.id === payload.new.id);
-                if (!exists) incomeRecords.push(toIncomeFE(payload.new));
-            } else if (payload.eventType === 'UPDATE') {
-                const idx = incomeRecords.findIndex(r => r.id === payload.new.id);
-                if (idx !== -1) incomeRecords[idx] = toIncomeFE(payload.new);
-            } else if (payload.eventType === 'DELETE') {
-                incomeRecords = incomeRecords.filter(r => r.id !== payload.old.id);
-            }
-            renderIncomeTable();
-        }
-
-        const toExpenseFE = (row) => ({
-            id: row.id, date: row.date, vendor: row.vendor, category: row.category, type: row.type,
-            service: row.service, amount: Number(row.amount)||0, payment: row.payment, status: row.status,
-            recurring: row.recurring, notes: row.notes
-        });
-
-        function handleExpenseRealtime(payload) {
-             if (payload.eventType === 'INSERT') {
-                const exists = expenseRecords.find(r => r.id === payload.new.id);
-                if (!exists) expenseRecords.push(toExpenseFE(payload.new));
-            } else if (payload.eventType === 'UPDATE') {
-                const idx = expenseRecords.findIndex(r => r.id === payload.new.id);
-                if (idx !== -1) expenseRecords[idx] = toExpenseFE(payload.new);
-            } else if (payload.eventType === 'DELETE') {
-                expenseRecords = expenseRecords.filter(r => r.id !== payload.old.id);
-            }
-            renderExpenseTable();
-        }
-
-        const toCashFE = (row) => ({
-             id: row.id, month: row.month, accountName: row.account_name, category: row.category,
-             institution: row.institution, balance: Number(row.balance)||0
-        });
-
-        function handleCashRealtime(payload) {
-             if (payload.eventType === 'INSERT') {
-                const exists = cashAccounts.find(r => r.id === payload.new.id);
-                if (!exists) cashAccounts.push(toCashFE(payload.new));
-            } else if (payload.eventType === 'UPDATE') {
-                const idx = cashAccounts.findIndex(r => r.id === payload.new.id);
-                if (idx !== -1) cashAccounts[idx] = toCashFE(payload.new);
-            } else if (payload.eventType === 'DELETE') {
-                cashAccounts = cashAccounts.filter(r => r.id !== payload.old.id);
-            }
-            renderCashAccountsTable();
-        }
-
-        // --- UPDATED SAVE FUNCTIONS (ATOMIC) ---
-        async function saveIncomeRecordSingle(record) { await apiPut('income', record); }
-        async function saveExpenseRecordSingle(record) { await apiPut('expenses', record); }
-        async function saveCashAccountSingle(record) { await apiPut('cash?type=accounts', record); }
+        async function saveIncomeRecords() { await apiPut('income', incomeRecords); }
+        async function saveExpenseRecords() { await apiPut('expenses', expenseRecords); }
+        async function saveCashAccounts() { await apiPut('cash?type=accounts', cashAccounts); }
         async function saveCashMovement() { await apiPost('cash?type=movement', cashMovement); }
         async function saveBusinessData() {
             await apiPost('business', { columns: businessColumns, businessData: businessData, dashboardExpenses: dashboardExpenses });
@@ -1124,14 +1034,18 @@
 
         function switchView(viewId) {
             currentView = viewId;
+
             const titles = { 'dashboard': 'Business Dashboard', 'income': 'Income Tracker', 'expenses': 'Expenses Tracker', 'cash': 'Cash Overview' };
             document.getElementById('page-title').innerText = titles[viewId] || 'Finance Tracker';
+            
             document.querySelectorAll('section[id^="view-"]').forEach(el => el.classList.add('hidden'));
             document.getElementById('view-' + viewId).classList.remove('hidden');
+
             document.querySelectorAll('.nav-link').forEach(el => {
                 el.classList.remove('active');
                 el.classList.add('text-slate-600');
             });
+
             document.getElementById('nav-' + viewId).classList.add('active');
             
             if(viewId === 'income') updateIncomeTracker();
@@ -1196,6 +1110,7 @@
                 
                 const netCell = row.querySelector('.net-cell');
                 netCell.className = `px-6 py-4 text-right net-cell font-bold ${net >= 0 ? 'text-green-600' : 'text-red-500'}`;
+
                 const marginCell = row.querySelector('.margin-cell');
                 if(income > 0) {
                     const margin = (net / income) * 100;
@@ -1205,6 +1120,7 @@
                     marginCell.innerText = '-';
                     marginCell.className = 'px-6 py-4 text-right margin-cell text-gray-400';
                 }
+
                 totalExpenses += expense;
                 totalNet += net;
             });
@@ -1214,6 +1130,7 @@
             document.getElementById('total-net-main').innerText = formatMoney(totalNet);
             const totalMargin = totalYearlyIncome > 0 ? (totalNet / totalYearlyIncome) * 100 : 0;
             document.getElementById('total-margin-main').innerText = totalMargin.toFixed(1) + '%';
+
             document.getElementById('kpi-revenue').innerText = formatMoney(totalYearlyIncome);
             document.getElementById('kpi-expenses').innerText = formatMoney(totalExpenses);
             document.getElementById('kpi-net-income').innerText = formatMoney(totalNet);
@@ -1321,50 +1238,68 @@
                 name = `${defaultName} ${counter}`;
                 counter++;
             }
+            
             MONTHS.forEach(month => {
                 delete businessData[currentYear + '_' + name + '_' + month];
             });
+
             businessColumns.push(name);
             addBusinessColumnUI(name);
             scheduleSave(saveBusinessData);
         }
 
+        // UPDATED: Logic to save deleted columns to LocalStorage
         function removeBusinessColumn(btn) {
-            if (!confirm("Remove this column?")) return;
+            if (!confirm("Are you sure you want to remove this column? It will be moved to the 'Restore' stack.")) return;
+
             const th = btn.closest('th');
             const headRow = th.parentElement;
             const colIndex = Array.from(headRow.children).indexOf(th);
             const colName = th.querySelector('.editable-header').innerText;
             const colData = {};
+            
             MONTHS.forEach(month => {
                 const key = currentYear + '_' + colName + '_' + month;
                 colData[month] = businessData[key] || 0;
                 delete businessData[key]; 
             });
+
+            // Add to array & Save to LocalStorage
             deletedColumns.push({ name: colName, data: colData, index: colIndex - 1 });
             localStorage.setItem('deletedColumns_GN', JSON.stringify(deletedColumns));
+
             document.getElementById('restore-btn').disabled = false;
+            
             const arrayIndex = colIndex - 1;
             if (arrayIndex >= 0) { businessColumns.splice(arrayIndex, 1); }
+            
             th.remove();
             const bodyRows = document.querySelectorAll('#table-business tbody tr');
             bodyRows.forEach(row => { if (row.children[colIndex]) row.children[colIndex].remove(); });
+            
             const footerRow = document.getElementById('business-footer-row');
             if (footerRow.children[colIndex]) footerRow.children[colIndex].remove();
+            
             calculateDashboard();
             scheduleSave(saveBusinessData);
         }
 
+        // UPDATED: Logic to restore from memory/LocalStorage
         function restoreColumn() {
             if (deletedColumns.length === 0) return;
+            
             const restored = deletedColumns.pop();
+            // Update LocalStorage
             localStorage.setItem('deletedColumns_GN', JSON.stringify(deletedColumns));
+            
             businessColumns.splice(restored.index, 0, restored.name);
             MONTHS.forEach(month => {
                 businessData[currentYear + '_' + restored.name + '_' + month] = restored.data[month];
             });
+            
             initDashboard();
             calculateDashboard();
+            
             if (deletedColumns.length === 0) document.getElementById('restore-btn').disabled = true;
             scheduleSave(saveBusinessData);
         }
@@ -1385,7 +1320,7 @@
             });
         }
 
-        // --- INCOME TRACKER ---
+        // --- INCOME TRACKER WITH PAGINATION ---
         const serviceOptions = ["Social Media Management", "Virtual Assistance", "Paid Ads", "Branding", "Graphic Design"];
         const pricingOptions = ["Monthly Retainer", "Project-Based"];
         const statusOptions = ["Paid", "Pending", "Overdue"];
@@ -1394,25 +1329,30 @@
             const tbody = document.getElementById('tracker-body');
             tbody.innerHTML = '';
             
+            // Filter first
             const filtered = incomeRecords.filter(record => {
                 const recordYear = new Date(record.date).getFullYear();
                 return !record.date || recordYear === currentYear;
             });
 
+            // Calculate pagination
             const totalItems = filtered.length;
             const totalPages = Math.ceil(totalItems / ROWS_PER_PAGE);
             if (pgIncome > totalPages) pgIncome = totalPages || 1;
             if (pgIncome < 1) pgIncome = 1;
 
+            // Slice data for current page
             const start = (pgIncome - 1) * ROWS_PER_PAGE;
             const end = start + ROWS_PER_PAGE;
             const pageData = filtered.slice(start, end);
 
+            // Render Rows
             pageData.forEach((record, index) => {
                 const tr = createIncomeRow(record, index);
                 tbody.appendChild(tr);
             });
 
+            // Update UI Controls
             document.getElementById('income-start').innerText = totalItems === 0 ? 0 : start + 1;
             document.getElementById('income-end').innerText = Math.min(end, totalItems);
             document.getElementById('income-total').innerText = totalItems;
@@ -1474,15 +1414,16 @@
                 notes: ''
             };
             incomeRecords.push(newRecord);
-            // We use API POST to insert the new record
-            scheduleSave(() => saveIncomeRecordSingle(newRecord));
             
+            // Jump to last page to see new entry
             const filtered = incomeRecords.filter(record => {
                 const recordYear = new Date(record.date).getFullYear();
                 return !record.date || recordYear === currentYear;
             });
             pgIncome = Math.ceil(filtered.length / ROWS_PER_PAGE) || 1;
+            
             renderIncomeTable();
+            scheduleSave(saveIncomeRecords);
         }
 
         function updateIncomeRecord(element) { updateIncomeRecordFromRow(element.closest('tr')); }
@@ -1507,16 +1448,15 @@
             cells[4].innerText = formatMoney(incomeRecords[index].gross);
             cells[5].innerText = formatMoney(incomeRecords[index].net);
             updateIncomeTracker();
-            // Save ONLY this record
-            scheduleSave(() => saveIncomeRecordSingle(incomeRecords[index]));
+            scheduleSave(saveIncomeRecords);
         }
 
         function deleteIncomeRow(btn) {
             const tr = btn.closest('tr');
             const id = tr.getAttribute('data-id');
             incomeRecords = incomeRecords.filter(r => r.id !== id);
-            renderIncomeTable();
-            apiDelete('income', id);
+            renderIncomeTable(); // Re-render to update pagination
+            scheduleSave(saveIncomeRecords);
         }
 
         function updateIncomeTracker() {
@@ -1546,7 +1486,7 @@
             }
         }
 
-        // --- EXPENSES TRACKER ---
+        // --- EXPENSES TRACKER WITH PAGINATION ---
         const expenseCategories = ["Payroll", "Software / Tools", "Advertising", "Payment Processing Fees", "Tax", "Education / Coaching", "Miscellaneous"];
         const expenseTypes = ["Fixed", "Variable"];
         const expensePayments = ["Card", "Bank", "Cash", "Transfer"];
@@ -1562,6 +1502,7 @@
                 return !record.date || recordYear === currentYear;
             });
 
+            // Pagination Logic
             const totalItems = filtered.length;
             const totalPages = Math.ceil(totalItems / ROWS_PER_PAGE);
             if (pgExpense > totalPages) pgExpense = totalPages || 1;
@@ -1576,6 +1517,7 @@
                 tbody.appendChild(tr);
             });
 
+            // Update UI
             document.getElementById('expense-start').innerText = totalItems === 0 ? 0 : start + 1;
             document.getElementById('expense-end').innerText = Math.min(end, totalItems);
             document.getElementById('expense-total').innerText = totalItems;
@@ -1633,13 +1575,15 @@
                 notes: ''
             };
             expenseRecords.push(newRecord);
-            scheduleSave(() => saveExpenseRecordSingle(newRecord));
+            
             const filtered = expenseRecords.filter(record => {
                 const recordYear = new Date(record.date).getFullYear();
                 return !record.date || recordYear === currentYear;
             });
             pgExpense = Math.ceil(filtered.length / ROWS_PER_PAGE) || 1;
+
             renderExpenseTable();
+            scheduleSave(saveExpenseRecords);
         }
 
         function updateExpenseRecord(element) { updateExpenseRecordFromRow(element.closest('tr')); }
@@ -1662,7 +1606,7 @@
                 notes: cells[9].innerText
             };
             cells[5].innerText = formatMoney(expenseRecords[index].amount);
-            scheduleSave(() => saveExpenseRecordSingle(expenseRecords[index]));
+            scheduleSave(saveExpenseRecords);
         }
 
         function deleteExpenseRow(btn) {
@@ -1670,19 +1614,24 @@
             const id = tr.getAttribute('data-id');
             expenseRecords = expenseRecords.filter(r => r.id !== id);
             renderExpenseTable();
-            apiDelete('expenses', id);
+            scheduleSave(saveExpenseRecords);
         }
 
+        // --- NEW: INDEPENDENT EXPENSES MOVEMENT LOGIC ---
         function initExpensesMovement() {
             const tbody = document.getElementById('expenses-movement-body');
             if (!tbody) return;
+
             tbody.innerHTML = '';
             MONTHS.forEach(month => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-white/20 transition-colors";
                 tr.setAttribute('data-month', month);
+                
+                // Note the 'exp_' prefix here to keep data separate
                 const startVal = cashMovement[`exp_${month}_start`] || 0;
                 const endVal = cashMovement[`exp_${month}_end`] || 0;
+                
                 tr.innerHTML = `
                     <td class="px-6 py-4 font-bold text-slate-700 border-r border-slate-200/60">${month}</td>
                     <td class="px-6 py-4 text-right border-r border-slate-200/60 exp-cash-start text-slate-600" contenteditable="true">${formatMoney(startVal)}</td>
@@ -1692,31 +1641,51 @@
                 tbody.appendChild(tr);
             });
 
+            // Attach listeners specific to this table
             tbody.querySelectorAll('.exp-cash-start, .exp-cash-end').forEach(cell => {
                 cell.addEventListener('blur', function() {
                     const row = this.closest('tr');
                     const month = row.getAttribute('data-month');
                     const val = parseMoney(this.innerText);
-                    if (this.classList.contains('exp-cash-start')) { cashMovement[`exp_${month}_start`] = val; } else { cashMovement[`exp_${month}_end`] = val; }
+                    
+                    // Save to 'exp_' keys
+                    if (this.classList.contains('exp-cash-start')) { 
+                        cashMovement[`exp_${month}_start`] = val; 
+                    } else { 
+                        cashMovement[`exp_${month}_end`] = val; 
+                    }
+                    
                     this.innerText = formatMoney(val);
                     calculateExpensesMovement();
-                    scheduleSave(saveCashMovement);
+                    scheduleSave(saveCashMovement); // Saves to the same DB location
                 });
-                cell.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); this.blur(); } });
+                
+                cell.addEventListener('keydown', function(e) { 
+                    if (e.key === 'Enter') { e.preventDefault(); this.blur(); } 
+                });
             });
+
             calculateExpensesMovement();
         }
 
         function calculateExpensesMovement() {
             const rows = document.querySelectorAll('#expenses-movement-body tr');
             rows.forEach(row => {
-                const start = parseMoney(row.querySelector('.exp-cash-start').innerText);
-                const end = parseMoney(row.querySelector('.exp-cash-end').innerText);
-                const net = end - start;
+                const startCell = row.querySelector('.exp-cash-start');
+                const endCell = row.querySelector('.exp-cash-end');
                 const netCell = row.querySelector('.exp-cash-net');
+                
+                const start = parseMoney(startCell.innerText);
+                const end = parseMoney(endCell.innerText);
+                
                 if(start !== 0 || end !== 0) {
-                    netCell.innerText = (net > 0 ? '+' : '') + formatMoney(net);
-                    netCell.className = `px-6 py-4 text-right exp-cash-net font-bold ${net > 0 ? 'text-green-600' : (net < 0 ? 'text-red-500' : 'text-slate-500')}`;
+                    const net = end - start;
+                    const sign = net > 0 ? '+' : '';
+                    netCell.innerText = sign + formatMoney(net);
+                    
+                    if(net > 0) netCell.className = "px-6 py-4 text-right exp-cash-net font-bold text-green-600";
+                    else if(net < 0) netCell.className = "px-6 py-4 text-right exp-cash-net font-bold text-red-500";
+                    else netCell.className = "px-6 py-4 text-right exp-cash-net font-bold text-slate-500";
                 } else {
                     netCell.innerText = '-';
                     netCell.className = "px-6 py-4 text-right exp-cash-net font-bold text-gray-400";
@@ -1724,7 +1693,7 @@
             });
         }
 
-        // --- CASH OVERVIEW ---
+        // --- CASH OVERVIEW WITH PAGINATION ---
         const cashAcctNames = ["Philippine Bank", "Business Savings", "Stripe Balance", "PayPal Balance", "Wise Balance"];
         const cashAcctCategories = ["Operating Cash", "Payment Processors", "Savings / Reserves", "Tax Reserve", "Other"];
 
@@ -1732,6 +1701,7 @@
             const tbody = document.getElementById('cash-balances-body');
             tbody.innerHTML = '';
             
+            // Pagination Logic for Cash Accounts
             const totalItems = cashAccounts.length;
             const totalPages = Math.ceil(totalItems / ROWS_PER_PAGE);
             if (pgCash > totalPages) pgCash = totalPages || 1;
@@ -1746,6 +1716,7 @@
                 tbody.appendChild(tr);
             });
 
+            // Update UI
             document.getElementById('cash-start').innerText = totalItems === 0 ? 0 : start + 1;
             document.getElementById('cash-end').innerText = Math.min(end, totalItems);
             document.getElementById('cash-total').innerText = totalItems;
@@ -1799,9 +1770,12 @@
                 balance: 0
             };
             cashAccounts.push(newRecord);
+            
+            // Jump to last page
             pgCash = Math.ceil(cashAccounts.length / ROWS_PER_PAGE) || 1;
+
             renderCashAccountsTable();
-            scheduleSave(() => saveCashAccountSingle(newRecord));
+            scheduleSave(saveCashAccounts);
         }
 
         function updateCashAccount(element) { updateCashAccountFromRow(element.closest('tr')); }
@@ -1819,7 +1793,7 @@
                 balance: parseMoney(cells[4].innerText)
             };
             cells[4].innerText = formatMoney(cashAccounts[index].balance);
-            scheduleSave(() => saveCashAccountSingle(cashAccounts[index]));
+            scheduleSave(saveCashAccounts);
         }
 
         function deleteCashAccount(btn) {
@@ -1827,7 +1801,7 @@
             const id = tr.getAttribute('data-id');
             cashAccounts = cashAccounts.filter(r => r.id !== id);
             renderCashAccountsTable();
-            apiDelete('cash?type=accounts', id);
+            scheduleSave(saveCashAccounts);
         }
 
         function initCashMovement() {
@@ -1866,13 +1840,18 @@
         function calculateCashMovement() {
             const rows = document.querySelectorAll('#cash-movement-body tr');
             rows.forEach(row => {
-                const start = parseMoney(row.querySelector('.cash-start').innerText);
-                const end = parseMoney(row.querySelector('.cash-end').innerText);
-                const net = end - start;
+                const startCell = row.querySelector('.cash-start');
+                const endCell = row.querySelector('.cash-end');
                 const netCell = row.querySelector('.cash-net');
+                const start = parseMoney(startCell.innerText);
+                const end = parseMoney(endCell.innerText);
                 if(start !== 0 || end !== 0) {
-                    netCell.innerText = (net > 0 ? '+' : '') + formatMoney(net);
-                    netCell.className = `px-6 py-4 text-right cash-net font-bold ${net > 0 ? 'text-green-600' : (net < 0 ? 'text-red-500' : 'text-slate-500')}`;
+                    const net = end - start;
+                    const sign = net > 0 ? '+' : '';
+                    netCell.innerText = sign + formatMoney(net);
+                    if(net > 0) netCell.className = "px-6 py-4 text-right cash-net font-bold text-green-600";
+                    else if(net < 0) netCell.className = "px-6 py-4 text-right cash-net font-bold text-red-500";
+                    else netCell.className = "px-6 py-4 text-right cash-net font-bold text-slate-500";
                 } else {
                     netCell.innerText = '-';
                     netCell.className = "px-6 py-4 text-right cash-net font-bold text-gray-400";
@@ -1880,6 +1859,7 @@
             });
         }
 
+        // --- CHARTS INIT ---
         function initCharts() {
             const ctxTracker = document.getElementById('trackerServiceChart').getContext('2d');
             window.trackerChart = new Chart(ctxTracker, {
@@ -1910,16 +1890,26 @@
             });
         }
 
+        // --- PAGINATION HANDLER ---
         function changePage(type, direction) {
-            if (type === 'income') { pgIncome += direction; renderIncomeTable(); } 
-            else if (type === 'expense') { pgExpense += direction; renderExpenseTable(); } 
-            else if (type === 'cash') { pgCash += direction; renderCashAccountsTable(); }
+            if (type === 'income') {
+                pgIncome += direction;
+                renderIncomeTable();
+            } else if (type === 'expense') {
+                pgExpense += direction;
+                renderExpenseTable();
+            } else if (type === 'cash') {
+                pgCash += direction;
+                renderCashAccountsTable();
+            }
         }
 
         window.onload = function() {
             initCharts();
             loadAllData();
             fetchLiveExchangeRate();
+
+            // Enable Restore button if local history exists
             if (deletedColumns.length > 0) {
                 document.getElementById('restore-btn').disabled = false;
             }
