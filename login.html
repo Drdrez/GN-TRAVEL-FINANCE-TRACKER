@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - GN Finance</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f5f3ff 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .input-field {
+            transition: all 0.2s;
+            outline: none;
+        }
+        .input-field:focus {
+            border-color: #34b0e5;
+            box-shadow: 0 0 0 3px rgba(52, 176, 229, 0.1);
+        }
+    </style>
+</head>
+<body class="p-4">
+
+    <div class="glass w-full max-w-md p-8 rounded-2xl flex flex-col items-center">
+        <div class="mb-6 flex flex-col items-center">
+            <img src="GN ICON.png" alt="Logo" class="w-16 h-16 rounded-xl shadow-sm mb-4 object-contain">
+            <h1 class="text-2xl font-extrabold text-[#34b0e5] tracking-tight">FINANCE TRACKER</h1>
+            <p class="text-sm text-slate-500 font-medium">GN Travel Marketing LLC</p>
+        </div>
+
+        <form id="loginForm" class="w-full space-y-4">
+            
+            <div>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Password</label>
+                <input type="password" id="password" required placeholder="Enter access key..." 
+                    class="input-field w-full px-4 py-3 rounded-xl bg-white/50 border border-slate-200 text-slate-700 font-bold placeholder:font-normal focus:bg-white">
+            </div>
+
+            <button type="submit" id="submitBtn" 
+                class="w-full py-3.5 bg-[#34b0e5] hover:bg-[#2c9bc9] text-white rounded-xl font-bold shadow-md transition-all active:scale-[0.98] flex justify-center items-center">
+                <span>Access Dashboard</span>
+                <div id="spinner" class="hidden ml-2 w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            </button>
+
+            <p id="errorMsg" class="text-center text-red-500 text-sm font-bold hidden"></p>
+        </form>
+
+        <div class="mt-8 pt-6 border-t border-slate-200/50 w-full text-center">
+            <p class="text-xs text-slate-400">Secure Environment &bull; 2026</p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const pass = document.getElementById('password').value;
+            const btn = document.getElementById('submitBtn');
+            const spinner = document.getElementById('spinner');
+            const error = document.getElementById('errorMsg');
+
+            // UI Loading State
+            btn.disabled = true;
+            btn.classList.add('opacity-75');
+            spinner.classList.remove('hidden');
+            error.classList.add('hidden');
+
+            try {
+                const res = await fetch('/api/auth', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: pass })
+                });
+
+                if (res.ok) {
+                    // Success: Redirect to dashboard
+                    window.location.href = '/';
+                } else {
+                    // Error
+                    error.textContent = "Incorrect password";
+                    error.classList.remove('hidden');
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-75');
+                    spinner.classList.add('hidden');
+                }
+            } catch (err) {
+                error.textContent = "Connection error. Please try again.";
+                error.classList.remove('hidden');
+                btn.disabled = false;
+                btn.classList.remove('opacity-75');
+                spinner.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
