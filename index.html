@@ -8,6 +8,7 @@
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
         :root {
@@ -241,7 +242,7 @@
         
         <div class="p-4 border-t border-slate-200/60">
             <div class="text-xs text-slate-400 text-center">
-                <span id="sync-status" class="text-green-500">●</span> Auto-saving enabled
+                <span id="sync-status" class="text-green-500">●</span> Live Sync enabled
             </div>
         </div>
     </aside>
@@ -661,6 +662,13 @@
         const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
         const API_BASE = '/api';
         
+        // !!! REPLACE THESE WITH YOUR KEYS FROM SUPABASE SETTINGS -> API !!!
+        const SUPABASE_URL = "https://udlnhhngwcqdjdwcheyd.supabase.co"; // e.g. https://xyz.supabase.co
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkbG5oaG5nd2NxZGpkd2NoZXlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk5ODM1NzMsImV4cCI6MjA4NTU1OTU3M30.3WeLLTCqvl3IT4YhfS77bA8cx7R2fVfyEXZ3mJaYG5w";
+        
+        // Initialize Supabase Client
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
         let currentView = 'dashboard';
 
         // --- MOBILE SIDEBAR ---
@@ -790,6 +798,112 @@
             }
             indicator.classList.add('show');
             setTimeout(() => indicator.classList.remove('show'), 2000);
+        }
+
+        // --- REALTIME LISTENER ---
+        function initRealtime() {
+            console.log("Initializing Realtime connection...");
+            const channel = supabase.channel('finance-tracker-changes')
+            
+            // 1. Listen for INCOME changes
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'income_records' }, payload => {
+                handleRealtimeRecordUpdate(payload, incomeRecords, renderIncomeTable);
+                updateIncomeTracker(); 
+            })
+            
+            // 2. Listen for EXPENSE changes
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'expense_records' }, payload => {
+                handleRealtimeRecordUpdate(payload, expenseRecords, renderExpenseTable);
+            })
+
+            // 3. Listen for CASH ACCOUNT changes
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'cash_accounts' }, payload => {
+                handleRealtimeRecordUpdate(payload, cashAccounts, renderCashAccountsTable);
+            })
+            
+            // 4. Listen for BUSINESS CONFIG changes
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'business_config' }, payload => {
+                if(payload.new) {
+                    if(payload.new.business_data) businessData = payload.new.business_data;
+                    if(payload.new.columns) businessColumns = payload.new.columns;
+                    if(payload.new.dashboard_expenses) dashboardExpenses = payload.new.dashboard_expenses;
+                    
+                    // If user is typing, calculate silently; otherwise refresh UI
+                    if(!document.activeElement.isContentEditable) {
+                        initDashboard(); 
+                    }
+                    calculateDashboard();
+                }
+            })
+            
+            // 5. Listen for CASH MOVEMENT changes
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'cash_movement' }, payload => {
+                if(payload.new && payload.new.data) {
+                    cashMovement = payload.new.data;
+                    initCashMovement();
+                    initExpensesMovement();
+                }
+            })
+            .subscribe((status) => {
+                console.log("Realtime status:", status);
+            });
+        }
+
+        function handleRealtimeRecordUpdate(payload, dataArray, renderFunction) {
+            const { eventType, new: newRecord, old: oldRecord } = payload;
+            
+            if (eventType === 'INSERT') {
+                const formatted = mapDbToFrontend(newRecord);
+                // Prevent duplicates if we just saved it locally
+                if (!dataArray.find(r => r.id == formatted.id)) {
+                    dataArray.push(formatted);
+                }
+            } 
+            else if (eventType === 'UPDATE') {
+                const index = dataArray.findIndex(r => r.id == newRecord.id);
+                if (index !== -1) dataArray[index] = mapDbToFrontend(newRecord);
+            } 
+            else if (eventType === 'DELETE') {
+                const index = dataArray.findIndex(r => r.id == oldRecord.id);
+                if (index !== -1) dataArray.splice(index, 1);
+            }
+            renderFunction();
+        }
+
+        function mapDbToFrontend(row) {
+            return {
+                id: row.id,
+                date: row.date,
+                notes: row.notes || '',
+                
+                // Income
+                clientName: row.client_name || row.clientName,
+                serviceType: row.service_type || row.serviceType,
+                pricingModel: row.pricing_model || row.pricingModel,
+                gross: Number(row.gross) || 0,
+                net: Number(row.net) || 0,
+                paymentMode: row.payment_mode || row.paymentMode,
+                status: row.status,
+                refId: row.ref_id || row.refId,
+
+                // Expenses
+                vendor: row.vendor,
+                category: row.category,
+                type: row.type,
+                service: row.service,
+                amount: Number(row.amount) || 0,
+                payment: row.payment,
+                recurring: row.recurring,
+
+                // Cash
+                month: row.month,
+                accountName: row.account_name || row.accountName,
+                institution: row.institution,
+                balance: Number(row.balance) || 0,
+                
+                createdAt: row.created_at,
+                updatedAt: row.updated_at
+            };
         }
 
         // --- LIVE CURRENCY FETCHER ---
@@ -1908,6 +2022,9 @@
             initCharts();
             loadAllData();
             fetchLiveExchangeRate();
+            
+            // START LISTENING
+            initRealtime(); 
 
             // Enable Restore button if local history exists
             if (deletedColumns.length > 0) {
