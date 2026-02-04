@@ -1,5 +1,12 @@
--- GN Travel Finance Tracker - Supabase Schema
+-- ==========================================
+-- GN Travel Finance Tracker - Enhanced Schema
+-- WITH REAL-TIME SUPPORT
+-- ==========================================
 -- Run this in Supabase Dashboard → SQL Editor
+
+-- ==========================================
+-- 1. CREATE TABLES
+-- ==========================================
 
 -- Income records
 CREATE TABLE IF NOT EXISTS income_records (
@@ -47,41 +54,125 @@ CREATE TABLE IF NOT EXISTS cash_accounts (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Cash movement (one row per app - stores JSON: { "January_start": 0, "January_end": 0, ... })
+-- Cash movement/flow
 CREATE TABLE IF NOT EXISTS cash_movement (
-  id INT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+  id TEXT PRIMARY KEY DEFAULT 1 CHECK (id = '1'),
   data JSONB DEFAULT '{}',
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-INSERT INTO cash_movement (id, data) VALUES (1, '{}')
-ON CONFLICT (id) DO NOTHING;
-
--- Business config (dashboard columns, business data, expenses - single row)
+-- Business configuration (columns, dropdowns)
 CREATE TABLE IF NOT EXISTS business_config (
-  id INT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+  id INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),
   columns JSONB DEFAULT '["Service A", "Service B"]',
   business_data JSONB DEFAULT '{}',
   dashboard_expenses JSONB DEFAULT '{}',
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Payroll records (if needed)
+CREATE TABLE IF NOT EXISTS payroll_records (
+  id TEXT PRIMARY KEY,
+  month TEXT DEFAULT '',
+  employee TEXT DEFAULT '',
+  salary NUMERIC DEFAULT 0,
+  bonus NUMERIC DEFAULT 0,
+  deductions NUMERIC DEFAULT 0,
+  net_pay NUMERIC DEFAULT 0,
+  status TEXT DEFAULT '',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Initialize single-row tables if empty
+INSERT INTO cash_movement (id, data) 
+VALUES ('1', '{}') 
+ON CONFLICT (id) DO NOTHING;
+
 INSERT INTO business_config (id, columns, business_data, dashboard_expenses)
 VALUES (1, '["Service A", "Service B"]', '{}', '{}')
 ON CONFLICT (id) DO NOTHING;
 
--- Enable RLS but allow all for server-side use with service role key
--- If you use anon key, add policies. With service_role key, RLS is bypassed.
+-- ==========================================
+-- 2. ENABLE ROW LEVEL SECURITY (RLS)
+-- ==========================================
+
 ALTER TABLE income_records ENABLE ROW LEVEL SECURITY;
 ALTER TABLE expense_records ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cash_accounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cash_movement ENABLE ROW LEVEL SECURITY;
 ALTER TABLE business_config ENABLE ROW LEVEL SECURITY;
+ALTER TABLE payroll_records ENABLE ROW LEVEL SECURITY;
 
--- Allow all operations for authenticated and anon (for server-side API using service role, these aren't needed)
--- Policy: allow all for service_role. For anon/key, add:
-CREATE POLICY "Allow all for income_records" ON income_records FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all for expense_records" ON expense_records FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all for cash_accounts" ON cash_accounts FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all for cash_movement" ON cash_movement FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all for business_config" ON business_config FOR ALL USING (true) WITH CHECK (true);
+-- ==========================================
+-- 3. CREATE POLICIES (Allow All)
+-- ==========================================
+-- WARNING: These policies allow public access. 
+-- For production, restrict to authenticated users.
+
+-- Income
+DROP POLICY IF EXISTS "Enable all access for income_records" ON income_records;
+CREATE POLICY "Enable all access for income_records" ON income_records FOR ALL USING (true) WITH CHECK (true);
+
+-- Expenses
+DROP POLICY IF EXISTS "Enable all access for expense_records" ON expense_records;
+CREATE POLICY "Enable all access for expense_records" ON expense_records FOR ALL USING (true) WITH CHECK (true);
+
+-- Cash Accounts
+DROP POLICY IF EXISTS "Enable all access for cash_accounts" ON cash_accounts;
+CREATE POLICY "Enable all access for cash_accounts" ON cash_accounts FOR ALL USING (true) WITH CHECK (true);
+
+-- Cash Movement
+DROP POLICY IF EXISTS "Enable all access for cash_movement" ON cash_movement;
+CREATE POLICY "Enable all access for cash_movement" ON cash_movement FOR ALL USING (true) WITH CHECK (true);
+
+-- Business Config
+DROP POLICY IF EXISTS "Enable all access for business_config" ON business_config;
+CREATE POLICY "Enable all access for business_config" ON business_config FOR ALL USING (true) WITH CHECK (true);
+
+-- Payroll
+DROP POLICY IF EXISTS "Enable all access for payroll_records" ON payroll_records;
+CREATE POLICY "Enable all access for payroll_records" ON payroll_records FOR ALL USING (true) WITH CHECK (true);
+
+-- ==========================================
+-- 4. ENABLE REAL-TIME REPLICATION
+-- ==========================================
+
+-- Add tables to the publication used by Supabase Realtime
+ALTER PUBLICATION supabase_realtime ADD TABLE income_records;
+ALTER PUBLICATION supabase_realtime ADD TABLE expense_records;
+ALTER PUBLICATION supabase_realtime ADD TABLE cash_accounts;
+ALTER PUBLICATION supabase_realtime ADD TABLE cash_movement;
+ALTER PUBLICATION supabase_realtime ADD TABLE business_config;
+ALTER PUBLICATION supabase_realtime ADD TABLE payroll_records;
+
+-- ==========================================
+-- 5. CREATE UPDATED_AT TRIGGER
+-- ==========================================
+
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- Apply triggers
+DROP TRIGGER IF EXISTS update_income_updated_at ON income_records;
+CREATE TRIGGER update_income_updated_at BEFORE UPDATE ON income_records FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_expenses_updated_at ON expense_records;
+CREATE TRIGGER update_expenses_updated_at BEFORE UPDATE ON expense_records FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_cash_accounts_updated_at ON cash_accounts;
+CREATE TRIGGER update_cash_accounts_updated_at BEFORE UPDATE ON cash_accounts FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_cash_movement_updated_at ON cash_movement;
+CREATE TRIGGER update_cash_movement_updated_at BEFORE UPDATE ON cash_movement FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_business_config_updated_at ON business_config;
+CREATE TRIGGER update_business_config_updated_at BEFORE UPDATE ON business_config FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_payroll_records_updated_at ON payroll_records;
+CREATE TRIGGER update_payroll_records_updated_at BEFORE UPDATE ON payroll_records FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
