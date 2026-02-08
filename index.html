@@ -8,6 +8,7 @@
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
         :root {
@@ -241,7 +242,7 @@
         
         <div class="p-4 border-t border-slate-200/60">
             <div class="text-xs text-slate-400 text-center">
-                <span id="sync-status" class="text-green-500">●</span> Auto-saving enabled
+                <span id="sync-status" class="text-green-500">●</span> <span id="sync-text">Auto-saving enabled</span>
             </div>
         </div>
     </aside>
@@ -951,6 +952,34 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+        }
+
+        // --- NEW: BACKUP TO GOOGLE DRIVE ---
+        async function performGoogleBackup() {
+            const btn = document.getElementById('btn-backup');
+            const originalText = btn.innerHTML;
+            
+            // Set loading state
+            btn.disabled = true;
+            btn.innerHTML = `<svg class="animate-spin h-4 w-4 text-slate-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Backing up...`;
+
+            try {
+                const response = await fetch('/api/backup', { method: 'POST' });
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert("✅ Backup successful! Your Google Sheet is updated.");
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                console.error(error);
+                alert("❌ Backup failed: " + error.message);
+            } finally {
+                // Restore button
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
         }
 
         // --- DATA PERSISTENCE ---
@@ -1911,31 +1940,188 @@
             }
         }
         
-        // --- NEW: BACKUP TO GOOGLE DRIVE ---
-        async function performGoogleBackup() {
-            const btn = document.getElementById('btn-backup');
-            const originalText = btn.innerHTML;
-            
-            // Set loading state
-            btn.disabled = true;
-            btn.innerHTML = `<svg class="animate-spin h-4 w-4 text-slate-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Backing up...`;
+        // --- REALTIME COLLABORATION SETUP ---
+        const SB_URL = 'https://udlnhhngwcqdjdwcheyd.supabase.co'; // <--- REPLACE THIS
+        const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkbG5oaG5nd2NxZGpkd2NoZXlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk5ODM1NzMsImV4cCI6MjA4NTU1OTU3M30.3WeLLTCqvl3IT4YhfS77bA8cx7R2fVfyEXZ3mJaYG5w'; // <--- REPLACE THIS
+        
+        // Initialize Supabase Client (safe check if undefined)
+        let supabase = null;
+        if(window.supabase) {
+            supabase = window.supabase.createClient(SB_URL, SB_KEY);
+        }
 
-            try {
-                const response = await fetch('/api/backup', { method: 'POST' });
-                const result = await response.json();
-                
-                if (result.success) {
-                    alert("✅ Backup successful! Your Google Sheet is updated.");
-                } else {
-                    throw new Error(result.error);
+        function setupRealtimeListeners() {
+            if(!supabase) {
+                console.warn("Supabase client not initialized. Check your credentials.");
+                return;
+            }
+            console.log("🔌 Connecting to Realtime...");
+
+            const channel = supabase.channel('db-changes')
+                .on(
+                    'postgres_changes',
+                    { event: '*', schema: 'public' }, // Listen to ALL changes
+                    (payload) => {
+                        console.log('Change received!', payload);
+                        handleRealtimeUpdate(payload);
+                    }
+                )
+                .subscribe((status) => {
+                    if (status === 'SUBSCRIBED') {
+                        // Visual indicator that we are live
+                        const indicator = document.getElementById('sync-status');
+                        const text = document.getElementById('sync-text');
+                        if(indicator && text) {
+                            indicator.style.color = '#10b981'; // Green
+                            text.innerText = 'Live Sync Active';
+                        }
+                    }
+                });
+        }
+
+        // Handle incoming data changes safely
+        function handleRealtimeUpdate(payload) {
+            const { table, eventType, new: newRow, old: oldRow } = payload;
+
+            // 1. Handle INCOME Table Changes
+            if (table === 'income_records') {
+                if (eventType === 'INSERT') {
+                    // Convert snake_case (DB) to camelCase (Frontend)
+                    const frontendRow = {
+                        id: newRow.id,
+                        date: newRow.date,
+                        clientName: newRow.client_name,
+                        serviceType: newRow.service_type,
+                        pricingModel: newRow.pricing_model,
+                        gross: newRow.gross,
+                        net: newRow.net,
+                        paymentMode: newRow.payment_mode,
+                        status: newRow.status,
+                        refId: newRow.ref_id,
+                        notes: newRow.notes
+                    };
+                    // Check if already exists (prevent duplicates from self)
+                    const exists = incomeRecords.some(r => r.id === newRow.id);
+                    if(!exists) {
+                        incomeRecords.push(frontendRow);
+                        if(currentView === 'income') renderIncomeTable();
+                    }
+                } 
+                else if (eventType === 'UPDATE') {
+                    const index = incomeRecords.findIndex(r => r.id === newRow.id);
+                    if (index !== -1) {
+                        // Update local data
+                        incomeRecords[index] = {
+                            ...incomeRecords[index],
+                            date: newRow.date,
+                            clientName: newRow.client_name,
+                            serviceType: newRow.service_type,
+                            pricingModel: newRow.pricing_model,
+                            gross: newRow.gross,
+                            net: newRow.net,
+                            paymentMode: newRow.payment_mode,
+                            status: newRow.status,
+                            refId: newRow.ref_id,
+                            notes: newRow.notes
+                        };
+                        
+                        // Smart UI Update (Don't break user focus)
+                        if (currentView === 'income') {
+                            // Only re-render if the user is NOT typing in this specific row
+                            const activeEl = document.activeElement;
+                            const activeRowId = activeEl ? activeEl.closest('tr')?.getAttribute('data-id') : null;
+                            
+                            if (activeRowId !== newRow.id) {
+                                renderIncomeTable(); 
+                            }
+                        }
+                    }
+                } 
+                else if (eventType === 'DELETE') {
+                    incomeRecords = incomeRecords.filter(r => r.id !== oldRow.id);
+                    if(currentView === 'income') renderIncomeTable();
                 }
-            } catch (error) {
-                console.error(error);
-                alert("❌ Backup failed: " + error.message);
-            } finally {
-                // Restore button
-                btn.disabled = false;
-                btn.innerHTML = originalText;
+                
+                // Always update charts/dashboard totals
+                updateIncomeTracker(); 
+                calculateDashboard();
+            }
+
+            // 2. Handle EXPENSES Table Changes
+            if (table === 'expense_records') {
+                if (eventType === 'INSERT') {
+                    const frontendRow = {
+                        id: newRow.id,
+                        date: newRow.date,
+                        vendor: newRow.vendor,
+                        category: newRow.category,
+                        type: newRow.type,
+                        service: newRow.service,
+                        amount: newRow.amount,
+                        payment: newRow.payment,
+                        status: newRow.status,
+                        recurring: newRow.recurring,
+                        notes: newRow.notes
+                    };
+                    const exists = expenseRecords.some(r => r.id === newRow.id);
+                    if(!exists) {
+                        expenseRecords.push(frontendRow);
+                        if(currentView === 'expenses') renderExpenseTable();
+                    }
+                }
+                else if (eventType === 'UPDATE') {
+                    const index = expenseRecords.findIndex(r => r.id === newRow.id);
+                    if (index !== -1) {
+                        expenseRecords[index] = {
+                            ...expenseRecords[index],
+                            date: newRow.date,
+                            vendor: newRow.vendor,
+                            category: newRow.category,
+                            type: newRow.type,
+                            service: newRow.service,
+                            amount: newRow.amount,
+                            payment: newRow.payment,
+                            status: newRow.status,
+                            recurring: newRow.recurring,
+                            notes: newRow.notes
+                        };
+                        
+                        if (currentView === 'expenses') {
+                            const activeEl = document.activeElement;
+                            const activeRowId = activeEl ? activeEl.closest('tr')?.getAttribute('data-id') : null;
+                            if (activeRowId !== newRow.id) renderExpenseTable();
+                        }
+                    }
+                }
+                else if (eventType === 'DELETE') {
+                    expenseRecords = expenseRecords.filter(r => r.id !== oldRow.id);
+                    if(currentView === 'expenses') renderExpenseTable();
+                }
+                calculateDashboard(); // Recalculate totals
+            }
+
+            // 3. Handle CASH ACCOUNTS Changes
+            if (table === 'cash_accounts') {
+                if (eventType === 'INSERT' || eventType === 'UPDATE') {
+                   const frontendRow = {
+                        id: newRow.id,
+                        month: newRow.month,
+                        accountName: newRow.account_name,
+                        category: newRow.category,
+                        institution: newRow.institution,
+                        balance: newRow.balance
+                   };
+                   
+                   const index = cashAccounts.findIndex(r => r.id === newRow.id);
+                   if (index === -1) cashAccounts.push(frontendRow);
+                   else cashAccounts[index] = frontendRow;
+                   
+                   if(currentView === 'cash') renderCashAccountsTable();
+                }
+                else if (eventType === 'DELETE') {
+                    cashAccounts = cashAccounts.filter(r => r.id !== oldRow.id);
+                    if(currentView === 'cash') renderCashAccountsTable();
+                }
             }
         }
 
@@ -1943,6 +2129,7 @@
             initCharts();
             loadAllData();
             fetchLiveExchangeRate();
+            setupRealtimeListeners(); // Start Listening for changes
 
             // Enable Restore button if local history exists
             if (deletedColumns.length > 0) {
