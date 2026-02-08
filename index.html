@@ -1689,6 +1689,37 @@
             }
         }
 
+        // --- CHARTS INIT FUNCTION (Restored) ---
+        function initCharts() {
+            const ctxTracker = document.getElementById('trackerServiceChart').getContext('2d');
+            window.trackerChart = new Chart(ctxTracker, {
+                type: 'pie',
+                data: { labels: [], datasets: [{ data: [], backgroundColor: ['#34b0e5', '#84d0f0', '#1e6b8c', '#a0e0f8', '#0f4b63'], borderWidth: 2, borderColor: '#ffffff' }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 10 } } } }
+            });
+            
+            const ctxTrackerBar = document.getElementById('trackerBarChart').getContext('2d');
+            window.trackerBarChart = new Chart(ctxTrackerBar, {
+                type: 'bar',
+                data: { labels: [], datasets: [{ label: 'Total Net Income', data: [], backgroundColor: '#34b0e5', borderRadius: 4 }] },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: { x: { beginAtZero: true } }, plugins: { legend: { display: false } } }
+            });
+            
+            const ctxBar = document.getElementById('revenueBarChart').getContext('2d');
+            window.revenueBarChart = new Chart(ctxBar, {
+                type: 'bar',
+                data: { labels: [], datasets: [{ label: 'Net Revenue', data: [], backgroundColor: '#34b0e5', borderRadius: 4 }] },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true }, x: { grid: { display: false } } }, plugins: { legend: { display: false } } }
+            });
+
+            const ctxPie = document.getElementById('revenuePieChart').getContext('2d');
+            window.revenuePieChart = new Chart(ctxPie, {
+                type: 'doughnut',
+                data: { labels: [], datasets: [{ data: [], backgroundColor: ['#34b0e5', '#84d0f0'], borderWidth: 2, borderColor: '#ffffff' }] },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 10 } } } }
+            });
+        }
+
         window.onload = function() {
             initCharts();
             loadAllData();
