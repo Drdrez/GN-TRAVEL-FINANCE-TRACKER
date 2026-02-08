@@ -1941,13 +1941,18 @@
         }
         
         // --- REALTIME COLLABORATION SETUP ---
-        const SB_URL = 'https://udlnhhngwcqdjdwcheyd.supabase.co'; // <--- REPLACE THIS
-        const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkbG5oaG5nd2NxZGpkd2NoZXlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk5ODM1NzMsImV4cCI6MjA4NTU1OTU3M30.3WeLLTCqvl3IT4YhfS77bA8cx7R2fVfyEXZ3mJaYG5w'; // <--- REPLACE THIS
+     
+        const SB_URL = 'https://udlnhhngwcqdjdwcheyd.supabase.co'; 
+        const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkbG5oaG5nd2NxZGpkd2NoZXlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk5ODM1NzMsImV4cCI6MjA4NTU1OTU3M30.3WeLLTCqvl3IT4YhfS77bA8cx7R2fVfyEXZ3mJaYG5w';
         
-        // Initialize Supabase Client (safe check if undefined)
+        // Initialize Supabase Client (Only once!)
         let supabase = null;
-        if(window.supabase) {
-            supabase = window.supabase.createClient(SB_URL, SB_KEY);
+        if (window.supabase) {
+            try {
+                supabase = window.supabase.createClient(SB_URL, SB_KEY);
+            } catch (err) {
+                console.error("Supabase Init Error:", err);
+            }
         }
 
         function setupRealtimeListeners() {
@@ -2139,3 +2144,4 @@
     </script>
 </body>
 </html>
+
