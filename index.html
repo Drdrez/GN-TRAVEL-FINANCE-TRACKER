@@ -664,7 +664,7 @@
         </div>
     </div>
 
-  <script>
+    <script>
         // --- CONFIG ---
         const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
         const API_BASE = '/api';
@@ -1540,18 +1540,23 @@
         const SB_URL = 'https://udlnhhngwcqdjdwcheyd.supabase.co'; 
         const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkbG5oaG5nd2NxZGpkd2NoZXlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk5ODM1NzMsImV4cCI6MjA4NTU1OTU3M30.3WeLLTCqvl3IT4YhfS77bA8cx7R2fVfyEXZ3mJaYG5w';
         
-        let realtimeClient = null;
+        // I renamed this variable from 'supabase' to '_supabase' to avoid conflict errors
+        let _supabase = null;
         if (window.supabase) {
-            try { realtimeClient = window.supabase.createClient(SB_URL, SB_KEY); } 
+            try { 
+                _supabase = window.supabase.createClient(SB_URL, SB_KEY); 
+            } 
             catch (err) { console.error("Supabase Init Error:", err); }
         }
 
         function setupRealtimeListeners() {
-            if(!realtimeClient) return;
+            if(!_supabase) return;
             console.log("🔌 Connecting to Realtime...");
-            realtimeClient.channel('db-changes')
+            
+            // Listen to all tables
+            const channel = _supabase.channel('db-changes')
                 .on('postgres_changes', { event: '*', schema: 'public' }, (payload) => {
-                    console.log('Change received! Table:', payload.table);
+                    console.log('Change received! Table:', payload.table, payload);
                     handleRealtimeUpdate(payload);
                 })
                 .subscribe((status) => {
@@ -1581,6 +1586,7 @@
             // 2. Income Table
             if (safeTable === 'income_records') {
                 if (eventType === 'INSERT' && !incomeRecords.some(r => r.id === newRow.id)) {
+                    // UNSHIFT adds to TOP of the list
                     incomeRecords.unshift({ 
                         id: newRow.id, 
                         date: newRow.date, 
@@ -1693,4 +1699,3 @@
     </script>
 </body>
 </html>
-
