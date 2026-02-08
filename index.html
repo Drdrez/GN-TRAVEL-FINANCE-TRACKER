@@ -1941,12 +1941,13 @@
         }
         
         // --- REALTIME COLLABORATION SETUP ---
-     
         const SB_URL = 'https://udlnhhngwcqdjdwcheyd.supabase.co'; 
         const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkbG5oaG5nd2NxZGpkd2NoZXlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk5ODM1NzMsImV4cCI6MjA4NTU1OTU3M30.3WeLLTCqvl3IT4YhfS77bA8cx7R2fVfyEXZ3mJaYG5w';
         
-        // Initialize Supabase Client (Only once!)
+        // Initialize Supabase Client
+        // We use 'var' here or check window properties to strictly avoid "already declared" errors
         let supabase = null;
+        
         if (window.supabase) {
             try {
                 supabase = window.supabase.createClient(SB_URL, SB_KEY);
@@ -2144,4 +2145,5 @@
     </script>
 </body>
 </html>
+
 
