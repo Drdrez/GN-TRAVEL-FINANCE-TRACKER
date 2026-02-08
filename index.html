@@ -1946,24 +1946,24 @@
         
         // Initialize Supabase Client
         // We use 'var' here or check window properties to strictly avoid "already declared" errors
-        let supabase = null;
+        let realtimeClient = null;
         
         if (window.supabase) {
             try {
-                supabase = window.supabase.createClient(SB_URL, SB_KEY);
+                realtimeClient = window.supabase.createClient(SB_URL, SB_KEY);
             } catch (err) {
                 console.error("Supabase Init Error:", err);
             }
         }
 
         function setupRealtimeListeners() {
-            if(!supabase) {
+            if(!realtimeClient) {
                 console.warn("Supabase client not initialized. Check your credentials.");
                 return;
             }
             console.log("🔌 Connecting to Realtime...");
 
-            const channel = supabase.channel('db-changes')
+            const channel = realtimeClient.channel('db-changes')
                 .on(
                     'postgres_changes',
                     { event: '*', schema: 'public' }, // Listen to ALL changes
@@ -2145,5 +2145,3 @@
     </script>
 </body>
 </html>
-
-
