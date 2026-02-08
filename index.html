@@ -664,7 +664,7 @@
         </div>
     </div>
 
-    <script>
+  <script>
         // --- CONFIG ---
         const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
         const API_BASE = '/api';
@@ -691,7 +691,7 @@
         
         // --- LIVE CURRENCY ---
         let currentCurrency = 'PHP';
-        let exchangeRate = 58; // Fallback
+        let exchangeRate = 58; 
         let currentYear = new Date().getFullYear();
 
         // --- DATA STORES ---
@@ -703,7 +703,7 @@
         let businessData = {};
         let dashboardExpenses = {};
         
-        // Persistent Memory for deleted columns
+        // Persistent Memory
         let deletedColumns = JSON.parse(localStorage.getItem('deletedColumns_GN')) || [];
 
         // --- PAGINATION STATE ---
@@ -807,7 +807,6 @@
                 const data = await response.json();
                 if (data && data.rates && data.rates.PHP) {
                     exchangeRate = data.rates.PHP;
-                    console.log('Live Exchange Rate Fetched:', exchangeRate);
                     const usdBtn = document.getElementById('btn-usd');
                     if (usdBtn) usdBtn.setAttribute('title', `Current Rate: ₱${exchangeRate.toFixed(2)} = $1 USD`);
                     if (currentCurrency === 'USD') {
@@ -827,16 +826,16 @@
         // --- GLOBAL UTILS ---
         function parseMoney(str) {
             if (!str) return 0;
-            const clean = str.replace(/[₱$₱,\s]/g, '');
+            const clean = str.toString().replace(/[₱$₱,\s]/g, '');
             const num = parseFloat(clean);
             return isNaN(num) ? 0 : num;
         }
 
         function formatMoney(num) {
-            let val = num;
+            let val = Number(num) || 0;
             let symbol = '₱';
             if (currentCurrency === 'USD') {
-                val = num / exchangeRate;
+                val = val / exchangeRate;
                 symbol = '$';
             }
             return symbol + val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -855,7 +854,7 @@
                 document.getElementById('btn-php').className = "px-3 py-1 rounded-md text-xs font-bold text-gray-500 hover:bg-white/50 transition-colors";
             }
 
-            // DISABLE EDITING IN USD TO PREVENT DATA CORRUPTION
+            // DISABLE EDITING IN USD
             const isEditable = (curr === 'PHP');
             document.querySelectorAll('[contenteditable="true"]').forEach(el => {
                 el.contentEditable = isEditable;
@@ -881,9 +880,7 @@
             currentYear = parseInt(year);
             document.getElementById('year-selector').value = year;
             initDashboard(); 
-            // Reset pagination on filter change
-            pgIncome = 1;
-            pgExpense = 1;
+            pgIncome = 1; pgExpense = 1;
             renderIncomeTable();
             renderExpenseTable();
             updateIncomeTracker();
@@ -895,56 +892,42 @@
             saveTimeout = setTimeout(saveFunction, SAVE_DELAY);
         }
 
-        // --- NEW: EXPORT CSV FUNCTION (BY TYPE) ---
+        // --- EXPORT CSV FUNCTION ---
         function exportToCSV(type) {
             let csvContent = "data:text/csv;charset=utf-8,";
             let filename = "Export.csv";
-            const clean = (text) => (text || "").replace(/,/g, " ").replace(/\n/g, " ");
+            const clean = (text) => (text || "").toString().replace(/,/g, " ").replace(/\n/g, " ");
 
             if (type === 'income') {
-                // EXPORT INCOME RECORDS
                 csvContent += "Date,Client Name,Service Type,Pricing Model,Gross,Net,Payment Mode,Status,Ref ID,Notes\n";
                 incomeRecords.forEach(row => {
                     csvContent += `${row.date},${clean(row.clientName)},${clean(row.serviceType)},${clean(row.pricingModel)},${row.gross},${row.net},${clean(row.paymentMode)},${clean(row.status)},${clean(row.refId)},${clean(row.notes)}\n`;
                 });
                 filename = `Income_Data_${new Date().toISOString().slice(0,10)}.csv`;
-
             } else if (type === 'expenses') {
-                // EXPORT EXPENSE RECORDS
                 csvContent += "Date,Vendor,Category,Type,Service,Amount,Payment,Status,Recurring,Notes\n";
                 expenseRecords.forEach(row => {
                     csvContent += `${row.date},${clean(row.vendor)},${clean(row.category)},${clean(row.type)},${clean(row.service)},${row.amount},${clean(row.payment)},${clean(row.status)},${clean(row.recurring)},${clean(row.notes)}\n`;
                 });
                 filename = `Expenses_Data_${new Date().toISOString().slice(0,10)}.csv`;
-
             } else if (type === 'cash') {
-                // EXPORT CASH ACCOUNTS
                 csvContent += "Month,Account Name,Category,Institution,Balance\n";
                 cashAccounts.forEach(row => {
                     csvContent += `${clean(row.month)},${clean(row.accountName)},${clean(row.category)},${clean(row.institution)},${row.balance}\n`;
                 });
                 filename = `Cash_Data_${new Date().toISOString().slice(0,10)}.csv`;
-
             } else if (type === 'summary') {
-                // EXPORT DASHBOARD SUMMARY REPORT
                 csvContent += "Year,Month,Total Income,Total Expense,Net Income,Margin %\n";
-                
-                // Recalculate summary data for export
                 MONTHS.forEach(month => {
                     let totalIncome = 0;
-                    businessColumns.forEach(col => {
-                        totalIncome += (businessData[currentYear + '_' + col + '_' + month] || 0);
-                    });
+                    businessColumns.forEach(col => { totalIncome += (businessData[currentYear + '_' + col + '_' + month] || 0); });
                     const expense = dashboardExpenses[currentYear + '_' + month] || 0;
                     const net = totalIncome - expense;
                     const margin = totalIncome > 0 ? ((net / totalIncome) * 100).toFixed(2) : 0;
-                    
                     csvContent += `${currentYear},${month},${totalIncome},${expense},${net},${margin}%\n`;
                 });
                 filename = `Annual_Report_${currentYear}.csv`;
             }
-
-            // Trigger Download
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
@@ -954,55 +937,42 @@
             document.body.removeChild(link);
         }
 
-        // --- NEW: BACKUP TO GOOGLE DRIVE ---
+        // --- BACKUP TO GOOGLE DRIVE ---
         async function performGoogleBackup() {
             const btn = document.getElementById('btn-backup');
             const originalText = btn.innerHTML;
-            
-            // Set loading state
             btn.disabled = true;
             btn.innerHTML = `<svg class="animate-spin h-4 w-4 text-slate-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Backing up...`;
-
             try {
                 const response = await fetch('/api/backup', { method: 'POST' });
                 const result = await response.json();
-                
-                if (result.success) {
-                    alert("✅ Backup successful! Your Google Sheet is updated.");
-                } else {
-                    throw new Error(result.error);
-                }
+                if (result.success) { alert("✅ Backup successful! Your Google Sheet is updated."); } 
+                else { throw new Error(result.error); }
             } catch (error) {
                 console.error(error);
                 alert("❌ Backup failed: " + error.message);
             } finally {
-                // Restore button
                 btn.disabled = false;
                 btn.innerHTML = originalText;
             }
         }
 
-        // --- DATA PERSISTENCE ---
+        // --- DATA LOADING & SAVING ---
         async function loadAllData() {
             document.getElementById('loading-overlay').style.display = 'flex';
             try {
-                const incomeData = await apiGet('income');
-                if (incomeData) incomeRecords = incomeData;
-
-                const expenseData = await apiGet('expenses');
-                if (expenseData) expenseRecords = expenseData;
-
-                const cashAccountsData = await apiGet('cash?type=accounts');
-                if (cashAccountsData) cashAccounts = cashAccountsData;
-
-                const cashMovementData = await apiGet('cash?type=movement');
-                if (cashMovementData) cashMovement = cashMovementData;
-
-                const businessDataResult = await apiGet('business');
-                if (businessDataResult) {
-                    businessColumns = businessDataResult.columns || ['Service A', 'Service B'];
-                    businessData = businessDataResult.businessData || {};
-                    dashboardExpenses = businessDataResult.dashboardExpenses || {};
+                const [inc, exp, cashAcct, cashMov, busConfig] = await Promise.all([
+                    apiGet('income'), apiGet('expenses'), apiGet('cash?type=accounts'), apiGet('cash?type=movement'), apiGet('business')
+                ]);
+                
+                if (inc) incomeRecords = inc;
+                if (exp) expenseRecords = exp;
+                if (cashAcct) cashAccounts = cashAcct;
+                if (cashMov) cashMovement = cashMov;
+                if (busConfig) {
+                    businessColumns = busConfig.columns || ['Service A', 'Service B'];
+                    businessData = busConfig.business_data || busConfig.businessData || {};
+                    dashboardExpenses = busConfig.dashboard_expenses || busConfig.dashboardExpenses || {};
                 }
 
                 initDashboard();
@@ -1032,29 +1002,21 @@
         function openInvoice(btn) {
             const row = btn.closest('tr');
             const cells = row.querySelectorAll('td');
-            const date = cells[0].querySelector('input') ? cells[0].querySelector('input').value : cells[0].innerText;
-            const client = cells[1].innerText;
-            const service = cells[2].querySelector('select') ? cells[2].querySelector('select').value : cells[2].innerText;
-            const amount = cells[5].innerText;
-            const ref = cells[8].innerText;
-
-            document.getElementById('inv-date').innerText = date;
-            document.getElementById('inv-num').innerText = ref || "001";
-            document.getElementById('inv-client').innerText = client || "Client Name";
-            document.getElementById('inv-service').innerText = service;
-            document.getElementById('inv-amount').innerText = amount;
-            document.getElementById('inv-total').innerText = amount;
-
+            document.getElementById('inv-date').innerText = cells[0].querySelector('input') ? cells[0].querySelector('input').value : cells[0].innerText;
+            document.getElementById('inv-client').innerText = cells[1].innerText;
+            document.getElementById('inv-service').innerText = cells[2].querySelector('select') ? cells[2].querySelector('select').value : cells[2].innerText;
+            document.getElementById('inv-amount').innerText = cells[5].innerText;
+            document.getElementById('inv-total').innerText = cells[5].innerText;
+            document.getElementById('inv-num').innerText = cells[8].innerText;
             document.getElementById('invoice-modal').classList.remove('hidden');
             document.getElementById('invoice-modal').classList.add('flex');
         }
-
         function closeInvoice() {
             document.getElementById('invoice-modal').classList.add('hidden');
             document.getElementById('invoice-modal').classList.remove('flex');
         }
 
-        // --- SHARED VIEW LOGIC ---
+        // --- DOM & VIEW LOGIC ---
         function resizeChartsForView(viewId) {
             requestAnimationFrame(function() {
                 if (viewId === 'dashboard') {
@@ -1070,30 +1032,21 @@
 
         function switchView(viewId) {
             currentView = viewId;
-
-            const titles = { 'dashboard': 'Business Dashboard', 'income': 'Income Tracker', 'expenses': 'Expenses Tracker', 'cash': 'Cash Overview' };
-            document.getElementById('page-title').innerText = titles[viewId] || 'Finance Tracker';
-            
+            document.getElementById('page-title').innerText = { 'dashboard': 'Business Dashboard', 'income': 'Income Tracker', 'expenses': 'Expenses Tracker', 'cash': 'Cash Overview' }[viewId];
             document.querySelectorAll('section[id^="view-"]').forEach(el => el.classList.add('hidden'));
             document.getElementById('view-' + viewId).classList.remove('hidden');
-
-            document.querySelectorAll('.nav-link').forEach(el => {
-                el.classList.remove('active');
-                el.classList.add('text-slate-600');
-            });
-
+            document.querySelectorAll('.nav-link').forEach(el => { el.classList.remove('active'); el.classList.add('text-slate-600'); });
             document.getElementById('nav-' + viewId).classList.add('active');
             
             if(viewId === 'income') updateIncomeTracker();
             if(viewId === 'dashboard') calculateDashboard();
             if(viewId === 'cash') calculateCashMovement();
             if(viewId === 'expenses') calculateExpensesMovement();
-
+            
             closeSidebar();
             resizeChartsForView(viewId);
         }
 
-        // --- DASHBOARD LOGIC ---
         function calculateDashboard() {
             const busTable = document.getElementById('table-business');
             const bodyRows = busTable.querySelectorAll('tbody tr');
@@ -1180,13 +1133,11 @@
             if(window.revenuePieChart) {
                 window.revenuePieChart.data.labels = colNames;
                 window.revenuePieChart.data.datasets[0].data = colSums;
-                const baseColors = ['#34b0e5', '#84d0f0', '#1e6b8c', '#a0e0f8', '#0f4b63', '#62c4ea', '#103a4a'];
-                window.revenuePieChart.data.datasets[0].backgroundColor = colNames.map((_, i) => baseColors[i % baseColors.length]);
+                window.revenuePieChart.data.datasets[0].backgroundColor = colNames.map((_, i) => ['#34b0e5', '#84d0f0', '#1e6b8c', '#a0e0f8'][i % 4]);
                 window.revenuePieChart.update();
             }
         }
 
-        // --- INIT DASHBOARD ---
         function initDashboard() {
             const mainBody = document.querySelector('#table-main tbody');
             const busBody = document.querySelector('#table-business tbody');
@@ -1199,7 +1150,7 @@
             while (headerRow.children.length > 2) { headerRow.removeChild(headerRow.children[1]); }
             while (footerRow.children.length > 2) { footerRow.removeChild(footerRow.children[1]); }
             
-            MONTHS.forEach((month, index) => {
+            MONTHS.forEach((month) => {
                 const trMain = document.createElement('tr');
                 trMain.className = "hover:bg-white/20 transition-colors";
                 const expenseVal = dashboardExpenses[currentYear + '_' + month] || 0;
@@ -1238,7 +1189,7 @@
             });
             headRow.insertBefore(newTh, totalHeader);
 
-            bodyRows.forEach((row, index) => {
+            bodyRows.forEach((row) => {
                 const month = row.getAttribute('data-month');
                 const newTd = document.createElement('td');
                 newTd.className = "px-6 py-4 text-right text-slate-600";
@@ -1270,72 +1221,45 @@
             let name = defaultName;
             let counter = 1;
             const headers = Array.from(document.querySelectorAll('#table-business thead th .editable-header')).map(el => el.innerText);
-            while(headers.includes(name)) {
-                name = `${defaultName} ${counter}`;
-                counter++;
-            }
-            
-            MONTHS.forEach(month => {
-                delete businessData[currentYear + '_' + name + '_' + month];
-            });
-
+            while(headers.includes(name)) { name = `${defaultName} ${counter}`; counter++; }
+            MONTHS.forEach(month => { delete businessData[currentYear + '_' + name + '_' + month]; });
             businessColumns.push(name);
             addBusinessColumnUI(name);
             scheduleSave(saveBusinessData);
         }
 
-        // UPDATED: Logic to save deleted columns to LocalStorage
         function removeBusinessColumn(btn) {
-            if (!confirm("Are you sure you want to remove this column? It will be moved to the 'Restore' stack.")) return;
-
+            if (!confirm("Are you sure?")) return;
             const th = btn.closest('th');
             const headRow = th.parentElement;
             const colIndex = Array.from(headRow.children).indexOf(th);
             const colName = th.querySelector('.editable-header').innerText;
             const colData = {};
-            
             MONTHS.forEach(month => {
                 const key = currentYear + '_' + colName + '_' + month;
                 colData[month] = businessData[key] || 0;
                 delete businessData[key]; 
             });
-
-            // Add to array & Save to LocalStorage
             deletedColumns.push({ name: colName, data: colData, index: colIndex - 1 });
             localStorage.setItem('deletedColumns_GN', JSON.stringify(deletedColumns));
-
             document.getElementById('restore-btn').disabled = false;
-            
-            const arrayIndex = colIndex - 1;
-            if (arrayIndex >= 0) { businessColumns.splice(arrayIndex, 1); }
-            
+            if (colIndex - 1 >= 0) { businessColumns.splice(colIndex - 1, 1); }
             th.remove();
-            const bodyRows = document.querySelectorAll('#table-business tbody tr');
-            bodyRows.forEach(row => { if (row.children[colIndex]) row.children[colIndex].remove(); });
-            
+            document.querySelectorAll('#table-business tbody tr').forEach(row => { if (row.children[colIndex]) row.children[colIndex].remove(); });
             const footerRow = document.getElementById('business-footer-row');
             if (footerRow.children[colIndex]) footerRow.children[colIndex].remove();
-            
             calculateDashboard();
             scheduleSave(saveBusinessData);
         }
 
-        // UPDATED: Logic to restore from memory/LocalStorage
         function restoreColumn() {
             if (deletedColumns.length === 0) return;
-            
             const restored = deletedColumns.pop();
-            // Update LocalStorage
             localStorage.setItem('deletedColumns_GN', JSON.stringify(deletedColumns));
-            
             businessColumns.splice(restored.index, 0, restored.name);
-            MONTHS.forEach(month => {
-                businessData[currentYear + '_' + restored.name + '_' + month] = restored.data[month];
-            });
-            
+            MONTHS.forEach(month => { businessData[currentYear + '_' + restored.name + '_' + month] = restored.data[month]; });
             initDashboard();
             calculateDashboard();
-            
             if (deletedColumns.length === 0) document.getElementById('restore-btn').disabled = true;
             scheduleSave(saveBusinessData);
         }
@@ -1350,13 +1274,11 @@
                     calculateDashboard();
                     scheduleSave(saveBusinessData);
                 });
-                cell.addEventListener('keydown', function(e) {
-                    if (e.key === 'Enter') { e.preventDefault(); this.blur(); }
-                });
+                cell.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); this.blur(); } });
             });
         }
 
-        // --- INCOME TRACKER WITH PAGINATION ---
+        // --- INCOME / EXPENSES / CASH LOGIC ---
         const serviceOptions = ["Social Media Management", "Virtual Assistance", "Paid Ads", "Branding", "Graphic Design"];
         const pricingOptions = ["Monthly Retainer", "Project-Based"];
         const statusOptions = ["Paid", "Pending", "Overdue"];
@@ -1364,165 +1286,88 @@
         function renderIncomeTable() {
             const tbody = document.getElementById('tracker-body');
             tbody.innerHTML = '';
-            
-            // Filter first
-            const filtered = incomeRecords.filter(record => {
-                const recordYear = new Date(record.date).getFullYear();
-                return !record.date || recordYear === currentYear;
-            });
-
-            // Calculate pagination
-            const totalItems = filtered.length;
-            const totalPages = Math.ceil(totalItems / ROWS_PER_PAGE);
+            const filtered = incomeRecords.filter(r => !r.date || new Date(r.date).getFullYear() === currentYear);
+            const totalPages = Math.ceil(filtered.length / ROWS_PER_PAGE);
             if (pgIncome > totalPages) pgIncome = totalPages || 1;
-            if (pgIncome < 1) pgIncome = 1;
-
-            // Slice data for current page
             const start = (pgIncome - 1) * ROWS_PER_PAGE;
-            const end = start + ROWS_PER_PAGE;
-            const pageData = filtered.slice(start, end);
-
-            // Render Rows
-            pageData.forEach((record, index) => {
-                const tr = createIncomeRow(record, index);
-                tbody.appendChild(tr);
-            });
-
-            // Update UI Controls
-            document.getElementById('income-start').innerText = totalItems === 0 ? 0 : start + 1;
-            document.getElementById('income-end').innerText = Math.min(end, totalItems);
-            document.getElementById('income-total').innerText = totalItems;
+            const pageData = filtered.slice(start, start + ROWS_PER_PAGE);
+            pageData.forEach((record) => { tbody.appendChild(createIncomeRow(record)); });
+            
+            document.getElementById('income-start').innerText = filtered.length === 0 ? 0 : start + 1;
+            document.getElementById('income-end').innerText = Math.min(start + ROWS_PER_PAGE, filtered.length);
+            document.getElementById('income-total').innerText = filtered.length;
             document.getElementById('btn-prev-income').disabled = pgIncome <= 1;
             document.getElementById('btn-next-income').disabled = pgIncome >= totalPages;
-
             updateIncomeTracker();
         }
 
-        function createIncomeRow(record, index) {
+        function createIncomeRow(record) {
             const tr = document.createElement('tr');
             tr.className = "hover:bg-white/20 transition-colors";
             tr.setAttribute('data-id', record.id);
-            const createSelect = (options, selected) => {
-                let html = `<select class="editable-input text-slate-700 font-medium" onchange="updateIncomeRecord(this)">`;
-                options.forEach(opt => html += `<option value="${opt}" ${opt === selected ? 'selected' : ''}>${opt}</option>`);
-                html += `</select>`;
-                return html;
-            };
-
+            const createSelect = (opts, sel) => `<select class="editable-input text-slate-700 font-medium" onchange="updateIncomeRecord(this)">${opts.map(o => `<option value="${o}" ${o === sel ? 'selected' : ''}>${o}</option>`).join('')}</select>`;
+            
             tr.innerHTML = `
                 <td class="px-4 py-3 border-r border-slate-200/60"><input type="date" value="${record.date || ''}" class="editable-input text-slate-700 font-medium" onchange="updateIncomeRecord(this)"></td>
-                <td class="px-4 py-3 border-r border-slate-200/60 text-slate-700" contenteditable="true">${record.clientName || 'Client Name'}</td>
+                <td class="px-4 py-3 border-r border-slate-200/60 text-slate-700" contenteditable="true">${record.clientName || ''}</td>
                 <td class="px-4 py-3 border-r border-slate-200/60">${createSelect(serviceOptions, record.serviceType)}</td>
                 <td class="px-4 py-3 border-r border-slate-200/60">${createSelect(pricingOptions, record.pricingModel)}</td>
                 <td class="px-4 py-3 text-right border-r border-slate-200/60 text-slate-700" contenteditable="true">${formatMoney(record.gross || 0)}</td>
                 <td class="px-4 py-3 text-right border-r border-slate-200/60 text-slate-700" contenteditable="true">${formatMoney(record.net || 0)}</td>
-                <td class="px-4 py-3 border-r border-slate-200/60 text-slate-700" contenteditable="true">${record.paymentMode || 'Bank Transfer'}</td>
+                <td class="px-4 py-3 border-r border-slate-200/60 text-slate-700" contenteditable="true">${record.paymentMode || ''}</td>
                 <td class="px-4 py-3 border-r border-slate-200/60">${createSelect(statusOptions, record.status)}</td>
-                <td class="px-4 py-3 border-r border-slate-200/60 text-slate-700" contenteditable="true">${record.refId || 'INV-001'}</td>
+                <td class="px-4 py-3 border-r border-slate-200/60 text-slate-700" contenteditable="true">${record.refId || ''}</td>
                 <td class="px-4 py-3 text-slate-700" contenteditable="true">${record.notes || ''}</td>
                 <td class="px-2 py-3 text-center flex gap-1 justify-center no-print">
-                    <button onclick="openInvoice(this)" class="text-blue-400 hover:text-blue-600 transition-colors" title="Generate Invoice">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    </button>
-                    <button onclick="deleteIncomeRow(this)" class="text-gray-400 hover:text-red-500 transition-colors" title="Delete">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                    </button>
-                </td>
-            `;
+                    <button onclick="openInvoice(this)" class="text-blue-400 hover:text-blue-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg></button>
+                    <button onclick="deleteIncomeRow(this)" class="text-gray-400 hover:text-red-500"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                </td>`;
             tr.querySelectorAll('[contenteditable="true"]').forEach(cell => {
-                cell.addEventListener('blur', function() { updateIncomeRecordFromRow(tr); });
-                cell.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); this.blur(); } });
+                cell.addEventListener('blur', () => updateIncomeRecordFromRow(tr));
+                cell.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); cell.blur(); } });
             });
             return tr;
         }
 
         function addIncomeRow() {
-            const newRecord = {
-                id: Date.now().toString(),
-                date: new Date().toISOString().split('T')[0],
-                clientName: 'Client Name',
-                serviceType: serviceOptions[0],
-                pricingModel: pricingOptions[0],
-                gross: 0, net: 0,
-                paymentMode: 'Bank Transfer',
-                status: statusOptions[0],
-                refId: `INV-${String(incomeRecords.length + 1).padStart(3, '0')}`,
-                notes: ''
-            };
-            incomeRecords.push(newRecord);
-            
-            // Jump to last page to see new entry
-            const filtered = incomeRecords.filter(record => {
-                const recordYear = new Date(record.date).getFullYear();
-                return !record.date || recordYear === currentYear;
-            });
-            pgIncome = Math.ceil(filtered.length / ROWS_PER_PAGE) || 1;
-            
+            // Unshift adds to TOP of list so you see it immediately on Page 1
+            incomeRecords.unshift({ id: Date.now().toString(), date: new Date().toISOString().split('T')[0], clientName: 'Client Name', serviceType: serviceOptions[0], pricingModel: pricingOptions[0], gross: 0, net: 0, paymentMode: 'Bank', status: 'Paid', refId: `INV-${String(incomeRecords.length+1).padStart(3,'0')}`, notes: '' });
             renderIncomeTable();
             scheduleSave(saveIncomeRecords);
         }
-
-        function updateIncomeRecord(element) { updateIncomeRecordFromRow(element.closest('tr')); }
+        function updateIncomeRecord(el) { updateIncomeRecordFromRow(el.closest('tr')); }
         function updateIncomeRecordFromRow(tr) {
             const id = tr.getAttribute('data-id');
-            const index = incomeRecords.findIndex(r => r.id === id);
-            if (index === -1) return;
+            const idx = incomeRecords.findIndex(r => r.id === id);
+            if (idx === -1) return;
             const cells = tr.querySelectorAll('td');
-            incomeRecords[index] = {
-                ...incomeRecords[index],
-                date: cells[0].querySelector('input').value,
-                clientName: cells[1].innerText,
-                serviceType: cells[2].querySelector('select').value,
-                pricingModel: cells[3].querySelector('select').value,
-                gross: parseMoney(cells[4].innerText),
-                net: parseMoney(cells[5].innerText),
-                paymentMode: cells[6].innerText,
-                status: cells[7].querySelector('select').value,
-                refId: cells[8].innerText,
-                notes: cells[9].innerText
-            };
-            cells[4].innerText = formatMoney(incomeRecords[index].gross);
-            cells[5].innerText = formatMoney(incomeRecords[index].net);
+            incomeRecords[idx] = { ...incomeRecords[idx], date: cells[0].querySelector('input').value, clientName: cells[1].innerText, serviceType: cells[2].querySelector('select').value, pricingModel: cells[3].querySelector('select').value, gross: parseMoney(cells[4].innerText), net: parseMoney(cells[5].innerText), paymentMode: cells[6].innerText, status: cells[7].querySelector('select').value, refId: cells[8].innerText, notes: cells[9].innerText };
+            cells[4].innerText = formatMoney(incomeRecords[idx].gross);
+            cells[5].innerText = formatMoney(incomeRecords[idx].net);
             updateIncomeTracker();
             scheduleSave(saveIncomeRecords);
         }
-
         function deleteIncomeRow(btn) {
-            const tr = btn.closest('tr');
-            const id = tr.getAttribute('data-id');
-            incomeRecords = incomeRecords.filter(r => r.id !== id);
-            renderIncomeTable(); // Re-render to update pagination
+            incomeRecords = incomeRecords.filter(r => r.id !== btn.closest('tr').getAttribute('data-id'));
+            renderIncomeTable();
             scheduleSave(saveIncomeRecords);
         }
-
         function updateIncomeTracker() {
-            let totalGross = 0;
-            let totalNet = 0;
-            let serviceTotals = {};
-            serviceOptions.forEach(s => serviceTotals[s] = 0);
-            incomeRecords.forEach(record => {
-                const recordYear = new Date(record.date).getFullYear();
-                if (!record.date || recordYear === currentYear) {
-                    totalGross += record.gross || 0;
-                    totalNet += record.net || 0;
-                    if (serviceTotals[record.serviceType] !== undefined) serviceTotals[record.serviceType] += record.net || 0;
-                }
+            let tGross = 0, tNet = 0, sTotals = {};
+            serviceOptions.forEach(s => sTotals[s] = 0);
+            incomeRecords.forEach(r => { 
+                if (!r.date || new Date(r.date).getFullYear() === currentYear) { tGross += r.gross || 0; tNet += r.net || 0; if (sTotals[r.serviceType] !== undefined) sTotals[r.serviceType] += r.net || 0; }
             });
-            document.getElementById('tracker-total-gross').innerText = formatMoney(totalGross);
-            document.getElementById('tracker-total-net').innerText = formatMoney(totalNet);
+            document.getElementById('tracker-total-gross').innerText = formatMoney(tGross);
+            document.getElementById('tracker-total-net').innerText = formatMoney(tNet);
             if(window.trackerChart) {
-                const labels = Object.keys(serviceTotals).filter(k => serviceTotals[k] > 0);
-                const data = labels.map(k => serviceTotals[k]);
-                window.trackerChart.data.labels = labels;
-                window.trackerChart.data.datasets[0].data = data;
+                window.trackerChart.data.datasets[0].data = Object.keys(sTotals).map(k => sTotals[k]);
                 window.trackerChart.update();
-                window.trackerBarChart.data.labels = labels;
-                window.trackerBarChart.data.datasets[0].data = data;
+                window.trackerBarChart.data.datasets[0].data = Object.keys(sTotals).map(k => sTotals[k]);
                 window.trackerBarChart.update();
             }
         }
 
-        // --- EXPENSES TRACKER WITH PAGINATION ---
         const expenseCategories = ["Payroll", "Software / Tools", "Advertising", "Payment Processing Fees", "Tax", "Education / Coaching", "Miscellaneous"];
         const expenseTypes = ["Fixed", "Variable"];
         const expensePayments = ["Card", "Bank", "Cash", "Transfer"];
@@ -1532,599 +1377,306 @@
         function renderExpenseTable() {
             const tbody = document.getElementById('expenses-body');
             tbody.innerHTML = '';
-            
-            const filtered = expenseRecords.filter(record => {
-                const recordYear = new Date(record.date).getFullYear();
-                return !record.date || recordYear === currentYear;
-            });
-
-            // Pagination Logic
-            const totalItems = filtered.length;
-            const totalPages = Math.ceil(totalItems / ROWS_PER_PAGE);
+            const filtered = expenseRecords.filter(r => !r.date || new Date(r.date).getFullYear() === currentYear);
+            const totalPages = Math.ceil(filtered.length / ROWS_PER_PAGE);
             if (pgExpense > totalPages) pgExpense = totalPages || 1;
-            if (pgExpense < 1) pgExpense = 1;
-
             const start = (pgExpense - 1) * ROWS_PER_PAGE;
-            const end = start + ROWS_PER_PAGE;
-            const pageData = filtered.slice(start, end);
-
-            pageData.forEach((record, index) => {
-                const tr = createExpenseRow(record, index);
-                tbody.appendChild(tr);
-            });
-
-            // Update UI
-            document.getElementById('expense-start').innerText = totalItems === 0 ? 0 : start + 1;
-            document.getElementById('expense-end').innerText = Math.min(end, totalItems);
-            document.getElementById('expense-total').innerText = totalItems;
+            filtered.slice(start, start + ROWS_PER_PAGE).forEach(r => tbody.appendChild(createExpenseRow(r)));
+            document.getElementById('expense-start').innerText = filtered.length === 0 ? 0 : start + 1;
+            document.getElementById('expense-end').innerText = Math.min(start + ROWS_PER_PAGE, filtered.length);
+            document.getElementById('expense-total').innerText = filtered.length;
             document.getElementById('btn-prev-expense').disabled = pgExpense <= 1;
             document.getElementById('btn-next-expense').disabled = pgExpense >= totalPages;
         }
 
-        function createExpenseRow(record, index) {
+        function createExpenseRow(record) {
             const tr = document.createElement('tr');
             tr.className = "hover:bg-white/20 transition-colors";
             tr.setAttribute('data-id', record.id);
-            const createSelect = (options, selected) => {
-                let html = `<select class="editable-input text-slate-700 font-medium" onchange="updateExpenseRecord(this)">`;
-                options.forEach(opt => html += `<option value="${opt}" ${opt === selected ? 'selected' : ''}>${opt}</option>`);
-                html += `</select>`;
-                return html;
-            };
-
+            const createSelect = (opts, sel) => `<select class="editable-input text-slate-700 font-medium" onchange="updateExpenseRecord(this)">${opts.map(o => `<option value="${o}" ${o === sel ? 'selected' : ''}>${o}</option>`).join('')}</select>`;
             tr.innerHTML = `
                 <td class="px-4 py-3 border-r border-slate-200/60"><input type="date" value="${record.date || ''}" class="editable-input text-slate-700 font-medium" onchange="updateExpenseRecord(this)"></td>
-                <td class="px-4 py-3 border-r border-slate-200/60 text-slate-700" contenteditable="true">${record.vendor || 'Vendor Name'}</td>
+                <td class="px-4 py-3 border-r border-slate-200/60 text-slate-700" contenteditable="true">${record.vendor || ''}</td>
                 <td class="px-4 py-3 border-r border-slate-200/60">${createSelect(expenseCategories, record.category)}</td>
                 <td class="px-4 py-3 border-r border-slate-200/60">${createSelect(expenseTypes, record.type)}</td>
-                <td class="px-4 py-3 border-r border-slate-200/60 text-slate-700" contenteditable="true">${record.service || 'General'}</td>
+                <td class="px-4 py-3 border-r border-slate-200/60 text-slate-700" contenteditable="true">${record.service || ''}</td>
                 <td class="px-4 py-3 text-right border-r border-slate-200/60 text-slate-700" contenteditable="true">${formatMoney(record.amount || 0)}</td>
                 <td class="px-4 py-3 border-r border-slate-200/60">${createSelect(expensePayments, record.payment)}</td>
                 <td class="px-4 py-3 border-r border-slate-200/60">${createSelect(expenseStatuses, record.status)}</td>
                 <td class="px-4 py-3 border-r border-slate-200/60">${createSelect(expenseRecurring, record.recurring)}</td>
                 <td class="px-4 py-3 text-slate-700" contenteditable="true">${record.notes || ''}</td>
-                <td class="px-2 py-3 text-center no-print">
-                    <button onclick="deleteExpenseRow(this)" class="text-gray-400 hover:text-red-500 transition-colors">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    </button>
-                </td>
-            `;
+                <td class="px-2 py-3 text-center"><button onclick="deleteExpenseRow(this)" class="text-gray-400 hover:text-red-500"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button></td>`;
             tr.querySelectorAll('[contenteditable="true"]').forEach(cell => {
-                cell.addEventListener('blur', function() { updateExpenseRecordFromRow(tr); });
-                cell.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); this.blur(); } });
+                cell.addEventListener('blur', () => updateExpenseRecordFromRow(tr));
+                cell.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); cell.blur(); } });
             });
             return tr;
         }
 
         function addExpenseRow() {
-            const newRecord = {
-                id: Date.now().toString(),
-                date: new Date().toISOString().split('T')[0],
-                vendor: 'Vendor Name',
-                category: expenseCategories[0],
-                type: expenseTypes[0],
-                service: 'General',
-                amount: 0,
-                payment: expensePayments[0],
-                status: expenseStatuses[0],
-                recurring: expenseRecurring[1],
-                notes: ''
-            };
-            expenseRecords.push(newRecord);
-            
-            const filtered = expenseRecords.filter(record => {
-                const recordYear = new Date(record.date).getFullYear();
-                return !record.date || recordYear === currentYear;
-            });
-            pgExpense = Math.ceil(filtered.length / ROWS_PER_PAGE) || 1;
-
+            // Unshift adds to TOP of list
+            expenseRecords.unshift({ id: Date.now().toString(), date: new Date().toISOString().split('T')[0], vendor: 'Vendor', category: expenseCategories[0], type: 'Fixed', service: 'General', amount: 0, payment: 'Card', status: 'Paid', recurring: 'No', notes: '' });
             renderExpenseTable();
             scheduleSave(saveExpenseRecords);
         }
-
-        function updateExpenseRecord(element) { updateExpenseRecordFromRow(element.closest('tr')); }
+        function updateExpenseRecord(el) { updateExpenseRecordFromRow(el.closest('tr')); }
         function updateExpenseRecordFromRow(tr) {
             const id = tr.getAttribute('data-id');
-            const index = expenseRecords.findIndex(r => r.id === id);
-            if (index === -1) return;
+            const idx = expenseRecords.findIndex(r => r.id === id);
+            if (idx === -1) return;
             const cells = tr.querySelectorAll('td');
-            expenseRecords[index] = {
-                ...expenseRecords[index],
-                date: cells[0].querySelector('input').value,
-                vendor: cells[1].innerText,
-                category: cells[2].querySelector('select').value,
-                type: cells[3].querySelector('select').value,
-                service: cells[4].innerText,
-                amount: parseMoney(cells[5].innerText),
-                payment: cells[6].querySelector('select').value,
-                status: cells[7].querySelector('select').value,
-                recurring: cells[8].querySelector('select').value,
-                notes: cells[9].innerText
-            };
-            cells[5].innerText = formatMoney(expenseRecords[index].amount);
+            expenseRecords[idx] = { ...expenseRecords[idx], date: cells[0].querySelector('input').value, vendor: cells[1].innerText, category: cells[2].querySelector('select').value, type: cells[3].querySelector('select').value, service: cells[4].innerText, amount: parseMoney(cells[5].innerText), payment: cells[6].querySelector('select').value, status: cells[7].querySelector('select').value, recurring: cells[8].querySelector('select').value, notes: cells[9].innerText };
+            cells[5].innerText = formatMoney(expenseRecords[idx].amount);
             scheduleSave(saveExpenseRecords);
         }
-
         function deleteExpenseRow(btn) {
-            const tr = btn.closest('tr');
-            const id = tr.getAttribute('data-id');
-            expenseRecords = expenseRecords.filter(r => r.id !== id);
+            expenseRecords = expenseRecords.filter(r => r.id !== btn.closest('tr').getAttribute('data-id'));
             renderExpenseTable();
             scheduleSave(saveExpenseRecords);
         }
 
-        // --- NEW: INDEPENDENT EXPENSES MOVEMENT LOGIC ---
-        function initExpensesMovement() {
-            const tbody = document.getElementById('expenses-movement-body');
-            if (!tbody) return;
-
-            tbody.innerHTML = '';
-            MONTHS.forEach(month => {
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-white/20 transition-colors";
-                tr.setAttribute('data-month', month);
-                
-                // Note the 'exp_' prefix here to keep data separate
-                const startVal = cashMovement[`exp_${month}_start`] || 0;
-                const endVal = cashMovement[`exp_${month}_end`] || 0;
-                
-                tr.innerHTML = `
-                    <td class="px-6 py-4 font-bold text-slate-700 border-r border-slate-200/60">${month}</td>
-                    <td class="px-6 py-4 text-right border-r border-slate-200/60 exp-cash-start text-slate-600" contenteditable="true">${formatMoney(startVal)}</td>
-                    <td class="px-6 py-4 text-right border-r border-slate-200/60 exp-cash-end text-slate-600" contenteditable="true">${formatMoney(endVal)}</td>
-                    <td class="px-6 py-4 text-right exp-cash-net font-bold">-</td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            // Attach listeners specific to this table
-            tbody.querySelectorAll('.exp-cash-start, .exp-cash-end').forEach(cell => {
-                cell.addEventListener('blur', function() {
-                    const row = this.closest('tr');
-                    const month = row.getAttribute('data-month');
-                    const val = parseMoney(this.innerText);
-                    
-                    // Save to 'exp_' keys
-                    if (this.classList.contains('exp-cash-start')) { 
-                        cashMovement[`exp_${month}_start`] = val; 
-                    } else { 
-                        cashMovement[`exp_${month}_end`] = val; 
-                    }
-                    
-                    this.innerText = formatMoney(val);
-                    calculateExpensesMovement();
-                    scheduleSave(saveCashMovement); // Saves to the same DB location
-                });
-                
-                cell.addEventListener('keydown', function(e) { 
-                    if (e.key === 'Enter') { e.preventDefault(); this.blur(); } 
-                });
-            });
-
-            calculateExpensesMovement();
-        }
-
-        function calculateExpensesMovement() {
-            const rows = document.querySelectorAll('#expenses-movement-body tr');
-            rows.forEach(row => {
-                const startCell = row.querySelector('.exp-cash-start');
-                const endCell = row.querySelector('.exp-cash-end');
-                const netCell = row.querySelector('.exp-cash-net');
-                
-                const start = parseMoney(startCell.innerText);
-                const end = parseMoney(endCell.innerText);
-                
-                if(start !== 0 || end !== 0) {
-                    const net = end - start;
-                    const sign = net > 0 ? '+' : '';
-                    netCell.innerText = sign + formatMoney(net);
-                    
-                    if(net > 0) netCell.className = "px-6 py-4 text-right exp-cash-net font-bold text-green-600";
-                    else if(net < 0) netCell.className = "px-6 py-4 text-right exp-cash-net font-bold text-red-500";
-                    else netCell.className = "px-6 py-4 text-right exp-cash-net font-bold text-slate-500";
-                } else {
-                    netCell.innerText = '-';
-                    netCell.className = "px-6 py-4 text-right exp-cash-net font-bold text-gray-400";
-                }
-            });
-        }
-
-        // --- CASH OVERVIEW WITH PAGINATION ---
+        // Cash Accounts
         const cashAcctNames = ["Philippine Bank", "Business Savings", "Stripe Balance", "PayPal Balance", "Wise Balance"];
         const cashAcctCategories = ["Operating Cash", "Payment Processors", "Savings / Reserves", "Tax Reserve", "Other"];
 
         function renderCashAccountsTable() {
             const tbody = document.getElementById('cash-balances-body');
             tbody.innerHTML = '';
-            
-            // Pagination Logic for Cash Accounts
-            const totalItems = cashAccounts.length;
-            const totalPages = Math.ceil(totalItems / ROWS_PER_PAGE);
+            const totalPages = Math.ceil(cashAccounts.length / ROWS_PER_PAGE);
             if (pgCash > totalPages) pgCash = totalPages || 1;
-            if (pgCash < 1) pgCash = 1;
-
             const start = (pgCash - 1) * ROWS_PER_PAGE;
-            const end = start + ROWS_PER_PAGE;
-            const pageData = cashAccounts.slice(start, end);
-
-            pageData.forEach((record, index) => {
-                const tr = createCashAccountRow(record, index);
-                tbody.appendChild(tr);
-            });
-
-            // Update UI
-            document.getElementById('cash-start').innerText = totalItems === 0 ? 0 : start + 1;
-            document.getElementById('cash-end').innerText = Math.min(end, totalItems);
-            document.getElementById('cash-total').innerText = totalItems;
+            cashAccounts.slice(start, start + ROWS_PER_PAGE).forEach(r => tbody.appendChild(createCashAccountRow(r)));
+            document.getElementById('cash-start').innerText = cashAccounts.length === 0 ? 0 : start + 1;
+            document.getElementById('cash-end').innerText = Math.min(start + ROWS_PER_PAGE, cashAccounts.length);
+            document.getElementById('cash-total').innerText = cashAccounts.length;
             document.getElementById('btn-prev-cash').disabled = pgCash <= 1;
             document.getElementById('btn-next-cash').disabled = pgCash >= totalPages;
         }
 
-        function createCashAccountRow(record, index) {
+        function createCashAccountRow(record) {
             const tr = document.createElement('tr');
             tr.className = "hover:bg-white/20 transition-colors";
             tr.setAttribute('data-id', record.id);
-            const createSelect = (options, selected) => {
-                let html = `<select class="editable-input text-slate-700 font-medium" onchange="updateCashAccount(this)">`;
-                options.forEach(opt => html += `<option value="${opt}" ${opt === selected ? 'selected' : ''}>${opt}</option>`);
-                html += `</select>`;
-                return html;
-            };
-            const createMonthSelect = (selected) => {
-                let html = `<select class="editable-input text-slate-700 font-medium" onchange="updateCashAccount(this)">`;
-                MONTHS.forEach(m => html += `<option value="${m}" ${m === selected ? 'selected' : ''}>${m}</option>`);
-                html += `</select>`;
-                return html;
-            };
-
+            const createSelect = (opts, sel) => `<select class="editable-input text-slate-700 font-medium" onchange="updateCashAccount(this)">${opts.map(o => `<option value="${o}" ${o === sel ? 'selected' : ''}>${o}</option>`).join('')}</select>`;
             tr.innerHTML = `
-                <td class="px-6 py-4 border-r border-slate-200/60">${createMonthSelect(record.month)}</td>
+                <td class="px-6 py-4 border-r border-slate-200/60"><select class="editable-input text-slate-700 font-medium" onchange="updateCashAccount(this)">${MONTHS.map(m => `<option value="${m}" ${m === record.month ? 'selected' : ''}>${m}</option>`).join('')}</select></td>
                 <td class="px-6 py-4 border-r border-slate-200/60">${createSelect(cashAcctNames, record.accountName)}</td>
                 <td class="px-6 py-4 border-r border-slate-200/60">${createSelect(cashAcctCategories, record.category)}</td>
-                <td class="px-6 py-4 border-r border-slate-200/60 text-slate-700" contenteditable="true">${record.institution || 'Bank Name'}</td>
+                <td class="px-6 py-4 border-r border-slate-200/60 text-slate-700" contenteditable="true">${record.institution || ''}</td>
                 <td class="px-6 py-4 text-right text-slate-700 font-medium" contenteditable="true">${formatMoney(record.balance || 0)}</td>
-                <td class="px-2 py-3 text-center no-print">
-                    <button onclick="deleteCashAccount(this)" class="text-gray-400 hover:text-red-500 transition-colors">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    </button>
-                </td>
-            `;
+                <td class="px-2 py-3 text-center"><button onclick="deleteCashAccount(this)" class="text-gray-400 hover:text-red-500"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button></td>`;
             tr.querySelectorAll('[contenteditable="true"]').forEach(cell => {
-                cell.addEventListener('blur', function() { updateCashAccountFromRow(tr); });
-                cell.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); this.blur(); } });
+                cell.addEventListener('blur', () => updateCashAccountFromRow(tr));
+                cell.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); cell.blur(); } });
             });
             return tr;
         }
-
         function addCashAccountRow() {
-            const newRecord = {
-                id: Date.now().toString(),
-                month: MONTHS[0],
-                accountName: cashAcctNames[0],
-                category: cashAcctCategories[0],
-                institution: 'Bank Name',
-                balance: 0
-            };
-            cashAccounts.push(newRecord);
-            
-            // Jump to last page
-            pgCash = Math.ceil(cashAccounts.length / ROWS_PER_PAGE) || 1;
-
+            cashAccounts.unshift({ id: Date.now().toString(), month: MONTHS[0], accountName: cashAcctNames[0], category: cashAcctCategories[0], institution: 'Bank', balance: 0 });
             renderCashAccountsTable();
             scheduleSave(saveCashAccounts);
         }
-
-        function updateCashAccount(element) { updateCashAccountFromRow(element.closest('tr')); }
+        function updateCashAccount(el) { updateCashAccountFromRow(el.closest('tr')); }
         function updateCashAccountFromRow(tr) {
-            const id = tr.getAttribute('data-id');
-            const index = cashAccounts.findIndex(r => r.id === id);
-            if (index === -1) return;
+            const idx = cashAccounts.findIndex(r => r.id === tr.getAttribute('data-id'));
+            if (idx === -1) return;
             const cells = tr.querySelectorAll('td');
-            cashAccounts[index] = {
-                ...cashAccounts[index],
-                month: cells[0].querySelector('select').value,
-                accountName: cells[1].querySelector('select').value,
-                category: cells[2].querySelector('select').value,
-                institution: cells[3].innerText,
-                balance: parseMoney(cells[4].innerText)
-            };
-            cells[4].innerText = formatMoney(cashAccounts[index].balance);
+            cashAccounts[idx] = { ...cashAccounts[idx], month: cells[0].querySelector('select').value, accountName: cells[1].querySelector('select').value, category: cells[2].querySelector('select').value, institution: cells[3].innerText, balance: parseMoney(cells[4].innerText) };
+            cells[4].innerText = formatMoney(cashAccounts[idx].balance);
             scheduleSave(saveCashAccounts);
         }
-
         function deleteCashAccount(btn) {
-            const tr = btn.closest('tr');
-            const id = tr.getAttribute('data-id');
-            cashAccounts = cashAccounts.filter(r => r.id !== id);
+            cashAccounts = cashAccounts.filter(r => r.id !== btn.closest('tr').getAttribute('data-id'));
             renderCashAccountsTable();
             scheduleSave(saveCashAccounts);
         }
 
+        // Cash Movement & Exp Movement
         function initCashMovement() {
-            const tbody = document.getElementById('cash-movement-body');
+            renderMovementTable('cash-movement-body', 'cash', cashMovement);
+        }
+        function initExpensesMovement() {
+            renderMovementTable('expenses-movement-body', 'exp', cashMovement); // Reusing cashMovement DB object
+        }
+        function renderMovementTable(tableId, prefix, dataStore) {
+            const tbody = document.getElementById(tableId);
             tbody.innerHTML = '';
             MONTHS.forEach(month => {
                 const tr = document.createElement('tr');
-                tr.className = "hover:bg-white/20 transition-colors";
                 tr.setAttribute('data-month', month);
-                const startVal = cashMovement[`${month}_start`] || 0;
-                const endVal = cashMovement[`${month}_end`] || 0;
-                tr.innerHTML = `
-                    <td class="px-6 py-4 font-bold text-slate-700 border-r border-slate-200/60">${month}</td>
-                    <td class="px-6 py-4 text-right border-r border-slate-200/60 cash-start text-slate-600" contenteditable="true">${formatMoney(startVal)}</td>
-                    <td class="px-6 py-4 text-right border-r border-slate-200/60 cash-end text-slate-600" contenteditable="true">${formatMoney(endVal)}</td>
-                    <td class="px-6 py-4 text-right cash-net font-bold">-</td>
-                `;
+                const p = prefix === 'cash' ? '' : 'exp_';
+                const s = dataStore[`${p}${month}_start`] || 0;
+                const e = dataStore[`${p}${month}_end`] || 0;
+                tr.innerHTML = `<td class="px-6 py-4 font-bold text-slate-700 border-r border-slate-200/60">${month}</td><td class="px-6 py-4 text-right border-r border-slate-200/60 start-val text-slate-600" contenteditable="true">${formatMoney(s)}</td><td class="px-6 py-4 text-right border-r border-slate-200/60 end-val text-slate-600" contenteditable="true">${formatMoney(e)}</td><td class="px-6 py-4 text-right net-val font-bold">-</td>`;
                 tbody.appendChild(tr);
             });
-            document.querySelectorAll('.cash-start, .cash-end').forEach(cell => {
+            tbody.querySelectorAll('.start-val, .end-val').forEach(cell => {
                 cell.addEventListener('blur', function() {
                     const row = this.closest('tr');
-                    const month = row.getAttribute('data-month');
-                    const val = parseMoney(this.innerText);
-                    if (this.classList.contains('cash-start')) { cashMovement[`${month}_start`] = val; } 
-                    else { cashMovement[`${month}_end`] = val; }
-                    this.innerText = formatMoney(val);
-                    calculateCashMovement();
+                    const m = row.getAttribute('data-month');
+                    const v = parseMoney(this.innerText);
+                    const k = (prefix === 'cash' ? '' : 'exp_') + m + (this.classList.contains('start-val') ? '_start' : '_end');
+                    dataStore[k] = v;
+                    this.innerText = formatMoney(v);
+                    calculateMovement(tableId);
                     scheduleSave(saveCashMovement);
                 });
-                cell.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); this.blur(); } });
+                cell.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); this.blur(); } });
             });
-            calculateCashMovement();
+            calculateMovement(tableId);
         }
-
-        function calculateCashMovement() {
-            const rows = document.querySelectorAll('#cash-movement-body tr');
-            rows.forEach(row => {
-                const startCell = row.querySelector('.cash-start');
-                const endCell = row.querySelector('.cash-end');
-                const netCell = row.querySelector('.cash-net');
-                const start = parseMoney(startCell.innerText);
-                const end = parseMoney(endCell.innerText);
-                if(start !== 0 || end !== 0) {
-                    const net = end - start;
-                    const sign = net > 0 ? '+' : '';
-                    netCell.innerText = sign + formatMoney(net);
-                    if(net > 0) netCell.className = "px-6 py-4 text-right cash-net font-bold text-green-600";
-                    else if(net < 0) netCell.className = "px-6 py-4 text-right cash-net font-bold text-red-500";
-                    else netCell.className = "px-6 py-4 text-right cash-net font-bold text-slate-500";
-                } else {
-                    netCell.innerText = '-';
-                    netCell.className = "px-6 py-4 text-right cash-net font-bold text-gray-400";
-                }
+        function calculateMovement(tableId) {
+            document.querySelectorAll(`#${tableId} tr`).forEach(row => {
+                const s = parseMoney(row.querySelector('.start-val').innerText);
+                const e = parseMoney(row.querySelector('.end-val').innerText);
+                const net = e - s;
+                const cell = row.querySelector('.net-val');
+                cell.innerText = (s||e) ? (net > 0 ? '+' : '') + formatMoney(net) : '-';
+                cell.className = `px-6 py-4 text-right net-val font-bold ${net > 0 ? 'text-green-600' : (net < 0 ? 'text-red-500' : 'text-slate-500')}`;
             });
         }
 
-        // --- CHARTS INIT ---
-        function initCharts() {
-            const ctxTracker = document.getElementById('trackerServiceChart').getContext('2d');
-            window.trackerChart = new Chart(ctxTracker, {
-                type: 'pie',
-                data: { labels: [], datasets: [{ data: [], backgroundColor: ['#34b0e5', '#84d0f0', '#1e6b8c', '#a0e0f8', '#0f4b63'], borderWidth: 2, borderColor: '#ffffff' }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { boxWidth: 10 } } } }
-            });
-            
-            const ctxTrackerBar = document.getElementById('trackerBarChart').getContext('2d');
-            window.trackerBarChart = new Chart(ctxTrackerBar, {
-                type: 'bar',
-                data: { labels: [], datasets: [{ label: 'Total Net Income', data: [], backgroundColor: '#34b0e5', borderRadius: 4 }] },
-                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: { x: { beginAtZero: true } }, plugins: { legend: { display: false } } }
-            });
-            
-            const ctxBar = document.getElementById('revenueBarChart').getContext('2d');
-            window.revenueBarChart = new Chart(ctxBar, {
-                type: 'bar',
-                data: { labels: [], datasets: [{ label: 'Net Revenue', data: [], backgroundColor: '#34b0e5', borderRadius: 4 }] },
-                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true }, x: { grid: { display: false } } }, plugins: { legend: { display: false } } }
-            });
-
-            const ctxPie = document.getElementById('revenuePieChart').getContext('2d');
-            window.revenuePieChart = new Chart(ctxPie, {
-                type: 'doughnut',
-                data: { labels: [], datasets: [{ data: [], backgroundColor: ['#34b0e5', '#84d0f0'], borderWidth: 2, borderColor: '#ffffff' }] },
-                options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 10 } } } }
-            });
-        }
-
-        // --- PAGINATION HANDLER ---
-        function changePage(type, direction) {
-            if (type === 'income') {
-                pgIncome += direction;
-                renderIncomeTable();
-            } else if (type === 'expense') {
-                pgExpense += direction;
-                renderExpenseTable();
-            } else if (type === 'cash') {
-                pgCash += direction;
-                renderCashAccountsTable();
-            }
-        }
-        
         // --- REALTIME COLLABORATION SETUP ---
         const SB_URL = 'https://udlnhhngwcqdjdwcheyd.supabase.co'; 
         const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkbG5oaG5nd2NxZGpkd2NoZXlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk5ODM1NzMsImV4cCI6MjA4NTU1OTU3M30.3WeLLTCqvl3IT4YhfS77bA8cx7R2fVfyEXZ3mJaYG5w';
         
-        // Initialize Supabase Client
-        // We use 'var' here or check window properties to strictly avoid "already declared" errors
         let realtimeClient = null;
-        
         if (window.supabase) {
-            try {
-                realtimeClient = window.supabase.createClient(SB_URL, SB_KEY);
-            } catch (err) {
-                console.error("Supabase Init Error:", err);
-            }
+            try { realtimeClient = window.supabase.createClient(SB_URL, SB_KEY); } 
+            catch (err) { console.error("Supabase Init Error:", err); }
         }
 
         function setupRealtimeListeners() {
-            if(!realtimeClient) {
-                console.warn("Supabase client not initialized. Check your credentials.");
-                return;
-            }
+            if(!realtimeClient) return;
             console.log("🔌 Connecting to Realtime...");
-
-            const channel = realtimeClient.channel('db-changes')
-                .on(
-                    'postgres_changes',
-                    { event: '*', schema: 'public' }, // Listen to ALL changes
-                    (payload) => {
-                        console.log('Change received!', payload);
-                        handleRealtimeUpdate(payload);
-                    }
-                )
+            realtimeClient.channel('db-changes')
+                .on('postgres_changes', { event: '*', schema: 'public' }, (payload) => {
+                    console.log('Change received! Table:', payload.table);
+                    handleRealtimeUpdate(payload);
+                })
                 .subscribe((status) => {
                     if (status === 'SUBSCRIBED') {
-                        // Visual indicator that we are live
-                        const indicator = document.getElementById('sync-status');
-                        const text = document.getElementById('sync-text');
-                        if(indicator && text) {
-                            indicator.style.color = '#10b981'; // Green
-                            text.innerText = 'Live Sync Active';
-                        }
+                        const ind = document.getElementById('sync-status');
+                        const txt = document.getElementById('sync-text');
+                        if(ind && txt) { ind.style.color = '#10b981'; txt.innerText = 'Live Sync Active'; }
                     }
                 });
         }
 
-        // Handle incoming data changes safely
         function handleRealtimeUpdate(payload) {
             const { table, eventType, new: newRow, old: oldRow } = payload;
+            const safeTable = table.toLowerCase(); // Handle case sensitivity
 
-            // 1. Handle INCOME Table Changes
-            if (table === 'income_records') {
-                if (eventType === 'INSERT') {
-                    // Convert snake_case (DB) to camelCase (Frontend)
-                    const frontendRow = {
-                        id: newRow.id,
-                        date: newRow.date,
-                        clientName: newRow.client_name,
-                        serviceType: newRow.service_type,
-                        pricingModel: newRow.pricing_model,
-                        gross: newRow.gross,
-                        net: newRow.net,
-                        paymentMode: newRow.payment_mode,
-                        status: newRow.status,
-                        refId: newRow.ref_id,
-                        notes: newRow.notes
-                    };
-                    // Check if already exists (prevent duplicates from self)
-                    const exists = incomeRecords.some(r => r.id === newRow.id);
-                    if(!exists) {
-                        incomeRecords.push(frontendRow);
-                        if(currentView === 'income') renderIncomeTable();
-                    }
-                } 
-                else if (eventType === 'UPDATE') {
-                    const index = incomeRecords.findIndex(r => r.id === newRow.id);
-                    if (index !== -1) {
-                        // Update local data
-                        incomeRecords[index] = {
-                            ...incomeRecords[index],
-                            date: newRow.date,
-                            clientName: newRow.client_name,
-                            serviceType: newRow.service_type,
-                            pricingModel: newRow.pricing_model,
-                            gross: newRow.gross,
-                            net: newRow.net,
-                            paymentMode: newRow.payment_mode,
-                            status: newRow.status,
-                            refId: newRow.ref_id,
-                            notes: newRow.notes
-                        };
-                        
-                        // Smart UI Update (Don't break user focus)
-                        if (currentView === 'income') {
-                            // Only re-render if the user is NOT typing in this specific row
-                            const activeEl = document.activeElement;
-                            const activeRowId = activeEl ? activeEl.closest('tr')?.getAttribute('data-id') : null;
-                            
-                            if (activeRowId !== newRow.id) {
-                                renderIncomeTable(); 
-                            }
-                        }
-                    }
-                } 
-                else if (eventType === 'DELETE') {
-                    incomeRecords = incomeRecords.filter(r => r.id !== oldRow.id);
-                    if(currentView === 'income') renderIncomeTable();
-                }
-                
-                // Always update charts/dashboard totals
-                updateIncomeTracker(); 
+            console.log(`Processing update for ${safeTable} (${eventType})`);
+
+            // 1. Dashboard Grid (Business Config)
+            if (safeTable === 'business_config') {
+                if (newRow.columns) businessColumns = newRow.columns;
+                if (newRow.business_data) businessData = newRow.business_data;
+                if (newRow.dashboard_expenses) dashboardExpenses = newRow.dashboard_expenses;
+                initDashboard(); 
                 calculateDashboard();
             }
 
-            // 2. Handle EXPENSES Table Changes
-            if (table === 'expense_records') {
-                if (eventType === 'INSERT') {
-                    const frontendRow = {
-                        id: newRow.id,
-                        date: newRow.date,
-                        vendor: newRow.vendor,
-                        category: newRow.category,
-                        type: newRow.type,
-                        service: newRow.service,
-                        amount: newRow.amount,
-                        payment: newRow.payment,
-                        status: newRow.status,
-                        recurring: newRow.recurring,
-                        notes: newRow.notes
-                    };
-                    const exists = expenseRecords.some(r => r.id === newRow.id);
-                    if(!exists) {
-                        expenseRecords.push(frontendRow);
-                        if(currentView === 'expenses') renderExpenseTable();
-                    }
-                }
-                else if (eventType === 'UPDATE') {
-                    const index = expenseRecords.findIndex(r => r.id === newRow.id);
-                    if (index !== -1) {
-                        expenseRecords[index] = {
-                            ...expenseRecords[index],
-                            date: newRow.date,
-                            vendor: newRow.vendor,
-                            category: newRow.category,
-                            type: newRow.type,
-                            service: newRow.service,
-                            amount: newRow.amount,
-                            payment: newRow.payment,
-                            status: newRow.status,
-                            recurring: newRow.recurring,
-                            notes: newRow.notes
+            // 2. Income Table
+            if (safeTable === 'income_records') {
+                if (eventType === 'INSERT' && !incomeRecords.some(r => r.id === newRow.id)) {
+                    incomeRecords.unshift({ 
+                        id: newRow.id, 
+                        date: newRow.date, 
+                        clientName: newRow.client_name, 
+                        serviceType: newRow.service_type, 
+                        pricingModel: newRow.pricing_model, 
+                        gross: Number(newRow.gross) || 0, 
+                        net: Number(newRow.net) || 0, 
+                        paymentMode: newRow.payment_mode, 
+                        status: newRow.status, 
+                        refId: newRow.ref_id, 
+                        notes: newRow.notes 
+                    });
+                    if(currentView === 'income') renderIncomeTable();
+                } else if (eventType === 'UPDATE') {
+                    const idx = incomeRecords.findIndex(r => r.id === newRow.id);
+                    if (idx !== -1) {
+                        incomeRecords[idx] = { 
+                            ...incomeRecords[idx], 
+                            date: newRow.date, 
+                            clientName: newRow.client_name, 
+                            serviceType: newRow.service_type, 
+                            pricingModel: newRow.pricing_model, 
+                            gross: Number(newRow.gross) || 0, 
+                            net: Number(newRow.net) || 0, 
+                            paymentMode: newRow.payment_mode, 
+                            status: newRow.status, 
+                            refId: newRow.ref_id, 
+                            notes: newRow.notes 
                         };
-                        
-                        if (currentView === 'expenses') {
-                            const activeEl = document.activeElement;
-                            const activeRowId = activeEl ? activeEl.closest('tr')?.getAttribute('data-id') : null;
-                            if (activeRowId !== newRow.id) renderExpenseTable();
-                        }
+                        if (currentView === 'income' && document.activeElement.closest('tr')?.getAttribute('data-id') !== newRow.id) renderIncomeTable();
                     }
+                } else if (eventType === 'DELETE') {
+                    incomeRecords = incomeRecords.filter(r => r.id !== oldRow.id);
+                    if(currentView === 'income') renderIncomeTable();
                 }
-                else if (eventType === 'DELETE') {
+                updateIncomeTracker(); calculateDashboard();
+            }
+
+            // 3. Expense Table
+            if (safeTable === 'expense_records') {
+                if (eventType === 'INSERT' && !expenseRecords.some(r => r.id === newRow.id)) {
+                    expenseRecords.unshift({ 
+                        id: newRow.id, 
+                        date: newRow.date, 
+                        vendor: newRow.vendor, 
+                        category: newRow.category, 
+                        type: newRow.type, 
+                        service: newRow.service, 
+                        amount: Number(newRow.amount) || 0, 
+                        payment: newRow.payment, 
+                        status: newRow.status, 
+                        recurring: newRow.recurring, 
+                        notes: newRow.notes 
+                    });
+                    if(currentView === 'expenses') renderExpenseTable();
+                } else if (eventType === 'UPDATE') {
+                    const idx = expenseRecords.findIndex(r => r.id === newRow.id);
+                    if (idx !== -1) {
+                        expenseRecords[idx] = { 
+                            ...expenseRecords[idx], 
+                            date: newRow.date, 
+                            vendor: newRow.vendor, 
+                            category: newRow.category, 
+                            type: newRow.type, 
+                            service: newRow.service, 
+                            amount: Number(newRow.amount) || 0, 
+                            payment: newRow.payment, 
+                            status: newRow.status, 
+                            recurring: newRow.recurring, 
+                            notes: newRow.notes 
+                        };
+                        if (currentView === 'expenses' && document.activeElement.closest('tr')?.getAttribute('data-id') !== newRow.id) renderExpenseTable();
+                    }
+                } else if (eventType === 'DELETE') {
                     expenseRecords = expenseRecords.filter(r => r.id !== oldRow.id);
                     if(currentView === 'expenses') renderExpenseTable();
                 }
-                calculateDashboard(); // Recalculate totals
+                calculateDashboard();
             }
 
-            // 3. Handle CASH ACCOUNTS Changes
-            if (table === 'cash_accounts') {
-                if (eventType === 'INSERT' || eventType === 'UPDATE') {
-                   const frontendRow = {
-                        id: newRow.id,
-                        month: newRow.month,
-                        accountName: newRow.account_name,
-                        category: newRow.category,
-                        institution: newRow.institution,
-                        balance: newRow.balance
+            // 4. Cash Table
+            if (safeTable === 'cash_accounts') {
+                if ((eventType === 'INSERT' || eventType === 'UPDATE')) {
+                   const row = { 
+                       id: newRow.id, 
+                       month: newRow.month, 
+                       accountName: newRow.account_name, 
+                       category: newRow.category, 
+                       institution: newRow.institution, 
+                       balance: Number(newRow.balance) || 0 
                    };
-                   
-                   const index = cashAccounts.findIndex(r => r.id === newRow.id);
-                   if (index === -1) cashAccounts.push(frontendRow);
-                   else cashAccounts[index] = frontendRow;
-                   
+                   const idx = cashAccounts.findIndex(r => r.id === newRow.id);
+                   if (idx === -1) cashAccounts.unshift(row); else cashAccounts[idx] = row;
                    if(currentView === 'cash') renderCashAccountsTable();
-                }
-                else if (eventType === 'DELETE') {
+                } else if (eventType === 'DELETE') {
                     cashAccounts = cashAccounts.filter(r => r.id !== oldRow.id);
                     if(currentView === 'cash') renderCashAccountsTable();
                 }
@@ -2135,13 +1687,10 @@
             initCharts();
             loadAllData();
             fetchLiveExchangeRate();
-            setupRealtimeListeners(); // Start Listening for changes
-
-            // Enable Restore button if local history exists
-            if (deletedColumns.length > 0) {
-                document.getElementById('restore-btn').disabled = false;
-            }
+            setupRealtimeListeners(); 
+            if (deletedColumns.length > 0) document.getElementById('restore-btn').disabled = false;
         };
     </script>
 </body>
 </html>
+
