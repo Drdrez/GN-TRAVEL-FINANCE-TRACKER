@@ -268,11 +268,6 @@
                     Backup to Drive
                 </button>
 
-                <div class="glass rounded-lg px-1 py-1 text-sm shadow-sm flex items-center">
-                    <button onclick="toggleCurrency('PHP')" id="btn-php" class="px-3 py-1 rounded-md text-xs font-bold bg-blue-100 text-blue-600 transition-colors">PHP</button>
-                    <button onclick="toggleCurrency('USD')" id="btn-usd" class="px-3 py-1 rounded-md text-xs font-bold text-gray-500 hover:bg-white/50 transition-colors">USD</button>
-                </div>
-
                 <div class="glass rounded-lg px-3 py-2 text-sm shadow-sm flex items-center gap-2">
                     <svg class="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                     <input type="number" id="year-selector" class="year-input bg-transparent font-bold text-slate-700 w-12 focus:outline-none" value="2026" onchange="changeYear(this.value)">
@@ -689,9 +684,6 @@
             overlay.setAttribute('aria-hidden', 'true');
         }
         
-        // --- LIVE CURRENCY ---
-        let currentCurrency = 'PHP';
-        let exchangeRate = 58; 
         let currentYear = new Date().getFullYear();
 
         // --- DATA STORES ---
@@ -800,29 +792,6 @@
             setTimeout(() => indicator.classList.remove('show'), 2000);
         }
 
-        // --- LIVE CURRENCY FETCHER ---
-        async function fetchLiveExchangeRate() {
-            try {
-                const response = await fetch('https://open.er-api.com/v6/latest/USD');
-                const data = await response.json();
-                if (data && data.rates && data.rates.PHP) {
-                    exchangeRate = data.rates.PHP;
-                    const usdBtn = document.getElementById('btn-usd');
-                    if (usdBtn) usdBtn.setAttribute('title', `Current Rate: ₱${exchangeRate.toFixed(2)} = $1 USD`);
-                    if (currentCurrency === 'USD') {
-                        calculateDashboard();
-                        updateIncomeTracker();
-                        renderIncomeTable();
-                        renderExpenseTable();
-                        calculateCashMovement();
-                        calculateExpensesMovement();
-                    }
-                }
-            } catch (error) {
-                console.warn('Failed to fetch live rate, using default.', error);
-            }
-        }
-
         // --- GLOBAL UTILS ---
         function parseMoney(str) {
             if (!str) return 0;
@@ -833,47 +802,7 @@
 
         function formatMoney(num) {
             let val = Number(num) || 0;
-            let symbol = '₱';
-            if (currentCurrency === 'USD') {
-                val = val / exchangeRate;
-                symbol = '$';
-            }
-            return symbol + val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        }
-
-        function toggleCurrency(curr) {
-            if(curr === currentCurrency) return;
-            currentCurrency = curr;
-            
-            // UI Button Toggles
-            if(curr === 'PHP') {
-                document.getElementById('btn-php').className = "px-3 py-1 rounded-md text-xs font-bold bg-blue-100 text-blue-600 transition-colors";
-                document.getElementById('btn-usd').className = "px-3 py-1 rounded-md text-xs font-bold text-gray-500 hover:bg-white/50 transition-colors";
-            } else {
-                document.getElementById('btn-usd').className = "px-3 py-1 rounded-md text-xs font-bold bg-blue-100 text-blue-600 transition-colors";
-                document.getElementById('btn-php').className = "px-3 py-1 rounded-md text-xs font-bold text-gray-500 hover:bg-white/50 transition-colors";
-            }
-
-            // DISABLE EDITING IN USD
-            const isEditable = (curr === 'PHP');
-            document.querySelectorAll('[contenteditable="true"]').forEach(el => {
-                el.contentEditable = isEditable;
-                el.style.cursor = isEditable ? 'text' : 'not-allowed';
-                el.style.opacity = isEditable ? '1' : '0.7'; 
-            });
-            document.querySelectorAll('.editable-input').forEach(el => {
-                el.disabled = !isEditable;
-                el.style.opacity = isEditable ? '1' : '0.7';
-                el.style.cursor = isEditable ? 'pointer' : 'not-allowed';
-            });
-
-            // Re-render
-            calculateDashboard();
-            updateIncomeTracker();
-            renderIncomeTable();
-            renderExpenseTable();
-            calculateCashMovement();
-            calculateExpensesMovement();
+            return '₱' + val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
         function changeYear(year) {
@@ -1535,12 +1464,20 @@
                 cell.className = `px-6 py-4 text-right net-val font-bold ${net > 0 ? 'text-green-600' : (net < 0 ? 'text-red-500' : 'text-slate-500')}`;
             });
         }
+        
+        // --- ADDED FIX FOR MISSING FUNCTIONS ---
+        function calculateCashMovement() {
+            calculateMovement('cash-movement-body');
+        }
+
+        function calculateExpensesMovement() {
+            calculateMovement('expenses-movement-body');
+        }
 
         // --- REALTIME COLLABORATION SETUP ---
         const SB_URL = 'https://udlnhhngwcqdjdwcheyd.supabase.co'; 
         const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkbG5oaG5nd2NxZGpkd2NoZXlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk5ODM1NzMsImV4cCI6MjA4NTU1OTU3M30.3WeLLTCqvl3IT4YhfS77bA8cx7R2fVfyEXZ3mJaYG5w';
         
-        // I renamed this variable from 'supabase' to '_supabase' to avoid conflict errors
         let _supabase = null;
         if (window.supabase) {
             try { 
@@ -1723,7 +1660,6 @@
         window.onload = function() {
             initCharts();
             loadAllData();
-            fetchLiveExchangeRate();
             setupRealtimeListeners(); 
             if (deletedColumns.length > 0) document.getElementById('restore-btn').disabled = false;
         };
